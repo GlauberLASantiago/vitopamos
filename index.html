@@ -3,172 +3,320 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Partitura</title>
+<title>Player de Partitura</title>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Inter",sans-serif;background:#f8f9fa;min-height:100vh;padding:0}
-.player-wrap{max-width:900px;margin:0 auto;padding:24px 20px}
-.player-card{background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,.08);overflow:hidden}
-.player-header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);padding:20px 24px;display:flex;align-items:center;gap:14px}
-.player-icon{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.player-title{color:#fff;font-size:16px;font-weight:600;letter-spacing:.2px}
-.player-sub{color:rgba(255,255,255,.55);font-size:12px;margin-top:2px}
-.player-body{padding:20px 24px}
-.file-area{border:2px dashed #e2e8f0;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px;background:#fafbfc}
-.file-area:hover{border-color:#6366f1;background:#f5f3ff}
-.file-area input{display:none}
-.file-label{display:block;cursor:pointer}
-.file-icon{font-size:28px;margin-bottom:6px}
-.file-text{font-size:13px;color:#64748b;font-weight:500}
-.file-hint{font-size:11px;color:#94a3b8;margin-top:3px}
-.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 0;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;margin-bottom:14px}
-.btn{height:38px;padding:0 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.3px;transition:all .18s;display:inline-flex;align-items:center;gap:6px}
-.btn:disabled{opacity:.35;cursor:default}
-.btn-play{background:#22c55e;color:#fff}
-.btn-play:not(:disabled):hover{background:#16a34a}
-.btn-pause{background:#f59e0b;color:#fff}
-.btn-pause:not(:disabled):hover{background:#d97706}
-.btn-stop{background:#ef4444;color:#fff}
-.btn-stop:not(:disabled):hover{background:#dc2626}
-.btn-export{background:#6366f1;color:#fff;margin-left:auto}
-.btn-export:not(:disabled):hover{background:#4f46e5}
-.bpm-wrap{display:flex;align-items:center;gap:6px;background:#f1f5f9;border-radius:8px;padding:4px 10px;height:38px}
-.bpm-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.bpm-input{width:46px;border:none;background:transparent;font-size:15px;font-weight:600;color:#1e293b;text-align:center;font-family:inherit}
-.bpm-input:focus{outline:none}
-.status-bar{font-size:12px;color:#94a3b8;font-family:monospace;min-height:18px;margin-bottom:12px}
-.status-bar.ok{color:#22c55e}
-.status-bar.err{color:#ef4444}
-#score{overflow-x:auto}
-#score svg{max-width:100%;height:auto}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16px; }
+.card { max-width: 880px; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 32px rgba(0,0,0,.10); overflow: hidden; }
+.hd { background: linear-gradient(120deg, #0f0c29, #302b63, #24243e); padding: 22px 28px; display: flex; align-items: center; gap: 16px; }
+.hd-icon { width: 46px; height: 46px; background: rgba(255,255,255,.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.hd-title { color: #fff; font-size: 17px; font-weight: 600; }
+.hd-sub { color: rgba(255,255,255,.45); font-size: 12px; margin-top: 3px; }
+.body { padding: 24px 28px; }
+
+/* botão carregar */
+.load-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: #302b63; color: #fff; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background .15s; margin-bottom: 6px; }
+.load-btn:hover { background: #1a1740; }
+.load-btn input { display: none; }
+.fname { font-size: 12px; color: #94a3b8; margin-bottom: 12px; min-height: 16px; }
+
+/* status */
+.status { font-size: 12px; font-family: monospace; padding: 7px 12px; border-radius: 7px; margin-bottom: 14px; background: #f8fafc; border-left: 3px solid #e2e8f0; color: #94a3b8; min-height: 34px; line-height: 1.5; }
+.status.info  { background: #eef2ff; border-color: #6366f1; color: #4338ca; }
+.status.ok    { background: #f0fdf4; border-color: #22c55e; color: #15803d; }
+.status.err   { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }
+
+/* controles */
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.btn { height: 38px; padding: 0 18px; border: none; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn:disabled { opacity: .3; cursor: default; }
+.btn-play   { background: #22c55e; color: #fff; } .btn-play:not(:disabled):hover   { background: #16a34a; }
+.btn-pause  { background: #f59e0b; color: #fff; } .btn-pause:not(:disabled):hover  { background: #d97706; }
+.btn-stop   { background: #ef4444; color: #fff; } .btn-stop:not(:disabled):hover   { background: #dc2626; }
+.btn-export { background: #6366f1; color: #fff; margin-left: auto; } .btn-export:not(:disabled):hover { background: #4f46e5; }
+.bpm-wrap { display: flex; align-items: center; gap: 7px; background: #f1f5f9; border-radius: 9px; padding: 0 14px; height: 38px; }
+.bpm-wrap label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }
+.bpm-wrap input { width: 48px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #1e293b; text-align: center; font-family: inherit; }
+.bpm-wrap input:focus { outline: none; }
+
+/* partitura */
+#score { overflow-x: auto; }
+#score svg { max-width: 100%; height: auto; }
 </style>
 </head>
 <body>
-<div class="player-wrap">
-<div class="player-card">
-<div class="player-header">
-  <div class="player-icon">&#127925;</div>
-  <div><div class="player-title">Player de Partitura</div><div class="player-sub">MusicXML &mdash; General MIDI</div></div>
-</div>
-<div class="player-body">
-  <div class="file-area" onclick="document.getElementById('fi').click()">
-    <label class="file-label">
+
+<div class="card">
+  <div class="hd">
+    <div class="hd-icon">&#127925;</div>
+    <div>
+      <div class="hd-title">Player de Partitura</div>
+      <div class="hd-sub">MusicXML &mdash; General MIDI</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <label class="load-btn">
+      <span>&#128193; Carregar partitura</span>
       <input type="file" id="fi" accept=".xml,.musicxml">
-      <div class="file-icon">&#128197;</div>
-      <div class="file-text">Clique para carregar a partitura</div>
-      <div class="file-hint">.xml ou .musicxml</div>
     </label>
+    <div class="fname" id="fname">Nenhum arquivo selecionado</div>
+
+    <div class="status" id="st">Selecione um arquivo .xml ou .musicxml para começar.</div>
+
+    <div class="controls">
+      <button class="btn btn-play"   id="bp"  disabled>&#9654; Play</button>
+      <button class="btn btn-pause"  id="bpa" disabled>&#9646;&#9646; Pause</button>
+      <button class="btn btn-stop"   id="bs"  disabled>&#9632; Stop</button>
+      <div class="bpm-wrap">
+        <label for="bpm">BPM</label>
+        <input type="number" id="bpm" value="100" min="20" max="400">
+      </div>
+      <button class="btn btn-export" id="bx"  disabled>&#128190; Exportar HTML</button>
+    </div>
+
+    <div id="score"></div>
   </div>
-  <div class="status-bar" id="status">Aguardando arquivo...</div>
-  <div class="controls">
-    <button class="btn btn-play"  id="btn-play"  disabled>&#9654; Play</button>
-    <button class="btn btn-pause" id="btn-pause" disabled>&#9646;&#9646; Pause</button>
-    <button class="btn btn-stop"  id="btn-stop"  disabled>&#9632; Stop</button>
-    <div class="bpm-wrap"><span class="bpm-label">BPM</span><input class="bpm-input" type="number" id="bpm" value="100" min="20" max="400"></div>
-    <button class="btn btn-export" id="btn-export" disabled>&#128190; Exportar HTML</button>
-  </div>
-  <div id="score"></div>
-</div></div></div>
+</div>
+
 <script>
-var osmd=new opensheetmusicdisplay.OpenSheetMusicDisplay("score",{backend:"svg",autoResize:true,drawTitle:true});
-var instrument=null,events=[],actx=null,scheduled=[],startedAt=0,pausedAt=0,running=false,rawXml="";
-function st(m,cls){var e=document.getElementById("status");e.textContent=m;e.className="status-bar"+(cls?" "+cls:"");}
-document.getElementById("fi").addEventListener("change",async function(ev){
-  var f=ev.target.files[0];if(!f)return;
-  rawXml=await f.text();
-  st("Carregando partitura...");
-  try{
-    await osmd.load(rawXml);osmd.render();
-    st("Carregando piano General MIDI...");
-    actx=new(window.AudioContext||window.webkitAudioContext)();
-    instrument=await Soundfont.instrument(actx,"acoustic_grand_piano",{soundfont:"FluidR3_GM",nameToUrl:function(n,sf){return "https://gleitz.github.io/midi-js-soundfonts/"+sf+"/"+n+"-mp3.js";}});
-    st("Pronto! Clique em Play.","ok");
-    ["btn-play","btn-pause","btn-stop","btn-export"].forEach(function(id){document.getElementById(id).disabled=false;});
-  }catch(e){st("Erro: "+e.message,"err");console.error(e);}
+var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
+  backend: 'svg',
+  autoResize: true,
+  drawTitle: true
 });
-function extractEvents(){
-  events=[];
-  var bpm=+document.getElementById("bpm").value||100;var spb=60/bpm;
-  var sm=osmd.Sheet.SourceMeasures;
-  for(var mi=0;mi<sm.length;mi++){
-    var m=sm[mi];var mT=m.AbsoluteTimestamp?m.AbsoluteTimestamp.RealValue:0;
-    for(var vi=0;vi<m.VerticalSourceStaffEntryContainers.length;vi++){
-      var vsec=m.VerticalSourceStaffEntryContainers[vi];
-      var eT=vsec.Timestamp?vsec.Timestamp.RealValue:0;var tSec=(mT+eT)*4*spb;
-      for(var si=0;si<vsec.StaffEntries.length;si++){
-        var se=vsec.StaffEntries[si];if(!se)continue;
-        for(var ei=0;ei<se.VoiceEntries.length;ei++){
-          var ve=se.VoiceEntries[ei];
-          for(var ni=0;ni<ve.Notes.length;ni++){
-            var note=ve.Notes[ni];if(note.isRest())continue;
-            var p=note.Pitch;if(!p)continue;
-            var semis=[0,2,4,5,7,9,11];
-            var midi=(p.Octave+1)*12+semis[p.FundamentalNote%7]+(p.Accidental||0);
-            var dur=Math.max(0.08,note.Length.RealValue*4*spb*0.9);
-            events.push({t:tSec,midi:midi,dur:dur});
+
+var inst = null, evs = [], ac = null, sc = [];
+var sat = 0, pat = 0, run = false, rawXml = '';
+
+function st(m, c) {
+  var e = document.getElementById('st');
+  e.textContent = m;
+  e.className = 'status' + (c ? ' ' + c : '');
+}
+
+/* ── carregar arquivo ── */
+document.getElementById('fi').addEventListener('change', async function(e) {
+  var f = e.target.files[0];
+  if (!f) return;
+  document.getElementById('fname').textContent = f.name;
+  st('Carregando partitura...', 'info');
+  try {
+    rawXml = await f.text();
+    await osmd.load(rawXml);
+    osmd.render();
+    st('Carregando piano General MIDI...', 'info');
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    inst = await Soundfont.instrument(ac, 'acoustic_grand_piano', {
+      soundfont: 'FluidR3_GM',
+      nameToUrl: function(n, sf) {
+        return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
+      }
+    });
+    st('Pronto! Clique em Play.', 'ok');
+    ['bp','bpa','bs','bx'].forEach(function(id) {
+      document.getElementById(id).disabled = false;
+    });
+  } catch(err) {
+    st('Erro: ' + err.message, 'err');
+    console.error(err);
+  }
+});
+
+/* ── extrai eventos de nota ── */
+function xev() {
+  evs = [];
+  var bpm = +document.getElementById('bpm').value || 100;
+  var spb = 60 / bpm;
+  var sm = osmd.Sheet.SourceMeasures;
+  for (var mi = 0; mi < sm.length; mi++) {
+    var m = sm[mi];
+    var mT = m.AbsoluteTimestamp ? m.AbsoluteTimestamp.RealValue : 0;
+    for (var vi = 0; vi < m.VerticalSourceStaffEntryContainers.length; vi++) {
+      var vsec = m.VerticalSourceStaffEntryContainers[vi];
+      var eT = vsec.Timestamp ? vsec.Timestamp.RealValue : 0;
+      var tSec = (mT + eT) * 4 * spb;
+      for (var si = 0; si < vsec.StaffEntries.length; si++) {
+        var se = vsec.StaffEntries[si];
+        if (!se) continue;
+        for (var ei = 0; ei < se.VoiceEntries.length; ei++) {
+          var ve = se.VoiceEntries[ei];
+          for (var ni = 0; ni < ve.Notes.length; ni++) {
+            var note = ve.Notes[ni];
+            if (note.isRest()) continue;
+            var p = note.Pitch;
+            if (!p) continue;
+            var semis = [0, 2, 4, 5, 7, 9, 11];
+            var midi = (p.Octave + 1) * 12 + semis[p.FundamentalNote % 7] + (p.Accidental || 0);
+            var dur = Math.max(0.08, note.Length.RealValue * 4 * spb * 0.9);
+            evs.push({ t: tSec, midi: midi, dur: dur });
           }
         }
       }
     }
   }
 }
-function stopScheduled(){scheduled.forEach(function(n){try{n.stop();}catch(_){}});scheduled=[];}
-function scheduleFrom(offset){
-  extractEvents();if(!events.length){st("Nenhuma nota encontrada.","err");return;}
-  if(actx.state==="suspended")actx.resume();
-  var now=actx.currentTime+0.1;startedAt=now-offset;
-  events.forEach(function(ev){
-    if(ev.t<offset-0.02)return;
-    var abs=startedAt+ev.t;if(abs<actx.currentTime)return;
-    var n=instrument.play(ev.midi,abs,{duration:ev.dur,gain:1.2});if(n)scheduled.push(n);
+
+/* ── audio ── */
+function ksc() {
+  sc.forEach(function(n) { try { n.stop(); } catch(_) {} });
+  sc = [];
+}
+
+function sch(off) {
+  xev();
+  if (!evs.length) { st('Nenhuma nota encontrada.', 'err'); return; }
+  if (ac.state === 'suspended') ac.resume();
+  var now = ac.currentTime + 0.1;
+  sat = now - off;
+  evs.forEach(function(ev) {
+    if (ev.t < off - 0.02) return;
+    var abs = sat + ev.t;
+    if (abs < ac.currentTime) return;
+    var n = inst.play(ev.midi, abs, { duration: ev.dur, gain: 1.2 });
+    if (n) sc.push(n);
   });
 }
-document.getElementById("btn-play").onclick=function(){if(running)return;running=true;stopScheduled();scheduleFrom(pausedAt);pausedAt=0;st("Tocando...","ok");};
-document.getElementById("btn-pause").onclick=function(){if(!running)return;running=false;pausedAt=actx.currentTime-startedAt;stopScheduled();st("Pausado.");};
-document.getElementById("btn-stop").onclick=function(){running=false;pausedAt=0;stopScheduled();st("Parado.");};
-document.getElementById("btn-export").onclick=function(){
-  var out=buildExportHTML(rawXml,document.getElementById("bpm").value);
-  navigator.clipboard.writeText(out).then(function(){
-    st("HTML copiado!","ok");
-    var b=document.getElementById("btn-export");b.textContent="Copiado!";
-    setTimeout(function(){b.innerHTML="&#128190; Exportar HTML";},2000);
-  }).catch(function(){st("Erro ao copiar.","err");});
+
+document.getElementById('bp').onclick  = function() { if (run) return; run = true;  ksc(); sch(pat); pat = 0; st('Tocando...', 'ok'); };
+document.getElementById('bpa').onclick = function() { if (!run) return; run = false; pat = ac.currentTime - sat; ksc(); st('Pausado.'); };
+document.getElementById('bs').onclick  = function() { run = false; pat = 0; ksc(); st('Parado.'); };
+
+/* ── exportar HTML autossuficiente ── */
+document.getElementById('bx').onclick = function() {
+  var bpm = document.getElementById('bpm').value;
+  var out = makeExport(rawXml, bpm);
+  navigator.clipboard.writeText(out)
+    .then(function() {
+      st('HTML copiado para a área de transferência!', 'ok');
+      var b = document.getElementById('bx');
+      b.textContent = '✓ Copiado!';
+      setTimeout(function() { b.innerHTML = '&#128190; Exportar HTML'; }, 2500);
+    })
+    .catch(function() { st('Erro ao copiar.', 'err'); });
 };
-function buildExportHTML(xml,bpm){
-  var s=JSON.stringify(xml);
-  return [
-    "<!DOCTYPE html><html lang='pt-br'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Partitura</title>",
-    "<script src='https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js'></scr"+"ipt>",
-    "<script src='https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js'></scr"+"ipt>",
-    "<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',sans-serif;background:#f8f9fa;padding:0}.pw{max-width:900px;margin:0 auto;padding:24px 20px}.pc{background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,.08);overflow:hidden}.ph{background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:18px 24px;display:flex;align-items:center;gap:12px}.pi{width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px}.pt{color:#fff;font-size:15px;font-weight:600}.ps{color:rgba(255,255,255,.5);font-size:11px;margin-top:2px}.pb{padding:18px 24px}.ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;margin-bottom:12px}.btn{height:36px;padding:0 16px;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:all .18s;display:inline-flex;align-items:center;gap:5px}.btn:disabled{opacity:.35;cursor:default}.bp{background:#22c55e;color:#fff}.bp:not(:disabled):hover{background:#16a34a}.bpa{background:#f59e0b;color:#fff}.bpa:not(:disabled):hover{background:#d97706}.bs{background:#ef4444;color:#fff}.bs:not(:disabled):hover{background:#dc2626}.bw{display:flex;align-items:center;gap:6px;background:#f1f5f9;border-radius:7px;padding:3px 10px;height:36px}.bl{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}.bi{width:44px;border:none;background:transparent;font-size:14px;font-weight:600;color:#1e293b;text-align:center;font-family:inherit}.bi:focus{outline:none}.sb{font-size:12px;color:#94a3b8;font-family:monospace;margin-bottom:10px;min-height:16px}.ok{color:#22c55e}.err{color:#ef4444}#score{overflow-x:auto}#score svg{max-width:100%;height:auto}</style>",
-    "</head><body><div class='pw'><div class='pc'>",
-    "<div class='ph'><div class='pi'>&#127925;</div><div><div class='pt'>Partitura</div><div class='ps'>General MIDI</div></div></div>",
-    "<div class='pb'>",
-    "<div class='sb' id='st'>Carregando...</div>",
-    "<div class='ctl'>",
-    "<button class='btn bp' id='bp' disabled>&#9654; Play</button>",
-    "<button class='btn bpa' id='bpa' disabled>&#9646;&#9646; Pause</button>",
-    "<button class='btn bs' id='bs' disabled>&#9632; Stop</button>",
-    "<div class='bw'><span class='bl'>BPM</span><input class='bi' type='number' id='bpm' value='"+bpm+"' min='20' max='400'></div>",
-    "</div><div id='score'></div></div></div></div>",
-    "<script>",
-    "var RAW="+s+";",
-    "var osmd=new opensheetmusicdisplay.OpenSheetMusicDisplay('score',{backend:'svg',autoResize:true,drawTitle:true});",
-    "var inst=null,evs=[],ac=null,sc=[],sat=0,pat=0,run=false;",
-    "function st(m,c){var e=document.getElementById('st');e.textContent=m;e.className='sb'+(c?' '+c:'');}",
-    "async function init(){try{await osmd.load(RAW);osmd.render();st('Carregando piano GM...');ac=new(window.AudioContext||window.webkitAudioContext)();inst=await Soundfont.instrument(ac,'acoustic_grand_piano',{soundfont:'FluidR3_GM',nameToUrl:function(n,sf){return 'https://gleitz.github.io/midi-js-soundfonts/'+sf+'/'+n+'-mp3.js';}});st('Pronto!','ok');['bp','bpa','bs'].forEach(function(id){document.getElementById(id).disabled=false;});}catch(e){st('Erro: '+e.message,'err');}}",
-    "function xev(){evs=[];var bpm=+document.getElementById('bpm').value||100;var spb=60/bpm;var sm=osmd.Sheet.SourceMeasures;for(var mi=0;mi<sm.length;mi++){var m=sm[mi];var mT=m.AbsoluteTimestamp?m.AbsoluteTimestamp.RealValue:0;for(var vi=0;vi<m.VerticalSourceStaffEntryContainers.length;vi++){var vsec=m.VerticalSourceStaffEntryContainers[vi];var eT=vsec.Timestamp?vsec.Timestamp.RealValue:0;var tSec=(mT+eT)*4*spb;for(var si=0;si<vsec.StaffEntries.length;si++){var se=vsec.StaffEntries[si];if(!se)continue;for(var ei=0;ei<se.VoiceEntries.length;ei++){var ve=se.VoiceEntries[ei];for(var ni=0;ni<ve.Notes.length;ni++){var note=ve.Notes[ni];if(note.isRest())continue;var p=note.Pitch;if(!p)continue;var semis=[0,2,4,5,7,9,11];var midi=(p.Octave+1)*12+semis[p.FundamentalNote%7]+(p.Accidental||0);var dur=Math.max(0.08,note.Length.RealValue*4*spb*0.9);evs.push({t:tSec,midi:midi,dur:dur});}}}}}",",
-    "function ksc(){sc.forEach(function(n){try{n.stop();}catch(_){}});sc=[];}",
-    "function sch(off){xev();if(!evs.length)return;if(ac.state==='suspended')ac.resume();var now=ac.currentTime+0.1;sat=now-off;evs.forEach(function(ev){if(ev.t<off-0.02)return;var abs=sat+ev.t;if(abs<ac.currentTime)return;var n=inst.play(ev.midi,abs,{duration:ev.dur,gain:1.2});if(n)sc.push(n);});}",
-    "document.getElementById('bp').onclick=function(){if(run)return;run=true;ksc();sch(pat);pat=0;st('Tocando...','ok');};",
-    "document.getElementById('bpa').onclick=function(){if(!run)return;run=false;pat=ac.currentTime-sat;ksc();st('Pausado.');};",
-    "document.getElementById('bs').onclick=function(){run=false;pat=0;ksc();st('Parado.');};",
-    "init();",
-    "</scr"+"ipt></body></html>"
-  ].join("\n");
+
+function makeExport(xml, bpm) {
+  /* O XML fica embutido como string JSON — sem risco de escape */
+  var xmlJson = JSON.stringify(xml);
+
+  var lines = [];
+  lines.push('<!DOCTYPE html>');
+  lines.push('<html lang="pt-br">');
+  lines.push('<head>');
+  lines.push('<meta charset="UTF-8">');
+  lines.push('<meta name="viewport" content="width=device-width,initial-scale=1">');
+  lines.push('<title>Partitura</title>');
+  lines.push('<script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"><' + '/script>');
+  lines.push('<script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"><' + '/script>');
+  lines.push('<style>');
+  lines.push("@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');");
+  lines.push('* { box-sizing: border-box; margin: 0; padding: 0; }');
+  lines.push("body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16px; }");
+  lines.push('.card { max-width: 880px; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 32px rgba(0,0,0,.10); overflow: hidden; }');
+  lines.push('.hd { background: linear-gradient(120deg, #0f0c29, #302b63, #24243e); padding: 22px 28px; display: flex; align-items: center; gap: 16px; }');
+  lines.push('.hd-icon { width: 46px; height: 46px; background: rgba(255,255,255,.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }');
+  lines.push('.hd-title { color: #fff; font-size: 17px; font-weight: 600; }');
+  lines.push('.hd-sub { color: rgba(255,255,255,.45); font-size: 12px; margin-top: 3px; }');
+  lines.push('.body { padding: 24px 28px; }');
+  lines.push('.status { font-size: 12px; font-family: monospace; padding: 7px 12px; border-radius: 7px; margin-bottom: 14px; background: #f8fafc; border-left: 3px solid #e2e8f0; color: #94a3b8; min-height: 34px; }');
+  lines.push('.status.info { background: #eef2ff; border-color: #6366f1; color: #4338ca; }');
+  lines.push('.status.ok   { background: #f0fdf4; border-color: #22c55e; color: #15803d; }');
+  lines.push('.status.err  { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }');
+  lines.push('.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }');
+  lines.push('.btn { height: 38px; padding: 0 18px; border: none; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }');
+  lines.push('.btn:disabled { opacity: .3; cursor: default; }');
+  lines.push('.btn-play  { background: #22c55e; color: #fff; } .btn-play:not(:disabled):hover  { background: #16a34a; }');
+  lines.push('.btn-pause { background: #f59e0b; color: #fff; } .btn-pause:not(:disabled):hover { background: #d97706; }');
+  lines.push('.btn-stop  { background: #ef4444; color: #fff; } .btn-stop:not(:disabled):hover  { background: #dc2626; }');
+  lines.push('.bpm-wrap { display: flex; align-items: center; gap: 7px; background: #f1f5f9; border-radius: 9px; padding: 0 14px; height: 38px; }');
+  lines.push('.bpm-wrap label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }');
+  lines.push('.bpm-wrap input { width: 48px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #1e293b; text-align: center; font-family: inherit; }');
+  lines.push('.bpm-wrap input:focus { outline: none; }');
+  lines.push('#score { overflow-x: auto; } #score svg { max-width: 100%; height: auto; }');
+  lines.push('<\/style>');
+  lines.push('<\/head>');
+  lines.push('<body>');
+  lines.push('<div class="card">');
+  lines.push('  <div class="hd"><div class="hd-icon">&#127925;<\/div><div><div class="hd-title">Partitura<\/div><div class="hd-sub">General MIDI<\/div><\/div><\/div>');
+  lines.push('  <div class="body">');
+  lines.push('    <div class="status info" id="st">Carregando partitura e piano...<\/div>');
+  lines.push('    <div class="controls">');
+  lines.push('      <button class="btn btn-play"  id="bp"  disabled>&#9654; Play<\/button>');
+  lines.push('      <button class="btn btn-pause" id="bpa" disabled>&#9646;&#9646; Pause<\/button>');
+  lines.push('      <button class="btn btn-stop"  id="bs"  disabled>&#9632; Stop<\/button>');
+  lines.push('      <div class="bpm-wrap"><label for="bpm">BPM<\/label><input type="number" id="bpm" value="' + bpm + '" min="20" max="400"><\/div>');
+  lines.push('    <\/div>');
+  lines.push('    <div id="score"><\/div>');
+  lines.push('  <\/div>');
+  lines.push('<\/div>');
+  lines.push('<script>');
+  lines.push('var RAW = ' + xmlJson + ';');
+  lines.push('var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("score", { backend: "svg", autoResize: true, drawTitle: true });');
+  lines.push('var inst = null, evs = [], ac = null, sc = [], sat = 0, pat = 0, run = false;');
+  lines.push('function st(m,c){ var e=document.getElementById("st"); e.textContent=m; e.className="status"+(c?" "+c:""); }');
+  lines.push('async function init() {');
+  lines.push('  try {');
+  lines.push('    await osmd.load(RAW);');
+  lines.push('    osmd.render();');
+  lines.push('    st("Carregando piano General MIDI...", "info");');
+  lines.push('    ac = new (window.AudioContext || window.webkitAudioContext)();');
+  lines.push('    inst = await Soundfont.instrument(ac, "acoustic_grand_piano", {');
+  lines.push('      soundfont: "FluidR3_GM",');
+  lines.push('      nameToUrl: function(n,sf){ return "https://gleitz.github.io/midi-js-soundfonts/"+sf+"/"+n+"-mp3.js"; }');
+  lines.push('    });');
+  lines.push('    st("Pronto! Clique em Play.", "ok");');
+  lines.push('    ["bp","bpa","bs"].forEach(function(id){ document.getElementById(id).disabled=false; });');
+  lines.push('  } catch(e) { st("Erro: "+e.message, "err"); }');
+  lines.push('}');
+  lines.push('function xev() {');
+  lines.push('  evs = [];');
+  lines.push('  var bpm = +document.getElementById("bpm").value||100, spb = 60/bpm;');
+  lines.push('  var sm = osmd.Sheet.SourceMeasures;');
+  lines.push('  for (var mi=0;mi<sm.length;mi++) {');
+  lines.push('    var m=sm[mi], mT=m.AbsoluteTimestamp?m.AbsoluteTimestamp.RealValue:0;');
+  lines.push('    for (var vi=0;vi<m.VerticalSourceStaffEntryContainers.length;vi++) {');
+  lines.push('      var vsec=m.VerticalSourceStaffEntryContainers[vi], eT=vsec.Timestamp?vsec.Timestamp.RealValue:0;');
+  lines.push('      var tSec=(mT+eT)*4*spb;');
+  lines.push('      for (var si=0;si<vsec.StaffEntries.length;si++) {');
+  lines.push('        var se=vsec.StaffEntries[si]; if(!se) continue;');
+  lines.push('        for (var ei=0;ei<se.VoiceEntries.length;ei++) {');
+  lines.push('          var ve=se.VoiceEntries[ei];');
+  lines.push('          for (var ni=0;ni<ve.Notes.length;ni++) {');
+  lines.push('            var note=ve.Notes[ni]; if(note.isRest()) continue;');
+  lines.push('            var p=note.Pitch; if(!p) continue;');
+  lines.push('            var semis=[0,2,4,5,7,9,11];');
+  lines.push('            var midi=(p.Octave+1)*12+semis[p.FundamentalNote%7]+(p.Accidental||0);');
+  lines.push('            var dur=Math.max(0.08,note.Length.RealValue*4*spb*0.9);');
+  lines.push('            evs.push({t:tSec,midi:midi,dur:dur});');
+  lines.push('          }');
+  lines.push('        }');
+  lines.push('      }');
+  lines.push('    }');
+  lines.push('  }');
+  lines.push('}');
+  lines.push('function ksc(){ sc.forEach(function(n){try{n.stop();}catch(_){}}); sc=[]; }');
+  lines.push('function sch(off) {');
+  lines.push('  xev(); if(!evs.length) return;');
+  lines.push('  if(ac.state==="suspended") ac.resume();');
+  lines.push('  var now=ac.currentTime+0.1; sat=now-off;');
+  lines.push('  evs.forEach(function(ev){');
+  lines.push('    if(ev.t<off-0.02) return;');
+  lines.push('    var abs=sat+ev.t; if(abs<ac.currentTime) return;');
+  lines.push('    var n=inst.play(ev.midi,abs,{duration:ev.dur,gain:1.2}); if(n) sc.push(n);');
+  lines.push('  });');
+  lines.push('}');
+  lines.push('document.getElementById("bp").onclick  = function(){ if(run)return; run=true;  ksc(); sch(pat); pat=0; st("Tocando...","ok"); };');
+  lines.push('document.getElementById("bpa").onclick = function(){ if(!run)return; run=false; pat=ac.currentTime-sat; ksc(); st("Pausado."); };');
+  lines.push('document.getElementById("bs").onclick  = function(){ run=false; pat=0; ksc(); st("Parado."); };');
+  lines.push('init();');
+  lines.push('<' + '/script>');
+  lines.push('<\/body>');
+  lines.push('<\/html>');
+  return lines.join('\n');
 }
 </script>
 </body>
