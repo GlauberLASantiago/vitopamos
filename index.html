@@ -165,7 +165,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
   var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
     backend: 'svg',
     autoResize: true,
-    drawTitle: true
+    drawTitle: true,
+    followCursor: false
   });
 
   var inst = null;
@@ -176,6 +177,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
   var pat = 0;
   var run = false;
   var rawXml = '';
+  var cursorTimer = null;
+  var cursorIndex = 0;
 
   var inputGain = null;
   var masterGain = null;
@@ -271,6 +274,69 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
       try { n.stop(); } catch (_) {}
     });
     sc = [];
+  }
+
+  function clearCursorTimer() {
+    if (cursorTimer) {
+      clearTimeout(cursorTimer);
+      cursorTimer = null;
+    }
+  }
+
+  function resetCursorToStart() {
+    clearCursorTimer();
+
+    if (!osmd || !osmd.cursor) return;
+
+    try {
+      osmd.cursor.hide();
+      osmd.cursor.reset();
+      osmd.cursor.show();
+      cursorIndex = 0;
+    } catch (_) {}
+  }
+
+  function moveCursorToTime(offset) {
+    if (!osmd || !osmd.cursor) return;
+
+    extractEvents();
+
+    try {
+      osmd.cursor.hide();
+      osmd.cursor.reset();
+      osmd.cursor.show();
+
+      cursorIndex = 0;
+
+      while (cursorIndex < evs.length && evs[cursorIndex].t < offset - 0.02) {
+        osmd.cursor.next();
+        cursorIndex++;
+      }
+    } catch (_) {}
+  }
+
+  function startCursorFollow(offset) {
+    clearCursorTimer();
+    moveCursorToTime(offset);
+
+    function step() {
+      if (!run || !ac || !osmd || !osmd.cursor || !evs.length) return;
+
+      var current = ac.currentTime - sat;
+
+      while (cursorIndex < evs.length && evs[cursorIndex].t <= current + 0.02) {
+        try {
+          osmd.cursor.next();
+        } catch (_) {
+          break;
+        }
+        cursorIndex++;
+      }
+
+      cursorTimer = setTimeout(step, 40);
+    }
+
+    step();
   }
 
   function extractEvents() {
@@ -393,16 +459,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
       .trim();
   }
 
+  function buildExportHtml(xml, bpm, instrumentName, reverbAmount) {
+    var xmlBase64 = encodeBase64Unicode(xml);
+    var safeBpm = String(bpm).replace(/"/g, '&quot;');
+    var safeInstrument = String(instrumentName || 'acoustic_grand_piano').replace(/"/g, '&quot;');
+    var safeReverb = String(reverbAmount || 25).replace(/"/g, '&quot;');
+    var title = extractTitleFromXml(xml).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    var titleHtml = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function buildExportHtml(xml, bpm, instrumentName, reverbAmount) {
-  var xmlBase64 = encodeBase64Unicode(xml);
-  var safeBpm = String(bpm).replace(/"/g, '&quot;');
-  var safeInstrument = String(instrumentName || 'acoustic_grand_piano').replace(/"/g, '&quot;');
-  var safeReverb = String(reverbAmount || 25).replace(/"/g, '&quot;');
-  var title = extractTitleFromXml(xml).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  var titleHtml = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-  return `<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
@@ -414,6 +479,8 @@ function buildExportHtml(xml, bpm, instrumentName, reverbAmount) {
 * { box-sizing: border-box; }
 
 html, body {
+  width: 100%;
+  height: auto;
   margin: 0;
   padding: 0;
   background: #fff;
@@ -534,7 +601,8 @@ html, body {
   var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
     backend: 'svg',
     autoResize: true,
-    drawTitle: true
+    drawTitle: true,
+    followCursor: false
   });
 
   var inst = null;
@@ -544,6 +612,8 @@ html, body {
   var sat = 0;
   var pat = 0;
   var run = false;
+  var cursorTimer = null;
+  var cursorIndex = 0;
 
   var inputGain = null;
   var masterGain = null;
@@ -609,6 +679,69 @@ html, body {
       try { n.stop(); } catch (_) {}
     });
     sc = [];
+  }
+
+  function clearCursorTimer() {
+    if (cursorTimer) {
+      clearTimeout(cursorTimer);
+      cursorTimer = null;
+    }
+  }
+
+  function resetCursorToStart() {
+    clearCursorTimer();
+
+    if (!osmd || !osmd.cursor) return;
+
+    try {
+      osmd.cursor.hide();
+      osmd.cursor.reset();
+      osmd.cursor.show();
+      cursorIndex = 0;
+    } catch (_) {}
+  }
+
+  function moveCursorToTime(offset) {
+    if (!osmd || !osmd.cursor) return;
+
+    extractEvents();
+
+    try {
+      osmd.cursor.hide();
+      osmd.cursor.reset();
+      osmd.cursor.show();
+
+      cursorIndex = 0;
+
+      while (cursorIndex < evs.length && evs[cursorIndex].t < offset - 0.02) {
+        osmd.cursor.next();
+        cursorIndex++;
+      }
+    } catch (_) {}
+  }
+
+  function startCursorFollow(offset) {
+    clearCursorTimer();
+    moveCursorToTime(offset);
+
+    function step() {
+      if (!run || !ac || !osmd || !osmd.cursor || !evs.length) return;
+
+      var current = ac.currentTime - sat;
+
+      while (cursorIndex < evs.length && evs[cursorIndex].t <= current + 0.02) {
+        try {
+          osmd.cursor.next();
+        } catch (_) {
+          break;
+        }
+        cursorIndex++;
+      }
+
+      cursorTimer = setTimeout(step, 40);
+    }
+
+    step();
   }
 
   async function loadInstrument(programName) {
@@ -731,12 +864,14 @@ html, body {
       run = false;
       pat = ac.currentTime - sat;
       stopScheduled();
+      clearCursorTimer();
       return;
     }
 
     run = true;
     stopScheduled();
     await scheduleFrom(pat);
+    startCursorFollow(pat);
     pat = 0;
   }
 
@@ -744,11 +879,14 @@ html, body {
     run = false;
     pat = 0;
     stopScheduled();
+    clearCursorTimer();
+    resetCursorToStart();
   }
 
   async function init() {
     await osmd.load(RAW);
     osmd.render();
+    resetCursorToStart();
 
     document.getElementById('instSel').value = "${safeInstrument}";
     await loadInstrument(getSelectedInstrument());
@@ -761,6 +899,7 @@ html, body {
 
     run = false;
     pat = Math.max(0, currentPos);
+    clearCursorTimer();
     stopScheduled();
 
     await loadInstrument(getSelectedInstrument());
@@ -768,12 +907,19 @@ html, body {
     if (wasRunning) {
       run = true;
       await scheduleFrom(pat);
+      startCursorFollow(pat);
       pat = 0;
     }
   });
 
   document.getElementById('reverbAmt').addEventListener('input', function () {
     updateReverb();
+  });
+
+  document.getElementById('bpm').addEventListener('change', function () {
+    if (!run) {
+      moveCursorToTime(pat);
+    }
   });
 
   var scoreEl = document.getElementById('score');
@@ -795,8 +941,7 @@ html, body {
 <\/script>
 </body>
 </html>`;
-}
-
+  }
 
   document.getElementById('fi').addEventListener('change', async function (e) {
     var f = e.target.files[0];
@@ -810,6 +955,7 @@ html, body {
 
       await osmd.load(rawXml);
       osmd.render();
+      resetCursorToStart();
 
       if (ac && ac.state !== 'closed') {
         try { await ac.close(); } catch (_) {}
@@ -851,6 +997,7 @@ html, body {
 
       run = false;
       pat = Math.max(0, currentPos);
+      clearCursorTimer();
       stopScheduled();
 
       await loadInstrument(getSelectedInstrument());
@@ -858,8 +1005,11 @@ html, body {
       if (wasRunning) {
         run = true;
         await scheduleFrom(pat);
+        startCursorFollow(pat);
         pat = 0;
         setStatus('Tocando...', 'ok');
+      } else {
+        moveCursorToTime(pat);
       }
     } catch (err) {
       console.error(err);
@@ -871,11 +1021,18 @@ html, body {
     updateReverb();
   });
 
+  document.getElementById('bpm').addEventListener('change', function () {
+    if (!run && rawXml) {
+      moveCursorToTime(pat);
+    }
+  });
+
   document.getElementById('bp').onclick = async function () {
     if (run || !inst || !ac) return;
     run = true;
     stopScheduled();
     await scheduleFrom(pat);
+    startCursorFollow(pat);
     pat = 0;
     setStatus('Tocando...', 'ok');
   };
@@ -885,6 +1042,7 @@ html, body {
     run = false;
     pat = ac.currentTime - sat;
     stopScheduled();
+    clearCursorTimer();
     setStatus('Pausado.');
   };
 
@@ -892,6 +1050,8 @@ html, body {
     run = false;
     pat = 0;
     stopScheduled();
+    clearCursorTimer();
+    resetCursorToStart();
     setStatus('Parado.');
   };
 
