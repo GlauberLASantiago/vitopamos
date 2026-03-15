@@ -38,6 +38,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 .btn-stop:not(:disabled):hover { background: #dc2626; }
 .btn-export { background: #6366f1; color: #fff; margin-left: auto; }
 .btn-export:not(:disabled):hover { background: #4f46e5; }
+
 .bpm-wrap { display: flex; align-items: center; gap: 7px; background: #f1f5f9; border-radius: 9px; padding: 0 14px; height: 38px; }
 .bpm-wrap label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }
 .bpm-wrap input { width: 48px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #1e293b; text-align: center; font-family: inherit; }
@@ -118,6 +119,7 @@ document.getElementById('fi').addEventListener('change', async function(e) {
     }
 
     ac = new (window.AudioContext || window.webkitAudioContext)();
+
     inst = await Soundfont.instrument(ac, 'acoustic_grand_piano', {
       soundfont: 'FluidR3_GM',
       nameToUrl: function(n, sf) {
@@ -268,153 +270,276 @@ document.getElementById('bs').onclick = function() {
 };
 
 document.getElementById('bx').onclick = function() {
-  var bpm = document.getElementById('bpm').value;
-  var out = makeExport(rawXml, bpm);
+  try {
+    var bpm = document.getElementById('bpm').value || 100;
+    var out = makeExport(rawXml, bpm);
 
-  navigator.clipboard.writeText(out)
-    .then(function() {
-      st('HTML copiado para a área de transferência!', 'ok');
-      var b = document.getElementById('bx');
-      b.textContent = '✓ Copiado!';
-      setTimeout(function() {
-        b.innerHTML = '&#128190; Exportar HTML';
-      }, 2500);
-    })
-    .catch(function() {
-      st('Erro ao copiar.', 'err');
-    });
+    var blob = new Blob([out], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'partitura_player.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(function() {
+      URL.revokeObjectURL(url);
+    }, 1000);
+
+    st('HTML exportado com sucesso!', 'ok');
+  } catch (err) {
+    console.error(err);
+    st('Erro ao exportar HTML: ' + err.message, 'err');
+  }
 };
 
 function makeExport(xml, bpm) {
-  var xmlJson = JSON.stringify(xml);
+  var xmlBase64 = btoa(unescape(encodeURIComponent(xml)));
 
-  var lines = [];
-  lines.push('<!DOCTYPE html>');
-  lines.push('<html lang="pt-br">');
-  lines.push('<head>');
-  lines.push('<meta charset="UTF-8">');
-  lines.push('<meta name="viewport" content="width=device-width,initial-scale=1">');
-  lines.push('<title>Partitura</title>');
-  lines.push('<script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"><' + '/script>');
-  lines.push('<script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"><' + '/script>');
-  lines.push('<style>');
-  lines.push("@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');");
-  lines.push('* { box-sizing: border-box; margin: 0; padding: 0; }');
-  lines.push("body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16px; }");
-  lines.push('.card { max-width: 880px; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 32px rgba(0,0,0,.10); overflow: hidden; }');
-  lines.push('.hd { background: linear-gradient(120deg, #0f0c29, #302b63, #24243e); padding: 22px 28px; display: flex; align-items: center; gap: 16px; }');
-  lines.push('.hd-icon { width: 46px; height: 46px; background: rgba(255,255,255,.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }');
-  lines.push('.hd-title { color: #fff; font-size: 17px; font-weight: 600; }');
-  lines.push('.hd-sub { color: rgba(255,255,255,.45); font-size: 12px; margin-top: 3px; }');
-  lines.push('.body { padding: 24px 28px; }');
-  lines.push('.status { font-size: 12px; font-family: monospace; padding: 7px 12px; border-radius: 7px; margin-bottom: 14px; background: #f8fafc; border-left: 3px solid #e2e8f0; color: #94a3b8; min-height: 34px; line-height: 1.5; }');
-  lines.push('.status.info { background: #eef2ff; border-color: #6366f1; color: #4338ca; }');
-  lines.push('.status.ok { background: #f0fdf4; border-color: #22c55e; color: #15803d; }');
-  lines.push('.status.err { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }');
-  lines.push('.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }');
-  lines.push('.btn { height: 38px; padding: 0 18px; border: none; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }');
-  lines.push('.btn:disabled { opacity: .3; cursor: default; }');
-  lines.push('.btn-play { background: #22c55e; color: #fff; } .btn-play:not(:disabled):hover { background: #16a34a; }');
-  lines.push('.btn-pause { background: #f59e0b; color: #fff; } .btn-pause:not(:disabled):hover { background: #d97706; }');
-  lines.push('.btn-stop { background: #ef4444; color: #fff; } .btn-stop:not(:disabled):hover { background: #dc2626; }');
-  lines.push('.bpm-wrap { display: flex; align-items: center; gap: 7px; background: #f1f5f9; border-radius: 9px; padding: 0 14px; height: 38px; }');
-  lines.push('.bpm-wrap label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }');
-  lines.push('.bpm-wrap input { width: 48px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #1e293b; text-align: center; font-family: inherit; }');
-  lines.push('.bpm-wrap input:focus { outline: none; }');
-  lines.push('#score { overflow-x: auto; } #score svg { max-width: 100%; height: auto; }');
-  lines.push('<\/style>');
-  lines.push('<\/head>');
-  lines.push('<body>');
-  lines.push('<div class="card">');
-  lines.push('  <div class="hd"><div class="hd-icon">&#127925;<\/div><div><div class="hd-title">Partitura<\/div><div class="hd-sub">General MIDI<\/div><\/div><\/div>');
-  lines.push('  <div class="body">');
-  lines.push('    <div class="status info" id="st">Carregando partitura e piano...<\/div>');
-  lines.push('    <div class="controls">');
-  lines.push('      <button class="btn btn-play" id="bp" disabled>&#9654; Play<\/button>');
-  lines.push('      <button class="btn btn-pause" id="bpa" disabled>&#9646;&#9646; Pause<\/button>');
-  lines.push('      <button class="btn btn-stop" id="bs" disabled>&#9632; Stop<\/button>');
-  lines.push('      <div class="bpm-wrap"><label for="bpm">BPM<\/label><input type="number" id="bpm" value="' + bpm + '" min="20" max="400"><\/div>');
-  lines.push('    <\/div>');
-  lines.push('    <div id="score"><\/div>');
-  lines.push('  <\/div>');
-  lines.push('<\/div>');
-  lines.push('<script>');
-  lines.push('var RAW = ' + xmlJson + ';');
-  lines.push('var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("score", { backend: "svg", autoResize: true, drawTitle: true });');
-  lines.push('var inst = null, evs = [], ac = null, sc = [];');
-  lines.push('var sat = 0, pat = 0, run = false;');
-  lines.push('function st(m,c){ var e=document.getElementById("st"); e.textContent=m; e.className="status"+(c?" "+c:""); }');
-  lines.push('function xev(){');
-  lines.push('  evs = [];');
-  lines.push('  var bpm = +document.getElementById("bpm").value || 100;');
-  lines.push('  osmd.cursor.reset();');
-  lines.push('  var iterator = osmd.cursor.Iterator;');
-  lines.push('  while (!iterator.EndReached) {');
-  lines.push('    var voices = iterator.CurrentVoiceEntries || [];');
-  lines.push('    var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;');
-  lines.push('    var real = 0;');
-  lines.push('    if (timeObj) real = (typeof timeObj.realValue !== "undefined") ? timeObj.realValue : (timeObj.RealValue || 0);');
-  lines.push('    var tSec = real * 4 * (60 / bpm);');
-  lines.push('    for (var i = 0; i < voices.length; i++) {');
-  lines.push('      var ve = voices[i];');
-  lines.push('      if (!ve || !ve.Notes) continue;');
-  lines.push('      for (var j = 0; j < ve.Notes.length; j++) {');
-  lines.push('        var note = ve.Notes[j];');
-  lines.push('        if (!note || note.isRest()) continue;');
-  lines.push('        var midi = null;');
-  lines.push('        if (typeof note.halfTone !== "undefined" && note.halfTone !== null) midi = note.halfTone + 12;');
-  lines.push('        else if (note.Pitch && typeof note.Pitch.getHalfTone === "function") midi = note.Pitch.getHalfTone();');
-  lines.push('        else if (note.TransposedPitch && typeof note.TransposedPitch.getHalfTone === "function") midi = note.TransposedPitch.getHalfTone();');
-  lines.push('        if (midi === null) continue;');
-  lines.push('        var len = 0;');
-  lines.push('        if (note.Length) len = (typeof note.Length.realValue !== "undefined") ? note.Length.realValue : (note.Length.RealValue || 0);');
-  lines.push('        var dur = Math.max(0.08, len * 4 * (60 / bpm) * 0.95);');
-  lines.push('        evs.push({ t: tSec, midi: midi, dur: dur });');
-  lines.push('      }');
-  lines.push('    }');
-  lines.push('    iterator.moveToNext();');
-  lines.push('  }');
-  lines.push('  evs.sort(function(a,b){ if(a.t !== b.t) return a.t - b.t; return a.midi - b.midi; });');
-  lines.push('}');
-  lines.push('function ksc(){ sc.forEach(function(n){ try{ n.stop(); } catch(_){} }); sc=[]; }');
-  lines.push('async function sch(off){');
-  lines.push('  xev();');
-  lines.push('  if(!evs.length){ st("Nenhuma nota encontrada para tocar.","err"); return; }');
-  lines.push('  if(ac.state==="suspended"){ await ac.resume(); }');
-  lines.push('  var now = ac.currentTime + 0.1;');
-  lines.push('  sat = now - off;');
-  lines.push('  evs.forEach(function(ev){');
-  lines.push('    if(ev.t < off - 0.02) return;');
-  lines.push('    var abs = sat + ev.t;');
-  lines.push('    if(abs < ac.currentTime) return;');
-  lines.push('    var n = inst.play(ev.midi, abs, { duration: ev.dur, gain: 1.0 });');
-  lines.push('    if(n) sc.push(n);');
-  lines.push('  });');
-  lines.push('}');
-  lines.push('async function init() {');
-  lines.push('  try {');
-  lines.push('    await osmd.load(RAW);');
-  lines.push('    osmd.render();');
-  lines.push('    st("Carregando piano General MIDI...", "info");');
-  lines.push('    ac = new (window.AudioContext || window.webkitAudioContext)();');
-  lines.push('    inst = await Soundfont.instrument(ac, "acoustic_grand_piano", {');
-  lines.push('      soundfont: "FluidR3_GM",');
-  lines.push('      nameToUrl: function(n,sf){ return "https://gleitz.github.io/midi-js-soundfonts/" + sf + "/" + n + "-mp3.js"; }');
-  lines.push('    });');
-  lines.push('    st("Pronto! Clique em Play.", "ok");');
-  lines.push('    ["bp","bpa","bs"].forEach(function(id){ document.getElementById(id).disabled = false; });');
-  lines.push('  } catch(e) {');
-  lines.push('    st("Erro: " + e.message, "err");');
-  lines.push('  }');
-  lines.push('}');
-  lines.push('document.getElementById("bp").onclick = async function(){ if(run || !inst || !ac) return; run = true; ksc(); await sch(pat); pat = 0; st("Tocando...","ok"); };');
-  lines.push('document.getElementById("bpa").onclick = function(){ if(!run || !ac) return; run = false; pat = ac.currentTime - sat; ksc(); st("Pausado."); };');
-  lines.push('document.getElementById("bs").onclick = function(){ run = false; pat = 0; ksc(); st("Parado."); };');
-  lines.push('init();');
-  lines.push('<' + '/script>');
-  lines.push('<\/body>');
-  lines.push('<\/html>');
-  return lines.join("\\n");
+  return `<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Partitura</title>
+<script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16px; }
+.card { max-width: 880px; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 32px rgba(0,0,0,.10); overflow: hidden; }
+.hd { background: linear-gradient(120deg, #0f0c29, #302b63, #24243e); padding: 22px 28px; display: flex; align-items: center; gap: 16px; }
+.hd-icon { width: 46px; height: 46px; background: rgba(255,255,255,.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.hd-title { color: #fff; font-size: 17px; font-weight: 600; }
+.hd-sub { color: rgba(255,255,255,.45); font-size: 12px; margin-top: 3px; }
+.body { padding: 24px 28px; }
+
+.status { font-size: 12px; font-family: monospace; padding: 7px 12px; border-radius: 7px; margin-bottom: 14px; background: #f8fafc; border-left: 3px solid #e2e8f0; color: #94a3b8; min-height: 34px; line-height: 1.5; }
+.status.info { background: #eef2ff; border-color: #6366f1; color: #4338ca; }
+.status.ok { background: #f0fdf4; border-color: #22c55e; color: #15803d; }
+.status.err { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }
+
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.btn { height: 38px; padding: 0 18px; border: none; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn:disabled { opacity: .3; cursor: default; }
+.btn-play { background: #22c55e; color: #fff; }
+.btn-play:not(:disabled):hover { background: #16a34a; }
+.btn-pause { background: #f59e0b; color: #fff; }
+.btn-pause:not(:disabled):hover { background: #d97706; }
+.btn-stop { background: #ef4444; color: #fff; }
+.btn-stop:not(:disabled):hover { background: #dc2626; }
+
+.bpm-wrap { display: flex; align-items: center; gap: 7px; background: #f1f5f9; border-radius: 9px; padding: 0 14px; height: 38px; }
+.bpm-wrap label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }
+.bpm-wrap input { width: 48px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #1e293b; text-align: center; font-family: inherit; }
+.bpm-wrap input:focus { outline: none; }
+
+#score { overflow-x: auto; }
+#score svg { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="hd">
+    <div class="hd-icon">&#127925;</div>
+    <div>
+      <div class="hd-title">Partitura</div>
+      <div class="hd-sub">General MIDI</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="status info" id="st">Carregando partitura e piano...</div>
+
+    <div class="controls">
+      <button class="btn btn-play" id="bp" disabled>&#9654; Play</button>
+      <button class="btn btn-pause" id="bpa" disabled>&#9646;&#9646; Pause</button>
+      <button class="btn btn-stop" id="bs" disabled>&#9632; Stop</button>
+      <div class="bpm-wrap">
+        <label for="bpm">BPM</label>
+        <input type="number" id="bpm" value="${String(bpm).replace(/"/g, '&quot;')}" min="20" max="400">
+      </div>
+    </div>
+
+    <div id="score"></div>
+  </div>
+</div>
+
+<script>
+var RAW = decodeURIComponent(escape(atob("${xmlBase64}")));
+
+var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
+  backend: 'svg',
+  autoResize: true,
+  drawTitle: true
+});
+
+var inst = null, evs = [], ac = null, sc = [];
+var sat = 0, pat = 0, run = false;
+
+function st(m, c) {
+  var e = document.getElementById('st');
+  e.textContent = m;
+  e.className = 'status' + (c ? ' ' + c : '');
+}
+
+function xev() {
+  evs = [];
+
+  var bpm = +document.getElementById('bpm').value || 100;
+
+  osmd.cursor.reset();
+  var iterator = osmd.cursor.Iterator;
+
+  while (!iterator.EndReached) {
+    var voices = iterator.CurrentVoiceEntries || [];
+    var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
+    var real = 0;
+
+    if (timeObj) {
+      real = (typeof timeObj.realValue !== 'undefined') ? timeObj.realValue : (timeObj.RealValue || 0);
+    }
+
+    var tSec = real * 4 * (60 / bpm);
+
+    for (var i = 0; i < voices.length; i++) {
+      var ve = voices[i];
+      if (!ve || !ve.Notes) continue;
+
+      for (var j = 0; j < ve.Notes.length; j++) {
+        var note = ve.Notes[j];
+        if (!note || note.isRest()) continue;
+
+        var midi = null;
+
+        if (typeof note.halfTone !== 'undefined' && note.halfTone !== null) {
+          midi = note.halfTone + 12;
+        } else if (note.Pitch && typeof note.Pitch.getHalfTone === 'function') {
+          midi = note.Pitch.getHalfTone();
+        } else if (note.TransposedPitch && typeof note.TransposedPitch.getHalfTone === 'function') {
+          midi = note.TransposedPitch.getHalfTone();
+        }
+
+        if (midi === null) continue;
+
+        var len = 0;
+        if (note.Length) {
+          len = (typeof note.Length.realValue !== 'undefined') ? note.Length.realValue : (note.Length.RealValue || 0);
+        }
+
+        var dur = Math.max(0.08, len * 4 * (60 / bpm) * 0.95);
+
+        evs.push({
+          t: tSec,
+          midi: midi,
+          dur: dur
+        });
+      }
+    }
+
+    iterator.moveToNext();
+  }
+
+  evs.sort(function(a, b) {
+    if (a.t !== b.t) return a.t - b.t;
+    return a.midi - b.midi;
+  });
+}
+
+function ksc() {
+  sc.forEach(function(n) {
+    try { n.stop(); } catch(_) {}
+  });
+  sc = [];
+}
+
+async function sch(off) {
+  xev();
+
+  if (!evs.length) {
+    st('Nenhuma nota encontrada para tocar.', 'err');
+    return;
+  }
+
+  if (ac.state === 'suspended') {
+    await ac.resume();
+  }
+
+  var now = ac.currentTime + 0.1;
+  sat = now - off;
+
+  evs.forEach(function(ev) {
+    if (ev.t < off - 0.02) return;
+
+    var abs = sat + ev.t;
+    if (abs < ac.currentTime) return;
+
+    var n = inst.play(ev.midi, abs, {
+      duration: ev.dur,
+      gain: 1.0
+    });
+
+    if (n) sc.push(n);
+  });
+}
+
+document.getElementById('bp').onclick = async function() {
+  if (run || !inst || !ac) return;
+  run = true;
+  ksc();
+  await sch(pat);
+  pat = 0;
+  st('Tocando...', 'ok');
+};
+
+document.getElementById('bpa').onclick = function() {
+  if (!run || !ac) return;
+  run = false;
+  pat = ac.currentTime - sat;
+  ksc();
+  st('Pausado.');
+};
+
+document.getElementById('bs').onclick = function() {
+  run = false;
+  pat = 0;
+  ksc();
+  st('Parado.');
+};
+
+async function init() {
+  try {
+    await osmd.load(RAW);
+    osmd.render();
+
+    st('Carregando piano General MIDI...', 'info');
+
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    inst = await Soundfont.instrument(ac, 'acoustic_grand_piano', {
+      soundfont: 'FluidR3_GM',
+      nameToUrl: function(n, sf) {
+        return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
+      }
+    });
+
+    st('Pronto! Clique em Play.', 'ok');
+    ['bp','bpa','bs'].forEach(function(id) {
+      document.getElementById(id).disabled = false;
+    });
+  } catch (e) {
+    console.error(e);
+    st('Erro: ' + e.message, 'err');
+  }
+}
+
+init();
+<\/script>
+</body>
+</html>`;
 }
 </script>
 </body>
