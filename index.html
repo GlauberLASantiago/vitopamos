@@ -177,7 +177,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
   var pat = 0;
   var run = false;
   var rawXml = '';
+
   var cursorTimer = null;
+  var cursorSteps = [];
   var cursorIndex = 0;
 
   var inputGain = null;
@@ -229,9 +231,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 
     inputGain.connect(dryGain);
     inputGain.connect(convolver);
-
     convolver.connect(wetGain);
-
     dryGain.connect(masterGain);
     wetGain.connect(masterGain);
     masterGain.connect(ac.destination);
@@ -296,10 +296,41 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
     } catch (_) {}
   }
 
+  function extractCursorSteps() {
+    cursorSteps = [];
+    var bpm = +document.getElementById('bpm').value || 100;
+
+    if (!osmd || !osmd.cursor) return;
+
+    try {
+      osmd.cursor.reset();
+      var iterator = osmd.cursor.Iterator;
+
+      while (!iterator.EndReached) {
+        var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
+        var real = 0;
+
+        if (timeObj) {
+          real = typeof timeObj.realValue !== 'undefined'
+            ? timeObj.realValue
+            : (timeObj.RealValue || 0);
+        }
+
+        var tSec = real * 4 * (60 / bpm);
+
+        cursorSteps.push({
+          t: tSec
+        });
+
+        iterator.moveToNext();
+      }
+    } catch (_) {}
+  }
+
   function moveCursorToTime(offset) {
     if (!osmd || !osmd.cursor) return;
 
-    extractEvents();
+    extractCursorSteps();
 
     try {
       osmd.cursor.hide();
@@ -308,8 +339,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 
       cursorIndex = 0;
 
-      while (cursorIndex < evs.length && evs[cursorIndex].t < offset - 0.02) {
-        osmd.cursor.next();
+      while (cursorIndex < cursorSteps.length && cursorSteps[cursorIndex].t < offset - 0.02) {
+        try { osmd.cursor.next(); } catch (_) { break; }
         cursorIndex++;
       }
     } catch (_) {}
@@ -320,11 +351,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
     moveCursorToTime(offset);
 
     function step() {
-      if (!run || !ac || !osmd || !osmd.cursor || !evs.length) return;
+      if (!run || !ac || !osmd || !osmd.cursor || !cursorSteps.length) return;
 
       var current = ac.currentTime - sat;
 
-      while (cursorIndex < evs.length && evs[cursorIndex].t <= current + 0.02) {
+      while (cursorIndex < cursorSteps.length && cursorSteps[cursorIndex].t <= current + 0.02) {
         try {
           osmd.cursor.next();
         } catch (_) {
@@ -612,7 +643,9 @@ html, body {
   var sat = 0;
   var pat = 0;
   var run = false;
+
   var cursorTimer = null;
+  var cursorSteps = [];
   var cursorIndex = 0;
 
   var inputGain = null;
@@ -701,10 +734,41 @@ html, body {
     } catch (_) {}
   }
 
+  function extractCursorSteps() {
+    cursorSteps = [];
+    var bpm = +document.getElementById('bpm').value || 100;
+
+    if (!osmd || !osmd.cursor) return;
+
+    try {
+      osmd.cursor.reset();
+      var iterator = osmd.cursor.Iterator;
+
+      while (!iterator.EndReached) {
+        var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
+        var real = 0;
+
+        if (timeObj) {
+          real = typeof timeObj.realValue !== 'undefined'
+            ? timeObj.realValue
+            : (timeObj.RealValue || 0);
+        }
+
+        var tSec = real * 4 * (60 / bpm);
+
+        cursorSteps.push({
+          t: tSec
+        });
+
+        iterator.moveToNext();
+      }
+    } catch (_) {}
+  }
+
   function moveCursorToTime(offset) {
     if (!osmd || !osmd.cursor) return;
 
-    extractEvents();
+    extractCursorSteps();
 
     try {
       osmd.cursor.hide();
@@ -713,8 +777,8 @@ html, body {
 
       cursorIndex = 0;
 
-      while (cursorIndex < evs.length && evs[cursorIndex].t < offset - 0.02) {
-        osmd.cursor.next();
+      while (cursorIndex < cursorSteps.length && cursorSteps[cursorIndex].t < offset - 0.02) {
+        try { osmd.cursor.next(); } catch (_) { break; }
         cursorIndex++;
       }
     } catch (_) {}
@@ -725,11 +789,11 @@ html, body {
     moveCursorToTime(offset);
 
     function step() {
-      if (!run || !ac || !osmd || !osmd.cursor || !evs.length) return;
+      if (!run || !ac || !osmd || !osmd.cursor || !cursorSteps.length) return;
 
       var current = ac.currentTime - sat;
 
-      while (cursorIndex < evs.length && evs[cursorIndex].t <= current + 0.02) {
+      while (cursorIndex < cursorSteps.length && cursorSteps[cursorIndex].t <= current + 0.02) {
         try {
           osmd.cursor.next();
         } catch (_) {
@@ -887,6 +951,7 @@ html, body {
     await osmd.load(RAW);
     osmd.render();
     resetCursorToStart();
+    extractCursorSteps();
 
     document.getElementById('instSel').value = "${safeInstrument}";
     await loadInstrument(getSelectedInstrument());
@@ -909,6 +974,8 @@ html, body {
       await scheduleFrom(pat);
       startCursorFollow(pat);
       pat = 0;
+    } else {
+      moveCursorToTime(pat);
     }
   });
 
@@ -918,6 +985,7 @@ html, body {
 
   document.getElementById('bpm').addEventListener('change', function () {
     if (!run) {
+      extractCursorSteps();
       moveCursorToTime(pat);
     }
   });
@@ -956,6 +1024,7 @@ html, body {
       await osmd.load(rawXml);
       osmd.render();
       resetCursorToStart();
+      extractCursorSteps();
 
       if (ac && ac.state !== 'closed') {
         try { await ac.close(); } catch (_) {}
@@ -1023,6 +1092,7 @@ html, body {
 
   document.getElementById('bpm').addEventListener('change', function () {
     if (!run && rawXml) {
+      extractCursorSteps();
       moveCursorToTime(pat);
     }
   });
