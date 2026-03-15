@@ -514,7 +514,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${titleHtml || 'Partitura'}</title>
+<!-- <title>${titleHtml || 'Partitura'}</title> -->
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"><\/script>
 <style>
@@ -606,7 +606,7 @@ html, body {
 <body>
 <div class="wrap">
   <div class="controls">
-    <div class="ctrl-group">
+    <div class="controls" style="display: flex; gap: 20px; align-items: center;">
       <label for="bpm">Andamento</label>
       <input type="number" id="bpm" value="${safeBpm}" min="20" max="400">
     </div>
