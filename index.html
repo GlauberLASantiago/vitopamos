@@ -17,32 +17,32 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 .hd-sub { color: rgba(255,255,255,.45); font-size: 12px; margin-top: 3px; }
 .body { padding: 24px 28px; }
 
-/* botão carregar */
 .load-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: #302b63; color: #fff; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background .15s; margin-bottom: 6px; }
 .load-btn:hover { background: #1a1740; }
 .load-btn input { display: none; }
 .fname { font-size: 12px; color: #94a3b8; margin-bottom: 12px; min-height: 16px; }
 
-/* status */
 .status { font-size: 12px; font-family: monospace; padding: 7px 12px; border-radius: 7px; margin-bottom: 14px; background: #f8fafc; border-left: 3px solid #e2e8f0; color: #94a3b8; min-height: 34px; line-height: 1.5; }
-.status.info  { background: #eef2ff; border-color: #6366f1; color: #4338ca; }
-.status.ok    { background: #f0fdf4; border-color: #22c55e; color: #15803d; }
-.status.err   { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }
+.status.info { background: #eef2ff; border-color: #6366f1; color: #4338ca; }
+.status.ok { background: #f0fdf4; border-color: #22c55e; color: #15803d; }
+.status.err { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }
 
-/* controles */
 .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
 .btn { height: 38px; padding: 0 18px; border: none; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
 .btn:disabled { opacity: .3; cursor: default; }
-.btn-play   { background: #22c55e; color: #fff; } .btn-play:not(:disabled):hover   { background: #16a34a; }
-.btn-pause  { background: #f59e0b; color: #fff; } .btn-pause:not(:disabled):hover  { background: #d97706; }
-.btn-stop   { background: #ef4444; color: #fff; } .btn-stop:not(:disabled):hover   { background: #dc2626; }
-.btn-export { background: #6366f1; color: #fff; margin-left: auto; } .btn-export:not(:disabled):hover { background: #4f46e5; }
+.btn-play { background: #22c55e; color: #fff; }
+.btn-play:not(:disabled):hover { background: #16a34a; }
+.btn-pause { background: #f59e0b; color: #fff; }
+.btn-pause:not(:disabled):hover { background: #d97706; }
+.btn-stop { background: #ef4444; color: #fff; }
+.btn-stop:not(:disabled):hover { background: #dc2626; }
+.btn-export { background: #6366f1; color: #fff; margin-left: auto; }
+.btn-export:not(:disabled):hover { background: #4f46e5; }
 .bpm-wrap { display: flex; align-items: center; gap: 7px; background: #f1f5f9; border-radius: 9px; padding: 0 14px; height: 38px; }
 .bpm-wrap label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }
 .bpm-wrap input { width: 48px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #1e293b; text-align: center; font-family: inherit; }
 .bpm-wrap input:focus { outline: none; }
 
-/* partitura */
 #score { overflow-x: auto; }
 #score svg { max-width: 100%; height: auto; }
 </style>
@@ -68,14 +68,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
     <div class="status" id="st">Selecione um arquivo .xml ou .musicxml para começar.</div>
 
     <div class="controls">
-      <button class="btn btn-play"   id="bp"  disabled>&#9654; Play</button>
-      <button class="btn btn-pause"  id="bpa" disabled>&#9646;&#9646; Pause</button>
-      <button class="btn btn-stop"   id="bs"  disabled>&#9632; Stop</button>
+      <button class="btn btn-play" id="bp" disabled>&#9654; Play</button>
+      <button class="btn btn-pause" id="bpa" disabled>&#9646;&#9646; Pause</button>
+      <button class="btn btn-stop" id="bs" disabled>&#9632; Stop</button>
       <div class="bpm-wrap">
         <label for="bpm">BPM</label>
         <input type="number" id="bpm" value="100" min="20" max="400">
       </div>
-      <button class="btn btn-export" id="bx"  disabled>&#128190; Exportar HTML</button>
+      <button class="btn btn-export" id="bx" disabled>&#128190; Exportar HTML</button>
     </div>
 
     <div id="score"></div>
@@ -98,24 +98,40 @@ function st(m, c) {
   e.className = 'status' + (c ? ' ' + c : '');
 }
 
-/* ── carregar arquivo ── */
 document.getElementById('fi').addEventListener('change', async function(e) {
   var f = e.target.files[0];
   if (!f) return;
+
   document.getElementById('fname').textContent = f.name;
   st('Carregando partitura...', 'info');
+
   try {
     rawXml = await f.text();
+
     await osmd.load(rawXml);
     osmd.render();
+
     st('Carregando piano General MIDI...', 'info');
+
+    if (ac && ac.state !== 'closed') {
+      try { await ac.close(); } catch (_) {}
+    }
+
     ac = new (window.AudioContext || window.webkitAudioContext)();
+
     inst = await Soundfont.instrument(ac, 'acoustic_grand_piano', {
       soundfont: 'FluidR3_GM',
       nameToUrl: function(n, sf) {
         return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
       }
     });
+
+    sat = 0;
+    pat = 0;
+    run = false;
+    evs = [];
+    sc = [];
+
     st('Pronto! Clique em Play.', 'ok');
     ['bp','bpa','bs','bx'].forEach(function(id) {
       document.getElementById(id).disabled = false;
@@ -126,81 +142,138 @@ document.getElementById('fi').addEventListener('change', async function(e) {
   }
 });
 
-/* ── extrai eventos de nota ── */
 function xev() {
   evs = [];
-  var bpm = +document.getElementById('bpm').value || 100;
-  var spb = 60 / bpm;
-  var sm = osmd.Sheet.SourceMeasures;
-  for (var mi = 0; mi < sm.length; mi++) {
-    var m = sm[mi];
-    var mT = m.AbsoluteTimestamp ? m.AbsoluteTimestamp.RealValue : 0;
-    for (var vi = 0; vi < m.VerticalSourceStaffEntryContainers.length; vi++) {
-      var vsec = m.VerticalSourceStaffEntryContainers[vi];
-      var eT = vsec.Timestamp ? vsec.Timestamp.RealValue : 0;
-      var tSec = (mT + eT) * 4 * spb;
-      for (var si = 0; si < vsec.StaffEntries.length; si++) {
-        var se = vsec.StaffEntries[si];
-        if (!se) continue;
-        for (var ei = 0; ei < se.VoiceEntries.length; ei++) {
-          var ve = se.VoiceEntries[ei];
-          for (var ni = 0; ni < ve.Notes.length; ni++) {
-            var note = ve.Notes[ni];
-            if (note.isRest()) continue;
-            var p = note.Pitch;
-            if (!p) continue;
-            var semis = [0, 2, 4, 5, 7, 9, 11];
-            var midi = (p.Octave + 1) * 12 + semis[p.FundamentalNote % 7] + (p.Accidental || 0);
-            var dur = Math.max(0.08, note.Length.RealValue * 4 * spb * 0.9);
-            evs.push({ t: tSec, midi: midi, dur: dur });
-          }
-        }
+
+  var bpmInput = +document.getElementById('bpm').value || 100;
+
+  osmd.cursor.reset();
+  var it = osmd.cursor.Iterator;
+
+  while (!it.EndReached) {
+    var currentMeasure = it.CurrentMeasure;
+    var bpm = bpmInput;
+
+    if (currentMeasure && currentMeasure.TempoInBPM) {
+      bpm = currentMeasure.TempoInBPM;
+    }
+
+    var tSec = it.CurrentTimeStamp.RealValue * 4 * (60 / bpm);
+    var voices = it.CurrentVoiceEntries || [];
+
+    for (var vi = 0; vi < voices.length; vi++) {
+      var ve = voices[vi];
+      if (!ve || !ve.Notes) continue;
+
+      for (var ni = 0; ni < ve.Notes.length; ni++) {
+        var note = ve.Notes[ni];
+        if (!note || note.isRest()) continue;
+
+        var p = note.Pitch || note.TransposedPitch;
+        if (!p) continue;
+
+        var midi = p.getHalfTone();
+        if (midi < 12) midi += 12;
+
+        var dur = Math.max(0.08, note.Length.RealValue * 4 * (60 / bpm) * 0.95);
+
+        evs.push({
+          t: tSec,
+          midi: midi,
+          dur: dur
+        });
       }
     }
+
+    it.moveToNext();
   }
+
+  evs.sort(function(a, b) {
+    if (a.t !== b.t) return a.t - b.t;
+    return a.midi - b.midi;
+  });
 }
 
-/* ── audio ── */
 function ksc() {
-  sc.forEach(function(n) { try { n.stop(); } catch(_) {} });
+  sc.forEach(function(n) {
+    try { n.stop(); } catch(_) {}
+  });
   sc = [];
 }
 
-function sch(off) {
+async function sch(off) {
   xev();
-  if (!evs.length) { st('Nenhuma nota encontrada.', 'err'); return; }
-  if (ac.state === 'suspended') ac.resume();
+
+  if (!evs.length) {
+    st('Nenhuma nota encontrada.', 'err');
+    return;
+  }
+
+  if (ac.state === 'suspended') {
+    await ac.resume();
+  }
+
   var now = ac.currentTime + 0.1;
   sat = now - off;
+
   evs.forEach(function(ev) {
     if (ev.t < off - 0.02) return;
+
     var abs = sat + ev.t;
     if (abs < ac.currentTime) return;
-    var n = inst.play(ev.midi, abs, { duration: ev.dur, gain: 1.2 });
+
+    var n = inst.play(ev.midi, abs, {
+      duration: ev.dur,
+      gain: 1.0
+    });
+
     if (n) sc.push(n);
   });
 }
 
-document.getElementById('bp').onclick  = function() { if (run) return; run = true;  ksc(); sch(pat); pat = 0; st('Tocando...', 'ok'); };
-document.getElementById('bpa').onclick = function() { if (!run) return; run = false; pat = ac.currentTime - sat; ksc(); st('Pausado.'); };
-document.getElementById('bs').onclick  = function() { run = false; pat = 0; ksc(); st('Parado.'); };
+document.getElementById('bp').onclick = async function() {
+  if (run) return;
+  run = true;
+  ksc();
+  await sch(pat);
+  pat = 0;
+  st('Tocando...', 'ok');
+};
 
-/* ── exportar HTML autossuficiente ── */
+document.getElementById('bpa').onclick = function() {
+  if (!run) return;
+  run = false;
+  pat = ac.currentTime - sat;
+  ksc();
+  st('Pausado.');
+};
+
+document.getElementById('bs').onclick = function() {
+  run = false;
+  pat = 0;
+  ksc();
+  st('Parado.');
+};
+
 document.getElementById('bx').onclick = function() {
   var bpm = document.getElementById('bpm').value;
   var out = makeExport(rawXml, bpm);
+
   navigator.clipboard.writeText(out)
     .then(function() {
       st('HTML copiado para a área de transferência!', 'ok');
       var b = document.getElementById('bx');
       b.textContent = '✓ Copiado!';
-      setTimeout(function() { b.innerHTML = '&#128190; Exportar HTML'; }, 2500);
+      setTimeout(function() {
+        b.innerHTML = '&#128190; Exportar HTML';
+      }, 2500);
     })
-    .catch(function() { st('Erro ao copiar.', 'err'); });
+    .catch(function() {
+      st('Erro ao copiar.', 'err');
+    });
 };
 
 function makeExport(xml, bpm) {
-  /* O XML fica embutido como string JSON — sem risco de escape */
   var xmlJson = JSON.stringify(xml);
 
   var lines = [];
@@ -218,20 +291,20 @@ function makeExport(xml, bpm) {
   lines.push("body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16px; }");
   lines.push('.card { max-width: 880px; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 32px rgba(0,0,0,.10); overflow: hidden; }');
   lines.push('.hd { background: linear-gradient(120deg, #0f0c29, #302b63, #24243e); padding: 22px 28px; display: flex; align-items: center; gap: 16px; }');
-  lines.push('.hd-icon { width: 46px; height: 46px; background: rgba(255,255,255,.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }');
+  lines.push('.hd-icon { width: 46px; height: 46px; background: rgba(255,255,255,.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }');
   lines.push('.hd-title { color: #fff; font-size: 17px; font-weight: 600; }');
   lines.push('.hd-sub { color: rgba(255,255,255,.45); font-size: 12px; margin-top: 3px; }');
   lines.push('.body { padding: 24px 28px; }');
-  lines.push('.status { font-size: 12px; font-family: monospace; padding: 7px 12px; border-radius: 7px; margin-bottom: 14px; background: #f8fafc; border-left: 3px solid #e2e8f0; color: #94a3b8; min-height: 34px; }');
+  lines.push('.status { font-size: 12px; font-family: monospace; padding: 7px 12px; border-radius: 7px; margin-bottom: 14px; background: #f8fafc; border-left: 3px solid #e2e8f0; color: #94a3b8; min-height: 34px; line-height: 1.5; }');
   lines.push('.status.info { background: #eef2ff; border-color: #6366f1; color: #4338ca; }');
-  lines.push('.status.ok   { background: #f0fdf4; border-color: #22c55e; color: #15803d; }');
-  lines.push('.status.err  { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }');
+  lines.push('.status.ok { background: #f0fdf4; border-color: #22c55e; color: #15803d; }');
+  lines.push('.status.err { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }');
   lines.push('.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }');
   lines.push('.btn { height: 38px; padding: 0 18px; border: none; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }');
   lines.push('.btn:disabled { opacity: .3; cursor: default; }');
-  lines.push('.btn-play  { background: #22c55e; color: #fff; } .btn-play:not(:disabled):hover  { background: #16a34a; }');
+  lines.push('.btn-play { background: #22c55e; color: #fff; } .btn-play:not(:disabled):hover { background: #16a34a; }');
   lines.push('.btn-pause { background: #f59e0b; color: #fff; } .btn-pause:not(:disabled):hover { background: #d97706; }');
-  lines.push('.btn-stop  { background: #ef4444; color: #fff; } .btn-stop:not(:disabled):hover  { background: #dc2626; }');
+  lines.push('.btn-stop { background: #ef4444; color: #fff; } .btn-stop:not(:disabled):hover { background: #dc2626; }');
   lines.push('.bpm-wrap { display: flex; align-items: center; gap: 7px; background: #f1f5f9; border-radius: 9px; padding: 0 14px; height: 38px; }');
   lines.push('.bpm-wrap label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }');
   lines.push('.bpm-wrap input { width: 48px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #1e293b; text-align: center; font-family: inherit; }');
@@ -245,9 +318,9 @@ function makeExport(xml, bpm) {
   lines.push('  <div class="body">');
   lines.push('    <div class="status info" id="st">Carregando partitura e piano...<\/div>');
   lines.push('    <div class="controls">');
-  lines.push('      <button class="btn btn-play"  id="bp"  disabled>&#9654; Play<\/button>');
+  lines.push('      <button class="btn btn-play" id="bp" disabled>&#9654; Play<\/button>');
   lines.push('      <button class="btn btn-pause" id="bpa" disabled>&#9646;&#9646; Pause<\/button>');
-  lines.push('      <button class="btn btn-stop"  id="bs"  disabled>&#9632; Stop<\/button>');
+  lines.push('      <button class="btn btn-stop" id="bs" disabled>&#9632; Stop<\/button>');
   lines.push('      <div class="bpm-wrap"><label for="bpm">BPM<\/label><input type="number" id="bpm" value="' + bpm + '" min="20" max="400"><\/div>');
   lines.push('    <\/div>');
   lines.push('    <div id="score"><\/div>');
@@ -256,8 +329,53 @@ function makeExport(xml, bpm) {
   lines.push('<script>');
   lines.push('var RAW = ' + xmlJson + ';');
   lines.push('var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("score", { backend: "svg", autoResize: true, drawTitle: true });');
-  lines.push('var inst = null, evs = [], ac = null, sc = [], sat = 0, pat = 0, run = false;');
+  lines.push('var inst = null, evs = [], ac = null, sc = [];');
+  lines.push('var sat = 0, pat = 0, run = false;');
   lines.push('function st(m,c){ var e=document.getElementById("st"); e.textContent=m; e.className="status"+(c?" "+c:""); }');
+  lines.push('function xev(){');
+  lines.push('  evs = [];');
+  lines.push('  var bpmInput = +document.getElementById("bpm").value || 100;');
+  lines.push('  osmd.cursor.reset();');
+  lines.push('  var it = osmd.cursor.Iterator;');
+  lines.push('  while (!it.EndReached) {');
+  lines.push('    var currentMeasure = it.CurrentMeasure;');
+  lines.push('    var bpm = bpmInput;');
+  lines.push('    if (currentMeasure && currentMeasure.TempoInBPM) bpm = currentMeasure.TempoInBPM;');
+  lines.push('    var tSec = it.CurrentTimeStamp.RealValue * 4 * (60 / bpm);');
+  lines.push('    var voices = it.CurrentVoiceEntries || [];');
+  lines.push('    for (var vi = 0; vi < voices.length; vi++) {');
+  lines.push('      var ve = voices[vi];');
+  lines.push('      if (!ve || !ve.Notes) continue;');
+  lines.push('      for (var ni = 0; ni < ve.Notes.length; ni++) {');
+  lines.push('        var note = ve.Notes[ni];');
+  lines.push('        if (!note || note.isRest()) continue;');
+  lines.push('        var p = note.Pitch || note.TransposedPitch;');
+  lines.push('        if (!p) continue;');
+  lines.push('        var midi = p.getHalfTone();');
+  lines.push('        if (midi < 12) midi += 12;');
+  lines.push('        var dur = Math.max(0.08, note.Length.RealValue * 4 * (60 / bpm) * 0.95);');
+  lines.push('        evs.push({ t: tSec, midi: midi, dur: dur });');
+  lines.push('      }');
+  lines.push('    }');
+  lines.push('    it.moveToNext();');
+  lines.push('  }');
+  lines.push('  evs.sort(function(a,b){ if(a.t !== b.t) return a.t - b.t; return a.midi - b.midi; });');
+  lines.push('}');
+  lines.push('function ksc(){ sc.forEach(function(n){ try{ n.stop(); } catch(_){} }); sc=[]; }');
+  lines.push('async function sch(off){');
+  lines.push('  xev();');
+  lines.push('  if(!evs.length){ st("Nenhuma nota encontrada.","err"); return; }');
+  lines.push('  if(ac.state==="suspended"){ await ac.resume(); }');
+  lines.push('  var now = ac.currentTime + 0.1;');
+  lines.push('  sat = now - off;');
+  lines.push('  evs.forEach(function(ev){');
+  lines.push('    if(ev.t < off - 0.02) return;');
+  lines.push('    var abs = sat + ev.t;');
+  lines.push('    if(abs < ac.currentTime) return;');
+  lines.push('    var n = inst.play(ev.midi, abs, { duration: ev.dur, gain: 1.0 });');
+  lines.push('    if(n) sc.push(n);');
+  lines.push('  });');
+  lines.push('}');
   lines.push('async function init() {');
   lines.push('  try {');
   lines.push('    await osmd.load(RAW);');
@@ -266,56 +384,22 @@ function makeExport(xml, bpm) {
   lines.push('    ac = new (window.AudioContext || window.webkitAudioContext)();');
   lines.push('    inst = await Soundfont.instrument(ac, "acoustic_grand_piano", {');
   lines.push('      soundfont: "FluidR3_GM",');
-  lines.push('      nameToUrl: function(n,sf){ return "https://gleitz.github.io/midi-js-soundfonts/"+sf+"/"+n+"-mp3.js"; }');
+  lines.push('      nameToUrl: function(n,sf){ return "https://gleitz.github.io/midi-js-soundfonts/" + sf + "/" + n + "-mp3.js"; }');
   lines.push('    });');
   lines.push('    st("Pronto! Clique em Play.", "ok");');
-  lines.push('    ["bp","bpa","bs"].forEach(function(id){ document.getElementById(id).disabled=false; });');
-  lines.push('  } catch(e) { st("Erro: "+e.message, "err"); }');
-  lines.push('}');
-  lines.push('function xev() {');
-  lines.push('  evs = [];');
-  lines.push('  var bpm = +document.getElementById("bpm").value||100, spb = 60/bpm;');
-  lines.push('  var sm = osmd.Sheet.SourceMeasures;');
-  lines.push('  for (var mi=0;mi<sm.length;mi++) {');
-  lines.push('    var m=sm[mi], mT=m.AbsoluteTimestamp?m.AbsoluteTimestamp.RealValue:0;');
-  lines.push('    for (var vi=0;vi<m.VerticalSourceStaffEntryContainers.length;vi++) {');
-  lines.push('      var vsec=m.VerticalSourceStaffEntryContainers[vi], eT=vsec.Timestamp?vsec.Timestamp.RealValue:0;');
-  lines.push('      var tSec=(mT+eT)*4*spb;');
-  lines.push('      for (var si=0;si<vsec.StaffEntries.length;si++) {');
-  lines.push('        var se=vsec.StaffEntries[si]; if(!se) continue;');
-  lines.push('        for (var ei=0;ei<se.VoiceEntries.length;ei++) {');
-  lines.push('          var ve=se.VoiceEntries[ei];');
-  lines.push('          for (var ni=0;ni<ve.Notes.length;ni++) {');
-  lines.push('            var note=ve.Notes[ni]; if(note.isRest()) continue;');
-  lines.push('            var p=note.Pitch; if(!p) continue;');
-  lines.push('            var semis=[0,2,4,5,7,9,11];');
-  lines.push('            var midi=(p.Octave+1)*12+semis[p.FundamentalNote%7]+(p.Accidental||0);');
-  lines.push('            var dur=Math.max(0.08,note.Length.RealValue*4*spb*0.9);');
-  lines.push('            evs.push({t:tSec,midi:midi,dur:dur});');
-  lines.push('          }');
-  lines.push('        }');
-  lines.push('      }');
-  lines.push('    }');
+  lines.push('    ["bp","bpa","bs"].forEach(function(id){ document.getElementById(id).disabled = false; });');
+  lines.push('  } catch(e) {');
+  lines.push('    st("Erro: " + e.message, "err");');
   lines.push('  }');
   lines.push('}');
-  lines.push('function ksc(){ sc.forEach(function(n){try{n.stop();}catch(_){}}); sc=[]; }');
-  lines.push('function sch(off) {');
-  lines.push('  xev(); if(!evs.length) return;');
-  lines.push('  if(ac.state==="suspended") ac.resume();');
-  lines.push('  var now=ac.currentTime+0.1; sat=now-off;');
-  lines.push('  evs.forEach(function(ev){');
-  lines.push('    if(ev.t<off-0.02) return;');
-  lines.push('    var abs=sat+ev.t; if(abs<ac.currentTime) return;');
-  lines.push('    var n=inst.play(ev.midi,abs,{duration:ev.dur,gain:1.2}); if(n) sc.push(n);');
-  lines.push('  });');
-  lines.push('}');
-  lines.push('document.getElementById("bp").onclick  = function(){ if(run)return; run=true;  ksc(); sch(pat); pat=0; st("Tocando...","ok"); };');
-  lines.push('document.getElementById("bpa").onclick = function(){ if(!run)return; run=false; pat=ac.currentTime-sat; ksc(); st("Pausado."); };');
-  lines.push('document.getElementById("bs").onclick  = function(){ run=false; pat=0; ksc(); st("Parado."); };');
+  lines.push('document.getElementById("bp").onclick = async function(){ if(run) return; run = true; ksc(); await sch(pat); pat = 0; st("Tocando...","ok"); };');
+  lines.push('document.getElementById("bpa").onclick = function(){ if(!run) return; run = false; pat = ac.currentTime - sat; ksc(); st("Pausado."); };');
+  lines.push('document.getElementById("bs").onclick = function(){ run = false; pat = 0; ksc(); st("Parado."); };');
   lines.push('init();');
   lines.push('<' + '/script>');
   lines.push('<\/body>');
   lines.push('<\/html>');
+
   return lines.join('\n');
 }
 </script>
