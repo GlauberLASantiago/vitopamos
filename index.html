@@ -393,15 +393,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
       .trim();
   }
 
-  function buildExportHtml(xml, bpm, instrumentName, reverbAmount) {
-    var xmlBase64 = encodeBase64Unicode(xml);
-    var safeBpm = String(bpm).replace(/"/g, '&quot;');
-    var safeInstrument = String(instrumentName || 'acoustic_grand_piano').replace(/"/g, '&quot;');
-    var safeReverb = String(reverbAmount || 25).replace(/"/g, '&quot;');
-    var title = extractTitleFromXml(xml).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    var titleHtml = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+ <script>
+function buildExportHtml(xml, bpm, instrumentName, reverbAmount) {
+  var xmlBase64 = encodeBase64Unicode(xml);
+  var safeBpm = String(bpm).replace(/"/g, '&quot;');
+  var safeInstrument = String(instrumentName || 'acoustic_grand_piano').replace(/"/g, '&quot;');
+  var safeReverb = String(reverbAmount || 25).replace(/"/g, '&quot;');
+  var title = extractTitleFromXml(xml).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  var titleHtml = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
@@ -410,80 +411,72 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"><\/script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 100%; height: auto; }
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: #fff;
-  padding: 0;
+* { box-sizing: border-box; }
+
+html, body {
   margin: 0;
+  padding: 0;
+  background: #fff;
+  font-family: Arial, Helvetica, sans-serif;
 }
+
 .wrap {
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
   margin: 0;
   padding: 0;
 }
-.score-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 6px 0;
-  padding: 0;
-}
+
 .controls {
   display: flex;
-  align-items: center;
-  gap: 8px;
   flex-wrap: nowrap;
-  margin: 0;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px 0;
   padding: 0;
+  white-space: nowrap;
+  overflow-x: auto;
 }
-.andamento-wrap,
-.inst-wrap,
-.rev-wrap {
+
+.ctrl-group {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: #f1f5f9;
-  border-radius: 9px;
-  padding: 0 14px;
-  height: 38px;
+  gap: 4px;
+  padding: 3px 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #f8fafc;
+  font-size: 12px;
+  line-height: 1.2;
 }
-.andamento-wrap label,
-.inst-wrap label,
-.rev-wrap label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: .6px;
+
+.ctrl-group label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #334155;
+  margin: 0;
   white-space: nowrap;
 }
-.andamento-wrap input,
-.rev-wrap input {
-  width: 64px;
-  border: none;
-  background: transparent;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1e293b;
+
+.ctrl-group input,
+.ctrl-group select {
+  font-size: 12px;
+  height: 24px;
+  padding: 1px 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  background: #fff;
+  color: #111827;
+}
+
+.ctrl-group input {
+  width: 54px;
   text-align: center;
-  font-family: inherit;
 }
-.inst-wrap select {
-  min-width: 170px;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  font-family: inherit;
+
+.ctrl-group select {
+  width: 130px;
 }
-.andamento-wrap input:focus,
-.rev-wrap input:focus,
-.inst-wrap select:focus { outline: none; }
 
 #score {
   overflow-x: auto;
@@ -493,6 +486,7 @@ body {
   user-select: none;
   -webkit-user-select: none;
 }
+
 #score svg {
   display: block;
   max-width: 100%;
@@ -502,14 +496,13 @@ body {
 </head>
 <body>
 <div class="wrap">
-  ${titleHtml ? `<div class="score-title">${titleHtml}</div>` : ''}
   <div class="controls">
-    <div class="andamento-wrap">
+    <div class="ctrl-group">
       <label for="bpm">Andamento</label>
       <input type="number" id="bpm" value="${safeBpm}" min="20" max="400">
     </div>
 
-    <div class="inst-wrap">
+    <div class="ctrl-group">
       <label for="instSel">Timbre</label>
       <select id="instSel">
         <option value="acoustic_grand_piano">Piano normal</option>
@@ -526,7 +519,7 @@ body {
       </select>
     </div>
 
-    <div class="rev-wrap">
+    <div class="ctrl-group">
       <label for="reverbAmt">Reverber</label>
       <input type="number" id="reverbAmt" value="${safeReverb}" min="0" max="100">
     </div>
@@ -541,7 +534,7 @@ body {
   var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
     backend: 'svg',
     autoResize: true,
-    drawTitle: false
+    drawTitle: true
   });
 
   var inst = null;
@@ -595,9 +588,7 @@ body {
 
     inputGain.connect(dryGain);
     inputGain.connect(convolver);
-
     convolver.connect(wetGain);
-
     dryGain.connect(masterGain);
     wetGain.connect(masterGain);
     masterGain.connect(ac.destination);
@@ -804,7 +795,8 @@ body {
 <\/script>
 </body>
 </html>`;
-  }
+}
+</script>
 
   document.getElementById('fi').addEventListener('change', async function (e) {
     var f = e.target.files[0];
