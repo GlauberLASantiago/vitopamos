@@ -10,7 +10,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16px; }
-.card { max-width: 880px; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 32px rgba(0,0,0,.10); overflow: hidden; }
+.card { max-width: 980px; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 32px rgba(0,0,0,.10); overflow: hidden; }
 .hd { background: linear-gradient(120deg, #0f0c29, #302b63, #24243e); padding: 22px 28px; display: flex; align-items: center; gap: 16px; }
 .hd-icon { width: 46px; height: 46px; background: rgba(255,255,255,.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
 .hd-title { color: #fff; font-size: 17px; font-weight: 600; }
@@ -39,10 +39,45 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 .btn-export { background: #6366f1; color: #fff; margin-left: auto; }
 .btn-export:not(:disabled):hover { background: #4f46e5; }
 
-.bpm-wrap { display: flex; align-items: center; gap: 7px; background: #f1f5f9; border-radius: 9px; padding: 0 14px; height: 38px; }
-.bpm-wrap label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }
-.bpm-wrap input { width: 56px; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #1e293b; text-align: center; font-family: inherit; }
-.bpm-wrap input:focus { outline: none; }
+.bpm-wrap,
+.inst-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #f1f5f9;
+  border-radius: 9px;
+  padding: 0 14px;
+  height: 38px;
+}
+.bpm-wrap label,
+.inst-wrap label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+.bpm-wrap input {
+  width: 56px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+  font-family: inherit;
+}
+.inst-wrap select {
+  min-width: 180px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  font-family: inherit;
+}
+.bpm-wrap input:focus,
+.inst-wrap select:focus { outline: none; }
 
 #score { overflow-x: auto; }
 #score svg { max-width: 100%; height: auto; }
@@ -78,6 +113,23 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
         <input type="number" id="bpm" value="100" min="20" max="400">
       </div>
 
+      <div class="inst-wrap">
+        <label for="instSel">Timbre</label>
+        <select id="instSel">
+          <option value="acoustic_grand_piano">Piano normal</option>
+          <option value="electric_piano_1">Piano elétrico Rhodes</option>
+          <option value="drawbar_organ">Órgão</option>
+          <option value="acoustic_guitar_nylon">Violão nylon</option>
+          <option value="electric_bass_finger">Contrabaixo elétrico</option>
+          <option value="xylophone">Xilofone</option>
+          <option value="flute">Flauta</option>
+          <option value="oboe">Oboé</option>
+          <option value="clarinet">Clarineta</option>
+          <option value="french_horn">Trompa</option>
+          <option value="string_ensemble_1">Cordas</option>
+        </select>
+      </div>
+
       <button class="btn btn-export" id="bx" disabled>&#128203; Copiar HTML</button>
     </div>
 
@@ -87,6 +139,20 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 
 <script>
 (function () {
+  var INSTRUMENTS = {
+    acoustic_grand_piano: 'Piano normal',
+    electric_piano_1: 'Piano elétrico Rhodes',
+    drawbar_organ: 'Órgão',
+    acoustic_guitar_nylon: 'Violão nylon',
+    electric_bass_finger: 'Contrabaixo elétrico',
+    xylophone: 'Xilofone',
+    flute: 'Flauta',
+    oboe: 'Oboé',
+    clarinet: 'Clarineta',
+    french_horn: 'Trompa',
+    string_ensemble_1: 'Cordas'
+  };
+
   var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
     backend: 'svg',
     autoResize: true,
@@ -106,6 +172,33 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
     var e = document.getElementById('st');
     e.textContent = msg;
     e.className = 'status' + (cls ? ' ' + cls : '');
+  }
+
+  function getSelectedInstrument() {
+    return document.getElementById('instSel').value || 'acoustic_grand_piano';
+  }
+
+  async function loadInstrument(programName) {
+    if (!ac) {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if (ac.state === 'closed') {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    stopScheduled();
+
+    setStatus('Carregando timbre: ' + (INSTRUMENTS[programName] || programName) + '...', 'info');
+
+    inst = await Soundfont.instrument(ac, programName, {
+      soundfont: 'FluidR3_GM',
+      nameToUrl: function (n, sf) {
+        return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
+      }
+    });
+
+    setStatus('Pronto! Clique em Play.', 'ok');
   }
 
   function stopScheduled() {
@@ -215,11 +308,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-function buildExportHtml(xml, bpm) {
-  var xmlBase64 = encodeBase64Unicode(xml);
-  var safeBpm = String(bpm).replace(/"/g, '&quot;');
+  function buildExportHtml(xml, bpm, instrumentName) {
+    var xmlBase64 = encodeBase64Unicode(xml);
+    var safeBpm = String(bpm).replace(/"/g, '&quot;');
+    var safeInstrument = String(instrumentName || 'acoustic_grand_piano').replace(/"/g, '&quot;');
 
-  return `<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
@@ -251,7 +345,8 @@ body {
   margin: 0;
   padding: 0;
 }
-.andamento-wrap {
+.andamento-wrap,
+.inst-wrap {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -260,7 +355,8 @@ body {
   padding: 0 14px;
   height: 38px;
 }
-.andamento-wrap label {
+.andamento-wrap label,
+.inst-wrap label {
   font-size: 11px;
   font-weight: 600;
   color: #64748b;
@@ -277,7 +373,17 @@ body {
   text-align: center;
   font-family: inherit;
 }
-.andamento-wrap input:focus { outline: none; }
+.inst-wrap select {
+  min-width: 180px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  font-family: inherit;
+}
+.andamento-wrap input:focus,
+.inst-wrap select:focus { outline: none; }
 
 #score {
   overflow-x: auto;
@@ -301,12 +407,44 @@ body {
       <label for="bpm">Andamento</label>
       <input type="number" id="bpm" value="${safeBpm}" min="20" max="400">
     </div>
+
+    <div class="inst-wrap">
+      <label for="instSel">Timbre</label>
+      <select id="instSel">
+        <option value="acoustic_grand_piano">Piano normal</option>
+        <option value="electric_piano_1">Piano elétrico Rhodes</option>
+        <option value="drawbar_organ">Órgão</option>
+        <option value="acoustic_guitar_nylon">Violão nylon</option>
+        <option value="electric_bass_finger">Contrabaixo elétrico</option>
+        <option value="xylophone">Xilofone</option>
+        <option value="flute">Flauta</option>
+        <option value="oboe">Oboé</option>
+        <option value="clarinet">Clarineta</option>
+        <option value="french_horn">Trompa</option>
+        <option value="string_ensemble_1">Cordas</option>
+      </select>
+    </div>
   </div>
+
   <div id="score" title="Clique: play/pause | Duplo clique: stop"></div>
 </div>
 
 <script>
 (function () {
+  var INSTRUMENTS = {
+    acoustic_grand_piano: 'Piano normal',
+    electric_piano_1: 'Piano elétrico Rhodes',
+    drawbar_organ: 'Órgão',
+    acoustic_guitar_nylon: 'Violão nylon',
+    electric_bass_finger: 'Contrabaixo elétrico',
+    xylophone: 'Xilofone',
+    flute: 'Flauta',
+    oboe: 'Oboé',
+    clarinet: 'Clarineta',
+    french_horn: 'Trompa',
+    string_ensemble_1: 'Cordas'
+  };
+
   var RAW = decodeURIComponent(escape(atob("${xmlBase64}")));
   var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
     backend: 'svg',
@@ -327,6 +465,29 @@ body {
       try { n.stop(); } catch (_) {}
     });
     sc = [];
+  }
+
+  function getSelectedInstrument() {
+    return document.getElementById('instSel').value || 'acoustic_grand_piano';
+  }
+
+  async function loadInstrument(programName) {
+    if (!ac) {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if (ac.state === 'closed') {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    stopScheduled();
+
+    inst = await Soundfont.instrument(ac, programName, {
+      soundfont: 'FluidR3_GM',
+      nameToUrl: function (n, sf) {
+        return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
+      }
+    });
   }
 
   function extractEvents() {
@@ -447,14 +608,32 @@ body {
     await osmd.load(RAW);
     osmd.render();
 
-    ac = new (window.AudioContext || window.webkitAudioContext)();
-    inst = await Soundfont.instrument(ac, 'acoustic_grand_piano', {
-      soundfont: 'FluidR3_GM',
-      nameToUrl: function (n, sf) {
-        return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
-      }
-    });
+    document.getElementById('instSel').value = "${safeInstrument}";
+    await loadInstrument(getSelectedInstrument());
   }
+
+  document.getElementById('instSel').addEventListener('change', async function () {
+    var wasRunning = run;
+    var currentPos = 0;
+
+    if (ac && run) {
+      currentPos = ac.currentTime - sat;
+    } else {
+      currentPos = pat;
+    }
+
+    run = false;
+    pat = Math.max(0, currentPos);
+    stopScheduled();
+
+    await loadInstrument(getSelectedInstrument());
+
+    if (wasRunning) {
+      run = true;
+      await scheduleFrom(pat);
+      pat = 0;
+    }
+  });
 
   var scoreEl = document.getElementById('score');
 
@@ -475,7 +654,7 @@ body {
 <\/script>
 </body>
 </html>`;
-}
+  }
 
   document.getElementById('fi').addEventListener('change', async function (e) {
     var f = e.target.files[0];
@@ -490,19 +669,12 @@ body {
       await osmd.load(rawXml);
       osmd.render();
 
-      setStatus('Carregando piano General MIDI...', 'info');
-
       if (ac && ac.state !== 'closed') {
         try { await ac.close(); } catch (_) {}
       }
 
       ac = new (window.AudioContext || window.webkitAudioContext)();
-      inst = await Soundfont.instrument(ac, 'acoustic_grand_piano', {
-        soundfont: 'FluidR3_GM',
-        nameToUrl: function (n, sf) {
-          return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
-        }
-      });
+      await loadInstrument(getSelectedInstrument());
 
       sat = 0;
       pat = 0;
@@ -511,12 +683,43 @@ body {
       sc = [];
 
       setStatus('Pronto! Clique em Play.', 'ok');
-      ['bp', 'bpa', 'bs', 'bx'].forEach(function (id) {
+      ['bp', 'bpa', 'bs', 'bx', 'instSel'].forEach(function (id) {
         document.getElementById(id).disabled = false;
       });
     } catch (err) {
       console.error(err);
       setStatus('Erro: ' + err.message, 'err');
+    }
+  });
+
+  document.getElementById('instSel').addEventListener('change', async function () {
+    if (!rawXml) return;
+
+    var wasRunning = run;
+    var currentPos = 0;
+
+    try {
+      if (ac && run) {
+        currentPos = ac.currentTime - sat;
+      } else {
+        currentPos = pat;
+      }
+
+      run = false;
+      pat = Math.max(0, currentPos);
+      stopScheduled();
+
+      await loadInstrument(getSelectedInstrument());
+
+      if (wasRunning) {
+        run = true;
+        await scheduleFrom(pat);
+        pat = 0;
+        setStatus('Tocando...', 'ok');
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus('Erro ao trocar timbre: ' + err.message, 'err');
     }
   });
 
@@ -552,7 +755,8 @@ body {
       }
 
       var bpm = document.getElementById('bpm').value || 100;
-      var html = buildExportHtml(rawXml, bpm);
+      var instrumentName = getSelectedInstrument();
+      var html = buildExportHtml(rawXml, bpm, instrumentName);
 
       await navigator.clipboard.writeText(html);
 
