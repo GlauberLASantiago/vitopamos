@@ -339,9 +339,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 
       cursorIndex = 0;
 
-      while (cursorIndex < cursorSteps.length && cursorSteps[cursorIndex].t < offset - 0.02) {
-        try { osmd.cursor.next(); } catch (_) { break; }
-        cursorIndex++;
+      while (
+        cursorIndex + 1 < cursorSteps.length &&
+        offset >= cursorSteps[cursorIndex + 1].t - 0.01
+      ) {
+        try {
+          osmd.cursor.next();
+          cursorIndex++;
+        } catch (_) {
+          break;
+        }
       }
     } catch (_) {}
   }
@@ -354,17 +361,21 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
       if (!run || !ac || !osmd || !osmd.cursor || !cursorSteps.length) return;
 
       var current = ac.currentTime - sat;
+      var lookAhead = 0.01;
 
-      while (cursorIndex < cursorSteps.length && cursorSteps[cursorIndex].t <= current + 0.02) {
+      while (
+        cursorIndex + 1 < cursorSteps.length &&
+        current >= cursorSteps[cursorIndex + 1].t - lookAhead
+      ) {
         try {
           osmd.cursor.next();
+          cursorIndex++;
         } catch (_) {
           break;
         }
-        cursorIndex++;
       }
 
-      cursorTimer = setTimeout(step, 40);
+      cursorTimer = setTimeout(step, 25);
     }
 
     step();
@@ -777,9 +788,16 @@ html, body {
 
       cursorIndex = 0;
 
-      while (cursorIndex < cursorSteps.length && cursorSteps[cursorIndex].t < offset - 0.02) {
-        try { osmd.cursor.next(); } catch (_) { break; }
-        cursorIndex++;
+      while (
+        cursorIndex + 1 < cursorSteps.length &&
+        offset >= cursorSteps[cursorIndex + 1].t - 0.01
+      ) {
+        try {
+          osmd.cursor.next();
+          cursorIndex++;
+        } catch (_) {
+          break;
+        }
       }
     } catch (_) {}
   }
@@ -792,17 +810,21 @@ html, body {
       if (!run || !ac || !osmd || !osmd.cursor || !cursorSteps.length) return;
 
       var current = ac.currentTime - sat;
+      var lookAhead = 0.01;
 
-      while (cursorIndex < cursorSteps.length && cursorSteps[cursorIndex].t <= current + 0.02) {
+      while (
+        cursorIndex + 1 < cursorSteps.length &&
+        current >= cursorSteps[cursorIndex + 1].t - lookAhead
+      ) {
         try {
           osmd.cursor.next();
+          cursorIndex++;
         } catch (_) {
           break;
         }
-        cursorIndex++;
       }
 
-      cursorTimer = setTimeout(step, 40);
+      cursorTimer = setTimeout(step, 25);
     }
 
     step();
