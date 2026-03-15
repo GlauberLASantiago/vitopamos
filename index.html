@@ -215,11 +215,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  function buildExportHtml(xml, bpm) {
-    var xmlBase64 = encodeBase64Unicode(xml);
-    var safeBpm = String(bpm).replace(/"/g, '&quot;');
+function buildExportHtml(xml, bpm) {
+  var xmlBase64 = encodeBase64Unicode(xml);
+  var safeBpm = String(bpm).replace(/"/g, '&quot;');
 
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
@@ -251,29 +251,8 @@ body {
   margin: 0;
   padding: 0;
 }
-.btn {
-  height: 38px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 9px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
+.andamento-wrap {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.btn:disabled { opacity: .3; cursor: default; }
-.btn-play { background: #22c55e; color: #fff; }
-.btn-play:not(:disabled):hover { background: #16a34a; }
-.btn-pause { background: #f59e0b; color: #fff; }
-.btn-pause:not(:disabled):hover { background: #d97706; }
-.btn-stop { background: #ef4444; color: #fff; }
-.btn-stop:not(:disabled):hover { background: #dc2626; }
-
-.bpm-wrap {
-  display: flex;
   align-items: center;
   gap: 7px;
   background: #f1f5f9;
@@ -281,14 +260,14 @@ body {
   padding: 0 14px;
   height: 38px;
 }
-.bpm-wrap label {
+.andamento-wrap label {
   font-size: 11px;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: .6px;
 }
-.bpm-wrap input {
+.andamento-wrap input {
   width: 56px;
   border: none;
   background: transparent;
@@ -298,12 +277,15 @@ body {
   text-align: center;
   font-family: inherit;
 }
-.bpm-wrap input:focus { outline: none; }
+.andamento-wrap input:focus { outline: none; }
 
 #score {
   overflow-x: auto;
   margin: 0;
   padding: 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 #score svg {
   display: block;
@@ -315,15 +297,12 @@ body {
 <body>
 <div class="wrap">
   <div class="controls">
-    <button class="btn btn-play" id="bp" disabled>&#9654; Play</button>
-    <button class="btn btn-pause" id="bpa" disabled>&#9646;&#9646; Pause</button>
-    <button class="btn btn-stop" id="bs" disabled>&#9632; Stop</button>
-    <div class="bpm-wrap">
-      <label for="bpm">BPM</label>
+    <div class="andamento-wrap">
+      <label for="bpm">Andamento</label>
       <input type="number" id="bpm" value="${safeBpm}" min="20" max="400">
     </div>
   </div>
-  <div id="score"></div>
+  <div id="score" title="Clique: play/pause | Duplo clique: stop"></div>
 </div>
 
 <script>
@@ -442,26 +421,27 @@ body {
     });
   }
 
-  document.getElementById('bp').onclick = async function () {
-    if (run || !inst || !ac) return;
+  async function togglePlayPause() {
+    if (!inst || !ac) return;
+
+    if (run) {
+      run = false;
+      pat = ac.currentTime - sat;
+      stopScheduled();
+      return;
+    }
+
     run = true;
     stopScheduled();
     await scheduleFrom(pat);
     pat = 0;
-  };
+  }
 
-  document.getElementById('bpa').onclick = function () {
-    if (!run || !ac) return;
-    run = false;
-    pat = ac.currentTime - sat;
-    stopScheduled();
-  };
-
-  document.getElementById('bs').onclick = function () {
+  function stopPlayback() {
     run = false;
     pat = 0;
     stopScheduled();
-  };
+  }
 
   async function init() {
     await osmd.load(RAW);
@@ -474,18 +454,28 @@ body {
         return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
       }
     });
-
-    ['bp', 'bpa', 'bs'].forEach(function (id) {
-      document.getElementById(id).disabled = false;
-    });
   }
+
+  var scoreEl = document.getElementById('score');
+
+  scoreEl.addEventListener('click', function () {
+    clearTimeout(scoreEl._clickTimer);
+    scoreEl._clickTimer = setTimeout(function () {
+      togglePlayPause();
+    }, 220);
+  });
+
+  scoreEl.addEventListener('dblclick', function () {
+    clearTimeout(scoreEl._clickTimer);
+    stopPlayback();
+  });
 
   init();
 })();
 <\/script>
 </body>
 </html>`;
-  }
+}
 
   document.getElementById('fi').addEventListener('change', async function (e) {
     var f = e.target.files[0];
