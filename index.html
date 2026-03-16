@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -41,7 +42,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 
 .bpm-wrap,
 .inst-wrap,
-.rev-wrap {
+.rev-wrap,
+.met-wrap {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -52,7 +54,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 }
 .bpm-wrap label,
 .inst-wrap label,
-.rev-wrap label {
+.rev-wrap label,
+.met-wrap label {
   font-size: 11px;
   font-weight: 600;
   color: #64748b;
@@ -78,6 +81,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
   font-weight: 600;
   color: #1e293b;
   font-family: inherit;
+}
+.met-wrap input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 .bpm-wrap input:focus,
 .rev-wrap input:focus,
@@ -115,6 +123,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
       <div class="bpm-wrap">
         <label for="bpm">BPM</label>
         <input type="number" id="bpm" value="100" min="20" max="400">
+      </div>
+
+      <div class="met-wrap">
+        <label for="metCheck">Metrônomo</label>
+        <input type="checkbox" id="metCheck">
       </div>
 
       <div class="inst-wrap">
@@ -169,24 +182,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
     followCursor: false
   });
 
-  var inst = null;
-  var evs = [];
-  var ac = null;
-  var sc = [];
-  var sat = 0;
-  var pat = 0;
-  var run = false;
-  var rawXml = '';
-
-  var cursorTimer = null;
-  var cursorSteps = [];
-  var cursorIndex = 0;
-
-  var inputGain = null;
-  var masterGain = null;
-  var dryGain = null;
-  var wetGain = null;
-  var convolver = null;
+  var inst = null, evs = [], ac = null, sc = [], sat = 0, pat = 0, run = false, rawXml = '';
+  var cursorTimer = null, cursorSteps = [], cursorIndex = 0;
+  var inputGain = null, masterGain = null, dryGain = null, wetGain = null, convolver = null;
 
   function setStatus(msg, cls) {
     var e = document.getElementById('st');
@@ -194,50 +192,28 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
     e.className = 'status' + (cls ? ' ' + cls : '');
   }
 
-  function getSelectedInstrument() {
-    return document.getElementById('instSel').value || 'acoustic_grand_piano';
-  }
-
+  function getSelectedInstrument() { return document.getElementById('instSel').value || 'acoustic_grand_piano'; }
   function getReverbAmount() {
     var v = +document.getElementById('reverbAmt').value;
-    if (isNaN(v)) v = 25;
-    return Math.max(0, Math.min(100, v));
+    return isNaN(v) ? 25 : Math.max(0, Math.min(100, v));
   }
 
   function createImpulseResponse(audioContext, seconds, decay) {
-    var rate = audioContext.sampleRate;
-    var length = rate * seconds;
-    var impulse = audioContext.createBuffer(2, length, rate);
-
+    var rate = audioContext.sampleRate, length = rate * seconds, impulse = audioContext.createBuffer(2, length, rate);
     for (var c = 0; c < 2; c++) {
       var ch = impulse.getChannelData(c);
-      for (var i = 0; i < length; i++) {
-        ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
-      }
+      for (var i = 0; i < length; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
     }
     return impulse;
   }
 
   function setupFx() {
     if (!ac) return;
-
-    inputGain = ac.createGain();
-    masterGain = ac.createGain();
-    dryGain = ac.createGain();
-    wetGain = ac.createGain();
-    convolver = ac.createConvolver();
-
+    inputGain = ac.createGain(); masterGain = ac.createGain(); dryGain = ac.createGain(); wetGain = ac.createGain(); convolver = ac.createConvolver();
     convolver.buffer = createImpulseResponse(ac, 2.8, 3.2);
-
-    inputGain.connect(dryGain);
-    inputGain.connect(convolver);
-    convolver.connect(wetGain);
-    dryGain.connect(masterGain);
-    wetGain.connect(masterGain);
-    masterGain.connect(ac.destination);
-
-    masterGain.gain.value = 1.0;
-    updateReverb();
+    inputGain.connect(dryGain); inputGain.connect(convolver); convolver.connect(wetGain);
+    dryGain.connect(masterGain); wetGain.connect(masterGain); masterGain.connect(ac.destination);
+    masterGain.gain.value = 1.0; updateReverb();
   }
 
   function updateReverb() {
@@ -248,80 +224,38 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
   }
 
   async function loadInstrument(programName) {
-    if (!ac || ac.state === 'closed') {
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      setupFx();
-    }
-
+    if (!ac || ac.state === 'closed') { ac = new (window.AudioContext || window.webkitAudioContext)(); setupFx(); }
     stopScheduled();
-
-    setStatus('Carregando timbre: ' + (INSTRUMENTS[programName] || programName) + '...', 'info');
-
+    setStatus('A carregar timbre: ' + (INSTRUMENTS[programName] || programName) + '...', 'info');
     inst = await Soundfont.instrument(ac, programName, {
       soundfont: 'FluidR3_GM',
       destination: inputGain,
-      nameToUrl: function (n, sf) {
-        return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
-      }
+      nameToUrl: function (n, sf) { return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js'; }
     });
-
     updateReverb();
     setStatus('Pronto! Clique em Play.', 'ok');
   }
 
-  function stopScheduled() {
-    sc.forEach(function (n) {
-      try { n.stop(); } catch (_) {}
-    });
-    sc = [];
-  }
-
-  function clearCursorTimer() {
-    if (cursorTimer) {
-      clearTimeout(cursorTimer);
-      cursorTimer = null;
-    }
-  }
+  function stopScheduled() { sc.forEach(function (n) { try { n.stop(); } catch (_) {} }); sc = []; }
+  function clearCursorTimer() { if (cursorTimer) { clearTimeout(cursorTimer); cursorTimer = null; } }
 
   function resetCursorToStart() {
     clearCursorTimer();
-
     if (!osmd || !osmd.cursor) return;
-
-    try {
-      osmd.cursor.hide();
-      osmd.cursor.reset();
-      osmd.cursor.show();
-      cursorIndex = 0;
-    } catch (_) {}
+    try { osmd.cursor.hide(); osmd.cursor.reset(); osmd.cursor.show(); cursorIndex = 0; } catch (_) {}
   }
 
   function extractCursorSteps() {
     cursorSteps = [];
     var bpm = +document.getElementById('bpm').value || 100;
-
     if (!osmd || !osmd.cursor) return;
-
     try {
       osmd.cursor.reset();
       var iterator = osmd.cursor.Iterator;
-
       while (!iterator.EndReached) {
         var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
-        var real = 0;
-
-        if (timeObj) {
-          real = typeof timeObj.realValue !== 'undefined'
-            ? timeObj.realValue
-            : (timeObj.RealValue || 0);
-        }
-
-        var tSec = real * 4 * (60 / bpm);
-
-        cursorSteps.push({
-          t: tSec
-        });
-
+        var real = timeObj ? (typeof timeObj.realValue !== 'undefined' ? timeObj.realValue : (timeObj.RealValue || 0)) : 0;
+        cursorSteps.push({ t: real * 4 * (60 / bpm) });
         iterator.moveToNext();
       }
     } catch (_) {}
@@ -329,26 +263,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
 
   function moveCursorToTime(offset) {
     if (!osmd || !osmd.cursor) return;
-
     extractCursorSteps();
-
     try {
-      osmd.cursor.hide();
-      osmd.cursor.reset();
-      osmd.cursor.show();
-
-      cursorIndex = 0;
-
-      while (
-        cursorIndex + 1 < cursorSteps.length &&
-        offset >= cursorSteps[cursorIndex + 1].t - 0.01
-      ) {
-        try {
-          osmd.cursor.next();
-          cursorIndex++;
-        } catch (_) {
-          break;
-        }
+      osmd.cursor.hide(); osmd.cursor.reset(); osmd.cursor.show(); cursorIndex = 0;
+      while (cursorIndex + 1 < cursorSteps.length && offset >= cursorSteps[cursorIndex + 1].t - 0.01) {
+        osmd.cursor.next(); cursorIndex++;
       }
     } catch (_) {}
   }
@@ -356,824 +275,312 @@ body { font-family: 'DM Sans', sans-serif; background: #f0f2f5; padding: 28px 16
   function startCursorFollow(offset) {
     clearCursorTimer();
     moveCursorToTime(offset);
-
     function step() {
       if (!run || !ac || !osmd || !osmd.cursor || !cursorSteps.length) return;
-
       var current = ac.currentTime - sat;
-      var lookAhead = 0.01;
-
-      while (
-        cursorIndex + 1 < cursorSteps.length &&
-        current >= cursorSteps[cursorIndex + 1].t - lookAhead
-      ) {
-        try {
-          osmd.cursor.next();
-          cursorIndex++;
-        } catch (_) {
-          break;
-        }
+      while (cursorIndex + 1 < cursorSteps.length && current >= cursorSteps[cursorIndex + 1].t - 0.01) {
+        try { osmd.cursor.next(); cursorIndex++; } catch (_) { break; }
       }
-
       cursorTimer = setTimeout(step, 25);
     }
-
     step();
   }
 
-  function extractEvents() {
-    evs = [];
-    var bpm = +document.getElementById('bpm').value || 100;
+  /* ─── HELPERS DE LIGADURA (TIE) ──────────────────────────────────────────
+   *
+   * A OSMD representa ligaduras via nota.NoteTie (objeto Tie).
+   * Cada Tie possui:
+   *   - StartNote  : primeira nota da ligadura
+   *   - Notes[]    : todas as notas ligadas (incluindo a inicial)
+   *
+   * Regras:
+   *  1. Uma nota é "continuação de ligadura" (não deve soar novamente) quando
+   *     ela pertence a um Tie E não é a StartNote desse Tie.
+   *  2. A duração total de uma ligadura é a soma das durações de todas as
+   *     notas em Tie.Notes, percorrida a partir da StartNote.
+   */
+  function isTieContinuation(note) {
+    var tie = note.NoteTie || note.Tie;
+    if (!tie) return false;
+    // Se a nota tem ligadura mas não é a nota inicial, é continuação → silenciar
+    var startNote = tie.StartNote;
+    if (startNote && startNote !== note) return true;
+    // Fallback: se Notes[] existe e a primeira entrada não é esta nota
+    if (tie.Notes && tie.Notes.length > 0 && tie.Notes[0] !== note) return true;
+    return false;
+  }
 
-    osmd.cursor.reset();
-    var iterator = osmd.cursor.Iterator;
+  function getTiedDuration(note, beatLen) {
+    var tie = note.NoteTie || note.Tie;
+    var totalReal = 0;
 
-    while (!iterator.EndReached) {
-      var voices = iterator.CurrentVoiceEntries || [];
-      var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
-      var real = 0;
-
-      if (timeObj) {
-        real = typeof timeObj.realValue !== 'undefined'
-          ? timeObj.realValue
-          : (timeObj.RealValue || 0);
+    if (tie && tie.Notes && tie.Notes.length > 0) {
+      // Somar durações de todas as notas do array de ligadura
+      for (var i = 0; i < tie.Notes.length; i++) {
+        var n = tie.Notes[i];
+        totalReal += getRealLength(n);
       }
-
-      var tSec = real * 4 * (60 / bpm);
-
-      for (var i = 0; i < voices.length; i++) {
-        var ve = voices[i];
-        if (!ve || !ve.Notes) continue;
-
-        for (var j = 0; j < ve.Notes.length; j++) {
-          var note = ve.Notes[j];
-          if (!note || note.isRest()) continue;
-
-          var midi = null;
-
-          if (typeof note.halfTone !== 'undefined' && note.halfTone !== null) {
-            midi = note.halfTone + 12;
-          } else if (note.Pitch && typeof note.Pitch.getHalfTone === 'function') {
-            midi = note.Pitch.getHalfTone();
-          } else if (note.TransposedPitch && typeof note.TransposedPitch.getHalfTone === 'function') {
-            midi = note.TransposedPitch.getHalfTone();
-          }
-
-          if (midi === null) continue;
-
-          var len = 0;
-          if (note.Length) {
-            len = typeof note.Length.realValue !== 'undefined'
-              ? note.Length.realValue
-              : (note.Length.RealValue || 0);
-          }
-
-          var dur = Math.max(0.08, len * 4 * (60 / bpm) * 0.95);
-
-          evs.push({
-            t: tSec,
-            midi: midi,
-            dur: dur
-          });
-        }
-      }
-
-      iterator.moveToNext();
-    }
-
-    evs.sort(function (a, b) {
-      if (a.t !== b.t) return a.t - b.t;
-      return a.midi - b.midi;
-    });
-  }
-
-  async function scheduleFrom(offset) {
-    extractEvents();
-
-    if (!evs.length) {
-      setStatus('Nenhuma nota encontrada para tocar.', 'err');
-      return;
-    }
-
-    if (ac.state === 'suspended') {
-      await ac.resume();
-    }
-
-    updateReverb();
-
-    var now = ac.currentTime + 0.1;
-    sat = now - offset;
-
-    evs.forEach(function (ev) {
-      if (ev.t < offset - 0.02) return;
-
-      var abs = sat + ev.t;
-      if (abs < ac.currentTime) return;
-
-      var n = inst.play(ev.midi, abs, {
-        duration: ev.dur,
-        gain: 1.0
-      });
-
-      if (n) sc.push(n);
-    });
-  }
-
-  function encodeBase64Unicode(str) {
-    return btoa(unescape(encodeURIComponent(str)));
-  }
-
-  function extractTitleFromXml(xml) {
-    var m =
-      xml.match(/<work-title>([\s\S]*?)<\/work-title>/i) ||
-      xml.match(/<movement-title>([\s\S]*?)<\/movement-title>/i) ||
-      xml.match(/<credit-words[^>]*>([\s\S]*?)<\/credit-words>/i);
-
-    if (!m) return '';
-
-    return m[1]
-      .replace(/<[^>]+>/g, '')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .trim();
-  }
-
-  function buildExportHtml(xml, bpm, instrumentName, reverbAmount) {
-    var xmlBase64 = encodeBase64Unicode(xml);
-    var safeBpm = String(bpm).replace(/"/g, '&quot;');
-    var safeInstrument = String(instrumentName || 'acoustic_grand_piano').replace(/"/g, '&quot;');
-    var safeReverb = String(reverbAmount || 25).replace(/"/g, '&quot;');
-    var title = extractTitleFromXml(xml).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    var titleHtml = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    return `<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- <title>${titleHtml || 'Partitura'}</title> -->
-<script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"><\/script>
-<style>
-* { box-sizing: border-box; }
-
-html, body {
-  width: 100%;
-  height: auto;
-  margin: 0;
-  padding: 0;
-  background: #fff;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-.wrap {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.controls {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 10px 0;
-  padding: 0;
-  white-space: nowrap;
-  overflow-x: auto;
-}
-
-.ctrl-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 6px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  background: #f8fafc;
-  font-size: 12px;
-  line-height: 1.2;
-}
-
-.ctrl-group label {
-  font-size: 12px;
-  font-weight: bold;
-  color: #334155;
-  margin: 0;
-  white-space: nowrap;
-}
-
-.ctrl-group input,
-.ctrl-group select {
-  font-size: 12px;
-  height: 24px;
-  padding: 1px 4px;
-  border: 1px solid #cbd5e1;
-  border-radius: 3px;
-  background: #fff;
-  color: #111827;
-}
-
-.ctrl-group input {
-  width: 54px;
-  text-align: center;
-}
-
-.ctrl-group select {
-  width: 130px;
-}
-
-#score {
-  overflow-x: auto;
-  margin: 0;
-  padding: 0;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-#score svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="controls" style="display: flex; gap: 20px; align-items: center;">
-    <div class="controls">
-      <label for="bpm">Andamento</label>
-      <input type="number" id="bpm" value="${safeBpm}" min="20" max="400">
-    </div>
-
-    <div class="ctrl-group">
-      <label for="instSel">Timbre</label>
-      <select id="instSel">
-        <option value="acoustic_grand_piano">Piano normal</option>
-        <option value="electric_piano_1">Piano elétrico Rhodes</option>
-        <option value="drawbar_organ">Órgão</option>
-        <option value="acoustic_guitar_nylon">Violão nylon</option>
-        <option value="electric_bass_finger">Contrabaixo elétrico</option>
-        <option value="marimba">Marimba</option>
-        <option value="flute">Flauta</option>
-        <option value="oboe">Oboé</option>
-        <option value="clarinet">Clarineta</option>
-        <option value="french_horn">Trompa</option>
-        <option value="string_ensemble_1">Cordas</option>
-      </select>
-    </div>
-
-    <div class="ctrl-group">
-      <label for="reverbAmt">Reverber</label>
-      <input type="number" id="reverbAmt" value="${safeReverb}" min="0" max="100">
-    </div>
-  </div>
-
-  <div id="score" title="Clique: play/pause | Duplo clique: stop"></div>
-</div>
-
-<script>
-(function () {
-  var RAW = decodeURIComponent(escape(atob("${xmlBase64}")));
-  var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
-    backend: 'svg',
-    autoResize: true,
-    drawTitle: true,
-    followCursor: false
-  });
-
-  var inst = null;
-  var evs = [];
-  var ac = null;
-  var sc = [];
-  var sat = 0;
-  var pat = 0;
-  var run = false;
-
-  var cursorTimer = null;
-  var cursorSteps = [];
-  var cursorIndex = 0;
-
-  var inputGain = null;
-  var masterGain = null;
-  var dryGain = null;
-  var wetGain = null;
-  var convolver = null;
-
-  function getSelectedInstrument() {
-    return document.getElementById('instSel').value || 'acoustic_grand_piano';
-  }
-
-  function getReverbAmount() {
-    var v = +document.getElementById('reverbAmt').value;
-    if (isNaN(v)) v = 25;
-    return Math.max(0, Math.min(100, v));
-  }
-
-  function createImpulseResponse(audioContext, seconds, decay) {
-    var rate = audioContext.sampleRate;
-    var length = rate * seconds;
-    var impulse = audioContext.createBuffer(2, length, rate);
-
-    for (var c = 0; c < 2; c++) {
-      var ch = impulse.getChannelData(c);
-      for (var i = 0; i < length; i++) {
-        ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
-      }
-    }
-    return impulse;
-  }
-
-  function setupFx() {
-    if (!ac) return;
-
-    inputGain = ac.createGain();
-    masterGain = ac.createGain();
-    dryGain = ac.createGain();
-    wetGain = ac.createGain();
-    convolver = ac.createConvolver();
-
-    convolver.buffer = createImpulseResponse(ac, 2.8, 3.2);
-
-    inputGain.connect(dryGain);
-    inputGain.connect(convolver);
-    convolver.connect(wetGain);
-    dryGain.connect(masterGain);
-    wetGain.connect(masterGain);
-    masterGain.connect(ac.destination);
-
-    masterGain.gain.value = 1.0;
-    updateReverb();
-  }
-
-  function updateReverb() {
-    if (!dryGain || !wetGain) return;
-    var amt = getReverbAmount() / 100;
-    dryGain.gain.value = 1 - (amt * 0.45);
-    wetGain.gain.value = amt * 1.35;
-  }
-
-  function stopScheduled() {
-    sc.forEach(function (n) {
-      try { n.stop(); } catch (_) {}
-    });
-    sc = [];
-  }
-
-  function clearCursorTimer() {
-    if (cursorTimer) {
-      clearTimeout(cursorTimer);
-      cursorTimer = null;
-    }
-  }
-
-  function resetCursorToStart() {
-    clearCursorTimer();
-
-    if (!osmd || !osmd.cursor) return;
-
-    try {
-      osmd.cursor.hide();
-      osmd.cursor.reset();
-      osmd.cursor.show();
-      cursorIndex = 0;
-    } catch (_) {}
-  }
-
-  function extractCursorSteps() {
-    cursorSteps = [];
-    var bpm = +document.getElementById('bpm').value || 100;
-
-    if (!osmd || !osmd.cursor) return;
-
-    try {
-      osmd.cursor.reset();
-      var iterator = osmd.cursor.Iterator;
-
-      while (!iterator.EndReached) {
-        var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
-        var real = 0;
-
-        if (timeObj) {
-          real = typeof timeObj.realValue !== 'undefined'
-            ? timeObj.realValue
-            : (timeObj.RealValue || 0);
-        }
-
-        var tSec = real * 4 * (60 / bpm);
-
-        cursorSteps.push({
-          t: tSec
-        });
-
-        iterator.moveToNext();
-      }
-    } catch (_) {}
-  }
-
-  function moveCursorToTime(offset) {
-    if (!osmd || !osmd.cursor) return;
-
-    extractCursorSteps();
-
-    try {
-      osmd.cursor.hide();
-      osmd.cursor.reset();
-      osmd.cursor.show();
-
-      cursorIndex = 0;
-
-      while (
-        cursorIndex + 1 < cursorSteps.length &&
-        offset >= cursorSteps[cursorIndex + 1].t - 0.01
-      ) {
-        try {
-          osmd.cursor.next();
-          cursorIndex++;
-        } catch (_) {
-          break;
-        }
-      }
-    } catch (_) {}
-  }
-
-  function startCursorFollow(offset) {
-    clearCursorTimer();
-    moveCursorToTime(offset);
-
-    function step() {
-      if (!run || !ac || !osmd || !osmd.cursor || !cursorSteps.length) return;
-
-      var current = ac.currentTime - sat;
-      var lookAhead = 0.01;
-
-      while (
-        cursorIndex + 1 < cursorSteps.length &&
-        current >= cursorSteps[cursorIndex + 1].t - lookAhead
-      ) {
-        try {
-          osmd.cursor.next();
-          cursorIndex++;
-        } catch (_) {
-          break;
-        }
-      }
-
-      cursorTimer = setTimeout(step, 25);
-    }
-
-    step();
-  }
-
-  async function loadInstrument(programName) {
-    if (!ac || ac.state === 'closed') {
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      setupFx();
-    }
-
-    stopScheduled();
-
-    inst = await Soundfont.instrument(ac, programName, {
-      soundfont: 'FluidR3_GM',
-      destination: inputGain,
-      nameToUrl: function (n, sf) {
-        return 'https://gleitz.github.io/midi-js-soundfonts/' + sf + '/' + n + '-mp3.js';
-      }
-    });
-
-    updateReverb();
-  }
-
-  function extractEvents() {
-    evs = [];
-    var bpm = +document.getElementById('bpm').value || 100;
-
-    osmd.cursor.reset();
-    var iterator = osmd.cursor.Iterator;
-
-    while (!iterator.EndReached) {
-      var voices = iterator.CurrentVoiceEntries || [];
-      var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
-      var real = 0;
-
-      if (timeObj) {
-        real = typeof timeObj.realValue !== 'undefined'
-          ? timeObj.realValue
-          : (timeObj.RealValue || 0);
-      }
-
-      var tSec = real * 4 * (60 / bpm);
-
-      for (var i = 0; i < voices.length; i++) {
-        var ve = voices[i];
-        if (!ve || !ve.Notes) continue;
-
-        for (var j = 0; j < ve.Notes.length; j++) {
-          var note = ve.Notes[j];
-          if (!note || note.isRest()) continue;
-
-          var midi = null;
-
-          if (typeof note.halfTone !== 'undefined' && note.halfTone !== null) {
-            midi = note.halfTone + 12;
-          } else if (note.Pitch && typeof note.Pitch.getHalfTone === 'function') {
-            midi = note.Pitch.getHalfTone();
-          } else if (note.TransposedPitch && typeof note.TransposedPitch.getHalfTone === 'function') {
-            midi = note.TransposedPitch.getHalfTone();
-          }
-
-          if (midi === null) continue;
-
-          var len = 0;
-          if (note.Length) {
-            len = typeof note.Length.realValue !== 'undefined'
-              ? note.Length.realValue
-              : (note.Length.RealValue || 0);
-          }
-
-          var dur = Math.max(0.08, len * 4 * (60 / bpm) * 0.95);
-
-          evs.push({
-            t: tSec,
-            midi: midi,
-            dur: dur
-          });
-        }
-      }
-
-      iterator.moveToNext();
-    }
-
-    evs.sort(function (a, b) {
-      if (a.t !== b.t) return a.t - b.t;
-      return a.midi - b.midi;
-    });
-  }
-
-  async function scheduleFrom(offset) {
-    extractEvents();
-    if (!evs.length) return;
-
-    if (ac.state === 'suspended') {
-      await ac.resume();
-    }
-
-    updateReverb();
-
-    var now = ac.currentTime + 0.1;
-    sat = now - offset;
-
-    evs.forEach(function (ev) {
-      if (ev.t < offset - 0.02) return;
-
-      var abs = sat + ev.t;
-      if (abs < ac.currentTime) return;
-
-      var n = inst.play(ev.midi, abs, {
-        duration: ev.dur,
-        gain: 1.0
-      });
-
-      if (n) sc.push(n);
-    });
-  }
-
-  async function togglePlayPause() {
-    if (!inst || !ac) return;
-
-    if (run) {
-      run = false;
-      pat = ac.currentTime - sat;
-      stopScheduled();
-      clearCursorTimer();
-      return;
-    }
-
-    run = true;
-    stopScheduled();
-    await scheduleFrom(pat);
-    startCursorFollow(pat);
-    pat = 0;
-  }
-
-  function stopPlayback() {
-    run = false;
-    pat = 0;
-    stopScheduled();
-    clearCursorTimer();
-    resetCursorToStart();
-  }
-
-  async function init() {
-    await osmd.load(RAW);
-    osmd.render();
-    resetCursorToStart();
-    extractCursorSteps();
-
-    document.getElementById('instSel').value = "${safeInstrument}";
-    await loadInstrument(getSelectedInstrument());
-    updateReverb();
-  }
-
-  document.getElementById('instSel').addEventListener('change', async function () {
-    var wasRunning = run;
-    var currentPos = ac && run ? (ac.currentTime - sat) : pat;
-
-    run = false;
-    pat = Math.max(0, currentPos);
-    clearCursorTimer();
-    stopScheduled();
-
-    await loadInstrument(getSelectedInstrument());
-
-    if (wasRunning) {
-      run = true;
-      await scheduleFrom(pat);
-      startCursorFollow(pat);
-      pat = 0;
     } else {
-      moveCursorToTime(pat);
+      // Sem ligadura: usar apenas a duração desta nota
+      totalReal = getRealLength(note);
     }
-  });
 
-  document.getElementById('reverbAmt').addEventListener('input', function () {
-    updateReverb();
-  });
-
-  document.getElementById('bpm').addEventListener('change', function () {
-    if (!run) {
-      extractCursorSteps();
-      moveCursorToTime(pat);
-    }
-  });
-
-  var scoreEl = document.getElementById('score');
-
-  scoreEl.addEventListener('click', function () {
-    clearTimeout(scoreEl._clickTimer);
-    scoreEl._clickTimer = setTimeout(function () {
-      togglePlayPause();
-    }, 220);
-  });
-
-  scoreEl.addEventListener('dblclick', function () {
-    clearTimeout(scoreEl._clickTimer);
-    stopPlayback();
-  });
-
-  init();
-})();
-<\/script>
-</body>
-</html>`;
+    return totalReal * 4 * beatLen * 0.98;
   }
 
-  document.getElementById('fi').addEventListener('change', async function (e) {
-    var f = e.target.files[0];
-    if (!f) return;
+  function getRealLength(note) {
+    if (!note || !note.Length) return 0;
+    if (typeof note.Length.realValue !== 'undefined') return note.Length.realValue;
+    if (typeof note.Length.RealValue !== 'undefined') return note.Length.RealValue;
+    return 0;
+  }
 
+  function getMidiPitch(note) {
+    if (typeof note.halfTone !== 'undefined' && note.halfTone !== null) return note.halfTone + 12;
+    if (note.Pitch && typeof note.Pitch.getHalfTone === 'function') return note.Pitch.getHalfTone() + 12;
+    return null;
+  }
+  /* ─────────────────────────────────────────────────────────────────────── */
+
+  function extractEvents() {
+    evs = [];
+    var bpm = +document.getElementById('bpm').value || 100;
+    var beatLen = 60 / bpm;
+    osmd.cursor.reset();
+    var iterator = osmd.cursor.Iterator;
+
+    while (!iterator.EndReached) {
+      var voices = iterator.CurrentVoiceEntries || [];
+      var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
+      var real = timeObj ? (typeof timeObj.realValue !== 'undefined' ? timeObj.realValue : (timeObj.RealValue || 0)) : 0;
+      var tSec = real * 4 * beatLen;
+
+      for (var i = 0; i < voices.length; i++) {
+        var ve = voices[i];
+        if (!ve || !ve.Notes) continue;
+
+        for (var j = 0; j < ve.Notes.length; j++) {
+          var note = ve.Notes[j];
+          if (!note || note.isRest()) continue;
+
+          // Ignorar notas que são continuação de ligadura (não devem re-soar)
+          if (isTieContinuation(note)) continue;
+
+          var midi = getMidiPitch(note);
+          if (midi === null) continue;
+
+          var dur = getTiedDuration(note, beatLen);
+          evs.push({ t: tSec, midi: midi, dur: dur });
+        }
+      }
+      iterator.moveToNext();
+    }
+    evs.sort(function(a, b) { return a.t - b.t; });
+  }
+
+  function scheduleMetronome(offset) {
+    if (!document.getElementById('metCheck').checked) return;
+    var bpm = +document.getElementById('bpm').value || 100, beatLen = 60 / bpm;
+    var firstBeat = Math.ceil(offset / beatLen) * beatLen;
+    for (var t = firstBeat; t < firstBeat + 300; t += beatLen) {
+      var abs = sat + t; if (abs < ac.currentTime) continue;
+      var osc = ac.createOscillator(), g = ac.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(1000, abs);
+      g.gain.setValueAtTime(0, abs); g.gain.linearRampToValueAtTime(0.1, abs + 0.005); g.gain.linearRampToValueAtTime(0, abs + 0.05);
+      osc.connect(g); g.connect(masterGain); osc.start(abs); osc.stop(abs + 0.1); sc.push(osc);
+    }
+  }
+
+  async function scheduleFrom(offset) {
+    extractEvents();
+    if (!evs.length) { setStatus('Nenhuma nota encontrada.', 'err'); return; }
+    if (ac.state === 'suspended') await ac.resume();
+    updateReverb();
+    sat = ac.currentTime + 0.1 - offset;
+    evs.forEach(function(ev) {
+      if (ev.t < offset - 0.02) return;
+      var abs = sat + ev.t; if (abs < ac.currentTime) return;
+      var n = inst.play(ev.midi, abs, { duration: ev.dur });
+      if (n) sc.push(n);
+    });
+    scheduleMetronome(offset);
+  }
+
+  document.getElementById('fi').onchange = async function (e) {
+    var f = e.target.files[0]; if (!f) return;
     document.getElementById('fname').textContent = f.name;
-    setStatus('Carregando partitura...', 'info');
-
+    setStatus('A carregar partitura...', 'info');
     try {
       rawXml = await f.text();
-
-      await osmd.load(rawXml);
-      osmd.render();
-      resetCursorToStart();
-      extractCursorSteps();
-
-      if (ac && ac.state !== 'closed') {
-        try { await ac.close(); } catch (_) {}
-      }
-
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      setupFx();
+      await osmd.load(rawXml); osmd.render();
+      resetCursorToStart(); extractCursorSteps();
+      if (ac && ac.state !== 'closed') try { await ac.close(); } catch (_) {}
+      ac = new AudioContext(); setupFx();
       await loadInstrument(getSelectedInstrument());
       updateReverb();
-
-      sat = 0;
-      pat = 0;
-      run = false;
-      evs = [];
-      sc = [];
-
-      setStatus('Pronto! Clique em Play.', 'ok');
-      ['bp', 'bpa', 'bs', 'bx', 'instSel', 'reverbAmt'].forEach(function (id) {
-        document.getElementById(id).disabled = false;
-      });
-    } catch (err) {
-      console.error(err);
-      setStatus('Erro: ' + err.message, 'err');
-    }
-  });
-
-  document.getElementById('instSel').addEventListener('change', async function () {
-    if (!rawXml) return;
-
-    var wasRunning = run;
-    var currentPos = 0;
-
-    try {
-      if (ac && run) {
-        currentPos = ac.currentTime - sat;
-      } else {
-        currentPos = pat;
-      }
-
-      run = false;
-      pat = Math.max(0, currentPos);
-      clearCursorTimer();
-      stopScheduled();
-
-      await loadInstrument(getSelectedInstrument());
-
-      if (wasRunning) {
-        run = true;
-        await scheduleFrom(pat);
-        startCursorFollow(pat);
-        pat = 0;
-        setStatus('Tocando...', 'ok');
-      } else {
-        moveCursorToTime(pat);
-      }
-    } catch (err) {
-      console.error(err);
-      setStatus('Erro ao trocar timbre: ' + err.message, 'err');
-    }
-  });
-
-  document.getElementById('reverbAmt').addEventListener('input', function () {
-    updateReverb();
-  });
-
-  document.getElementById('bpm').addEventListener('change', function () {
-    if (!run && rawXml) {
-      extractCursorSteps();
-      moveCursorToTime(pat);
-    }
-  });
+      sat = 0; pat = 0; run = false; evs = []; sc = [];
+      setStatus('Pronto!', 'ok');
+      ['bp', 'bpa', 'bs', 'bx', 'instSel', 'reverbAmt'].forEach(function(id) { document.getElementById(id).disabled = false; });
+    } catch (err) { setStatus('Erro: ' + err.message, 'err'); }
+  };
 
   document.getElementById('bp').onclick = async function () {
-    if (run || !inst || !ac) return;
-    run = true;
-    stopScheduled();
-    await scheduleFrom(pat);
-    startCursorFollow(pat);
-    pat = 0;
-    setStatus('Tocando...', 'ok');
+    if (run || !inst || !ac) return; run = true; stopScheduled();
+    await scheduleFrom(pat); startCursorFollow(pat); pat = 0; setStatus('A tocar...', 'ok');
   };
 
   document.getElementById('bpa').onclick = function () {
-    if (!run || !ac) return;
-    run = false;
-    pat = ac.currentTime - sat;
-    stopScheduled();
-    clearCursorTimer();
-    setStatus('Pausado.');
+    if (!run || !ac) return; run = false; pat = ac.currentTime - sat; stopScheduled(); clearCursorTimer(); setStatus('Pausado.');
   };
 
   document.getElementById('bs').onclick = function () {
-    run = false;
-    pat = 0;
-    stopScheduled();
-    clearCursorTimer();
-    resetCursorToStart();
-    setStatus('Parado.');
+    run = false; pat = 0; stopScheduled(); clearCursorTimer(); resetCursorToStart(); setStatus('Parado.');
   };
 
   document.getElementById('bx').onclick = async function () {
-    try {
-      if (!rawXml) {
-        setStatus('Nenhuma partitura carregada para exportar.', 'err');
-        return;
-      }
-
-      var bpm = document.getElementById('bpm').value || 100;
-      var instrumentName = getSelectedInstrument();
-      var reverbAmount = getReverbAmount();
-      var html = buildExportHtml(rawXml, bpm, instrumentName, reverbAmount);
-
-      await navigator.clipboard.writeText(html);
-
-      setStatus('HTML copiado para a área de transferência!', 'ok');
-
-      var btn = document.getElementById('bx');
-      var old = btn.innerHTML;
-      btn.innerHTML = '✓ Copiado!';
-      setTimeout(function () {
-        btn.innerHTML = old;
-      }, 2000);
-    } catch (err) {
-      console.error(err);
-      setStatus('Erro ao copiar HTML: ' + err.message, 'err');
-    }
+    if (!rawXml) return;
+    var bpm = document.getElementById('bpm').value || 100, instNm = getSelectedInstrument();
+    var revAmt = getReverbAmount(), metOn = document.getElementById('metCheck').checked;
+    var html = buildExportHtml(rawXml, bpm, instNm, revAmt, metOn);
+    await navigator.clipboard.writeText(html);
+    setStatus('HTML copiado!', 'ok');
+    var btn = document.getElementById('bx'), old = btn.innerHTML;
+    btn.innerHTML = '✓ Copiado!'; setTimeout(function() { btn.innerHTML = old; }, 2000);
   };
+
+  function encodeBase64Unicode(str) { return btoa(unescape(encodeURIComponent(str))); }
+  function extractTitleFromXml(xml) {
+    var m = xml.match(/<(work|movement)-title>([\s\S]*?)<\/\1-title>/i) || xml.match(/<credit-words[^>]*>([\s\S]*?)<\/credit-words>/i);
+    return m ? m[2].replace(/<[^>]+>/g, '').trim() : '';
+  }
+
+  function buildExportHtml(xml, bpm, instrumentName, reverbAmount, metronomeChecked) {
+    var xmlB64 = encodeBase64Unicode(xml), safeBpm = String(bpm), safeInst = instrumentName, safeRev = String(reverbAmount);
+    var metAttr = metronomeChecked ? 'checked' : '';
+    // Build instrument options with the saved instrument pre-selected
+    var instOptions = [
+      ['acoustic_grand_piano','Piano normal'],['electric_piano_1','Piano elétrico Rhodes'],
+      ['drawbar_organ','Órgão'],['acoustic_guitar_nylon','Violão nylon'],
+      ['electric_bass_finger','Contrabaixo elétrico'],['marimba','Marimba'],
+      ['flute','Flauta'],['oboe','Oboé'],['clarinet','Clarineta'],
+      ['french_horn','Trompa'],['string_ensemble_1','Cordas']
+    ].map(function(o) {
+      return '<option value="' + o[0] + '"' + (o[0] === instrumentName ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"><\/script><script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"><\/script>
+<style>body{font-family:sans-serif;margin:10px;}.ctrls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:10px;background:#f1f5f9;border-radius:8px;align-items:center;font-size:12px;}#score{overflow-x:auto;cursor:pointer;}#hint{font-size:11px;color:#94a3b8;margin-bottom:6px;}</style></head>
+<body>
+<div class="ctrls">
+  <label>BPM: <input type="number" id="bpm" value="${safeBpm}" style="width:50px"></label>
+  <label>Metrônomo: <input type="checkbox" id="met" ${metAttr}></label>
+  <label>Reverb: <input type="number" id="rev" value="${safeRev}" style="width:50px"></label>
+  <label>Timbre: <select id="inst">${instOptions}<\/select></label>
+</div>
+<div id="hint">Clique na partitura para play/pause &mdash; duplo clique para parar</div>
+<div id="score"></div>
+<script>
+(function(){
+  var raw=decodeURIComponent(escape(atob("${xmlB64}")));
+  var osmd=new opensheetmusicdisplay.OpenSheetMusicDisplay('score',{backend:'svg',autoResize:true});
+  var ac,inst,evs=[],sc=[],sat=0,pat=0,run=false,curInst='';
+
+  function isTieCont(note){
+    var tie=note.NoteTie||note.Tie;
+    if(!tie)return false;
+    if(tie.StartNote&&tie.StartNote!==note)return true;
+    if(tie.Notes&&tie.Notes.length>0&&tie.Notes[0]!==note)return true;
+    return false;
+  }
+  function getRealLen(note){
+    if(!note||!note.Length)return 0;
+    return(typeof note.Length.realValue!=='undefined')?note.Length.realValue:(note.Length.RealValue||0);
+  }
+  function getTiedDur(note,beatLen){
+    var tie=note.NoteTie||note.Tie,total=0;
+    if(tie&&tie.Notes&&tie.Notes.length>0){
+      for(var i=0;i<tie.Notes.length;i++)total+=getRealLen(tie.Notes[i]);
+    }else{total=getRealLen(note);}
+    return total*4*beatLen*0.98;
+  }
+  function getMidi(note){
+    if(typeof note.halfTone!=='undefined'&&note.halfTone!==null)return note.halfTone+12;
+    if(note.Pitch&&typeof note.Pitch.getHalfTone==='function')return note.Pitch.getHalfTone()+12;
+    return null;
+  }
+  function stopAll(){sc.forEach(function(s){try{s.stop();}catch(_){}});sc=[];}
+
+  function extract(){
+    evs=[];var b=+document.getElementById('bpm').value||100,bl=60/b;
+    osmd.cursor.reset();var it=osmd.cursor.Iterator;
+    while(!it.EndReached){
+      var v=it.CurrentVoiceEntries||[];
+      var to=it.currentTimeStamp||it.CurrentTimeStamp;
+      var rv=to?(typeof to.realValue!=='undefined'?to.realValue:(to.RealValue||0)):0;
+      var t=rv*4*bl;
+      v.forEach(function(ve){
+        if(!ve||!ve.Notes)return;
+        ve.Notes.forEach(function(n){
+          if(!n||n.isRest()||isTieCont(n))return;
+          var m=getMidi(n);if(m===null)return;
+          evs.push({t:t,m:m,d:getTiedDur(n,bl)});
+        });
+      });
+      it.moveToNext();
+    }
+  }
+  async function ensureInst(){
+    var sel=document.getElementById('inst').value;
+    if(!ac)ac=new AudioContext();
+    if(ac.state==='suspended')await ac.resume();
+    if(!inst||curInst!==sel){
+      inst=await Soundfont.instrument(ac,sel);
+      curInst=sel;
+    }
+  }
+  async function play(off){
+    await ensureInst();
+    extract();
+    sat=ac.currentTime+0.1-off;
+    evs.forEach(function(e){if(e.t>=off-0.02)sc.push(inst.play(e.m,sat+e.t,{duration:e.d}));});
+    if(document.getElementById('met').checked){
+      var bl=60/(+document.getElementById('bpm').value||100);
+      for(var t=Math.ceil(off/bl)*bl;t<off+300;t+=bl){
+        var o=ac.createOscillator(),g=ac.createGain();
+        o.frequency.setValueAtTime(1000,sat+t);g.gain.setValueAtTime(0,sat+t);
+        g.gain.linearRampToValueAtTime(0.1,sat+t+0.005);g.gain.linearRampToValueAtTime(0,sat+t+0.05);
+        o.connect(g);g.connect(ac.destination);o.start(sat+t);o.stop(sat+t+0.1);sc.push(o);
+      }
+    }
+  }
+
+  var clickTimer=null;
+  function handleClick(){
+    if(clickTimer){
+      // double click → stop
+      clearTimeout(clickTimer);clickTimer=null;
+      run=false;pat=0;stopAll();
+      try{osmd.cursor.hide();osmd.cursor.reset();osmd.cursor.show();}catch(_){}
+      return;
+    }
+    clickTimer=setTimeout(async function(){
+      clickTimer=null;
+      if(run){
+        // pause
+        run=false;pat=ac.currentTime-sat;stopAll();
+      }else{
+        // play
+        stopAll();run=true;await play(pat);pat=0;
+      }
+    },250);
+  }
+
+  osmd.load(raw).then(function(){
+    osmd.render();
+    document.getElementById('score').onclick=handleClick;
+  });
+})();
+<\/script></body></html>`;
+  }
 })();
 </script>
 </body>
