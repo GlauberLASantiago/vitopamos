@@ -483,18 +483,146 @@
                 <div class="inst-wrap">
                     <label for="instSel">Timbre</label>
                     <select id="instSel">
-                        <option value="acoustic_grand_piano">Piano normal</option>
-                        <option value="electric_piano_1">Piano elétrico Rhodes</option>
-                        <option value="drawbar_organ">Órgão</option>
-                        <option value="acoustic_guitar_nylon">Violão nylon</option>
-                        <option value="electric_bass_finger">Contrabaixo elétrico</option>
-                        <option value="marimba">Marimba</option>
-                        <option value="recorder">Flauta doce</option>
-                        <option value="flute">Flauta transversal</option>
-                        <option value="oboe">Oboé</option>
-                        <option value="clarinet">Clarineta</option>
-                        <option value="french_horn">Trompa</option>
-                        <option value="string_ensemble_1">Cordas</option>
+                        <optgroup label="Piano">
+                            <option value="acoustic_grand_piano" selected>Piano de cauda</option>
+                            <option value="bright_acoustic_piano">Piano brilhante</option>
+                            <option value="electric_grand_piano">Piano elÃ©trico de cauda</option>
+                            <option value="honkytonk_piano">Piano honky-tonk</option>
+                            <option value="electric_piano_1">Piano elÃ©trico Rhodes</option>
+                            <option value="electric_piano_2">Piano elÃ©trico FM</option>
+                            <option value="harpsichord">Cravo</option>
+                            <option value="clavinet">Clavinet</option>
+                        </optgroup>
+                        <optgroup label="Percussao Cromatica">
+                            <option value="celesta">Celesta</option>
+                            <option value="glockenspiel">Glockenspiel</option>
+                            <option value="music_box">Caixinha de musica</option>
+                            <option value="vibraphone">Vibrafone</option>
+                            <option value="marimba">Marimba</option>
+                            <option value="xylophone">Xilofone</option>
+                            <option value="tubular_bells">Sinos tubulares</option>
+                            <option value="dulcimer">Dulcimer</option>
+                        </optgroup>
+                        <optgroup label="Orgao">
+                            <option value="drawbar_organ">Orgao de registros</option>
+                            <option value="percussive_organ">Orgao percussivo</option>
+                            <option value="rock_organ">Orgao rock</option>
+                            <option value="church_organ">Orgao de igreja</option>
+                            <option value="reed_organ">Orgao de palheta</option>
+                            <option value="accordion">Acordeom</option>
+                            <option value="harmonica">Gaita</option>
+                            <option value="tango_accordion">Acordeom de tango</option>
+                        </optgroup>
+                        <optgroup label="Violao / Guitarra">
+                            <option value="acoustic_guitar_nylon">Violao nylon</option>
+                            <option value="acoustic_guitar_steel">Violao aco</option>
+                            <option value="electric_guitar_jazz">Guitarra jazz</option>
+                            <option value="electric_guitar_clean">Guitarra clean</option>
+                            <option value="electric_guitar_muted">Guitarra abafada</option>
+                            <option value="overdriven_guitar">Guitarra overdrive</option>
+                            <option value="distortion_guitar">Guitarra distorcao</option>
+                            <option value="guitar_harmonics">Guitarra flageolets</option>
+                        </optgroup>
+                        <optgroup label="Baixo">
+                            <option value="acoustic_bass">Contrabaixo acustico</option>
+                            <option value="electric_bass_finger">Contrabaixo eletrico</option>
+                            <option value="electric_bass_pick">Contrabaixo c/ palheta</option>
+                            <option value="fretless_bass">Contrabaixo fretless</option>
+                            <option value="slap_bass_1">Slap bass 1</option>
+                            <option value="slap_bass_2">Slap bass 2</option>
+                            <option value="synth_bass_1">Synth bass 1</option>
+                            <option value="synth_bass_2">Synth bass 2</option>
+                        </optgroup>
+                        <optgroup label="Cordas">
+                            <option value="violin">Violino</option>
+                            <option value="viola">Viola</option>
+                            <option value="cello">Violoncelo</option>
+                            <option value="contrabass">Contrabaixo orquestral</option>
+                            <option value="tremolo_strings">Cordas tremolo</option>
+                            <option value="pizzicato_strings">Cordas pizzicato</option>
+                            <option value="orchestral_harp">Harpa</option>
+                            <option value="timpani">Timpanos</option>
+                        </optgroup>
+                        <optgroup label="Ensemble">
+                            <option value="string_ensemble_1">Cordas ensemble 1</option>
+                            <option value="string_ensemble_2">Cordas ensemble 2</option>
+                            <option value="synthstrings_1">Synth cordas 1</option>
+                            <option value="synthstrings_2">Synth cordas 2</option>
+                            <option value="choir_aahs">Coro (Aahs)</option>
+                            <option value="voice_oohs">Vozes (Oohs)</option>
+                            <option value="synth_voice">Voz sintetizada</option>
+                            <option value="orchestra_hit">Golpe orquestral</option>
+                        </optgroup>
+                        <optgroup label="Metais">
+                            <option value="trumpet">Trompete</option>
+                            <option value="trombone">Trombone</option>
+                            <option value="tuba">Tuba</option>
+                            <option value="muted_trumpet">Trompete c/ surdina</option>
+                            <option value="french_horn">Trompa</option>
+                            <option value="brass_section">Naipe de metais</option>
+                            <option value="synthbrass_1">Synth metais 1</option>
+                            <option value="synthbrass_2">Synth metais 2</option>
+                        </optgroup>
+                        <optgroup label="Palheta">
+                            <option value="soprano_sax">Sax soprano</option>
+                            <option value="alto_sax">Sax alto</option>
+                            <option value="tenor_sax">Sax tenor</option>
+                            <option value="baritone_sax">Sax baritono</option>
+                            <option value="oboe">Oboe</option>
+                            <option value="english_horn">Corno ingles</option>
+                            <option value="bassoon">Fagote</option>
+                            <option value="clarinet">Clarineta</option>
+                        </optgroup>
+                        <optgroup label="Sopros">
+                            <option value="piccolo">Flautim</option>
+                            <option value="flute">Flauta transversal</option>
+                            <option value="recorder">Flauta doce</option>
+                            <option value="pan_flute">Flauta de Pa</option>
+                            <option value="blown_bottle">Sopro em garrafa</option>
+                            <option value="shakuhachi">Shakuhachi</option>
+                            <option value="whistle">Apito</option>
+                            <option value="ocarina">Ocarina</option>
+                        </optgroup>
+                        <optgroup label="Synth Lead">
+                            <option value="lead_1_square">Lead quadrado</option>
+                            <option value="lead_2_sawtooth">Lead dente-de-serra</option>
+                            <option value="lead_3_calliope">Lead caliope</option>
+                            <option value="lead_4_chiff">Lead chiff</option>
+                            <option value="lead_5_charang">Lead charang</option>
+                            <option value="lead_6_voice">Lead voz</option>
+                            <option value="lead_7_fifths">Lead quintas</option>
+                            <option value="lead_8_bass_lead">Lead bass+lead</option>
+                        </optgroup>
+                        <optgroup label="Synth Pad">
+                            <option value="pad_1_new_age">Pad new age</option>
+                            <option value="pad_2_warm">Pad warm</option>
+                            <option value="pad_3_polysynth">Pad polysynth</option>
+                            <option value="pad_4_choir">Pad choir</option>
+                            <option value="pad_5_bowed">Pad bowed</option>
+                            <option value="pad_6_metallic">Pad metalico</option>
+                            <option value="pad_7_halo">Pad halo</option>
+                            <option value="pad_8_sweep">Pad sweep</option>
+                        </optgroup>
+                        <optgroup label="Etnico">
+                            <option value="sitar">Sitar</option>
+                            <option value="banjo">Banjo</option>
+                            <option value="shamisen">Shamisen</option>
+                            <option value="koto">Koto</option>
+                            <option value="kalimba">Kalimba</option>
+                            <option value="bagpipe">Gaita de fole</option>
+                            <option value="fiddle">Fiddle</option>
+                            <option value="shanai">Shanai</option>
+                        </optgroup>
+                        <optgroup label="Percussao">
+                            <option value="tinkle_bell">Sino tintilante</option>
+                            <option value="agogo">Agogo</option>
+                            <option value="steel_drums">Steel drums</option>
+                            <option value="woodblock">Woodblock</option>
+                            <option value="taiko_drum">Taiko</option>
+                            <option value="melodic_tom">Tom melodico</option>
+                            <option value="synth_drum">Bumbo sintetizado</option>
+                            <option value="reverse_cymbal">Prato reverso</option>
+                        </optgroup>
                     </select>
                 </div>
 
@@ -587,18 +715,54 @@
     <script>
         (function () {
             var INSTRUMENTS = {
-                acoustic_grand_piano: 'Piano normal',
-                electric_piano_1: 'Piano elétrico Rhodes',
-                drawbar_organ: 'Órgão',
-                acoustic_guitar_nylon: 'Violão nylon',
-                electric_bass_finger: 'Contrabaixo elétrico',
-                marimba: 'Marimba',
-                recorder: 'Flauta doce',
-                flute: 'Flauta transversal',
-                oboe: 'Oboé',
-                clarinet: 'Clarineta',
-                french_horn: 'Trompa',
-                string_ensemble_1: 'Cordas'
+                acoustic_grand_piano:'Piano de cauda', bright_acoustic_piano:'Piano brilhante',
+                electric_grand_piano:'Piano elÃ©trico de cauda', honkytonk_piano:'Piano honky-tonk',
+                electric_piano_1:'Piano elÃ©trico Rhodes', electric_piano_2:'Piano elÃ©trico FM',
+                harpsichord:'Cravo', clavinet:'Clavinet',
+                celesta:'Celesta', glockenspiel:'Glockenspiel', music_box:'Caixinha de mÃºsica',
+                vibraphone:'Vibrafone', marimba:'Marimba', xylophone:'Xilofone',
+                tubular_bells:'Sinos tubulares', dulcimer:'Dulcimer',
+                drawbar_organ:'Ã“rgÃ£o de registros', percussive_organ:'Ã“rgÃ£o percussivo',
+                rock_organ:'Ã“rgÃ£o rock', church_organ:'Ã“rgÃ£o de igreja',
+                reed_organ:'Ã“rgÃ£o de palheta', accordion:'Acordeom',
+                harmonica:'Gaita', tango_accordion:'Acordeom de tango',
+                acoustic_guitar_nylon:'ViolÃ£o nylon', acoustic_guitar_steel:'ViolÃ£o aÃ§o',
+                electric_guitar_jazz:'Guitarra jazz', electric_guitar_clean:'Guitarra clean',
+                electric_guitar_muted:'Guitarra abafada', overdriven_guitar:'Guitarra overdrive',
+                distortion_guitar:'Guitarra distorÃ§Ã£o', guitar_harmonics:'Guitarra flageolets',
+                acoustic_bass:'Contrabaixo acÃºstico', electric_bass_finger:'Contrabaixo elÃ©trico',
+                electric_bass_pick:'Contrabaixo c/ palheta', fretless_bass:'Contrabaixo fretless',
+                slap_bass_1:'Slap bass 1', slap_bass_2:'Slap bass 2',
+                synth_bass_1:'Synth bass 1', synth_bass_2:'Synth bass 2',
+                violin:'Violino', viola:'Viola', cello:'Violoncelo',
+                contrabass:'Contrabaixo orquestral', tremolo_strings:'Cordas tremolo',
+                pizzicato_strings:'Cordas pizzicato', orchestral_harp:'Harpa', timpani:'TÃ­mpanos',
+                string_ensemble_1:'Cordas ensemble 1', string_ensemble_2:'Cordas ensemble 2',
+                synthstrings_1:'Synth cordas 1', synthstrings_2:'Synth cordas 2',
+                choir_aahs:'Coro (Aahs)', voice_oohs:'Vozes (Oohs)',
+                synth_voice:'Voz sintetizada', orchestra_hit:'Golpe orquestral',
+                trumpet:'Trompete', trombone:'Trombone', tuba:'Tuba',
+                muted_trumpet:'Trompete c/ surdina', french_horn:'Trompa',
+                brass_section:'Naipe de metais', synthbrass_1:'Synth metais 1', synthbrass_2:'Synth metais 2',
+                soprano_sax:'Sax soprano', alto_sax:'Sax alto',
+                tenor_sax:'Sax tenor', baritone_sax:'Sax barÃ­tono',
+                oboe:'OboÃ©', english_horn:'Corno inglÃªs', bassoon:'Fagote', clarinet:'Clarineta',
+                piccolo:'Flautim', flute:'Flauta transversal', recorder:'Flauta doce',
+                pan_flute:'Flauta de PÃ£', blown_bottle:'Sopro em garrafa',
+                shakuhachi:'Shakuhachi', whistle:'Apito', ocarina:'Ocarina',
+                lead_1_square:'Lead quadrado', lead_2_sawtooth:'Lead dente-de-serra',
+                lead_3_calliope:'Lead calÃ­ope', lead_4_chiff:'Lead chiff',
+                lead_5_charang:'Lead charang', lead_6_voice:'Lead voz',
+                lead_7_fifths:'Lead quintas', lead_8_bass_lead:'Lead bass+lead',
+                pad_1_new_age:'Pad new age', pad_2_warm:'Pad warm',
+                pad_3_polysynth:'Pad polysynth', pad_4_choir:'Pad choir',
+                pad_5_bowed:'Pad bowed', pad_6_metallic:'Pad metÃ¡lico',
+                pad_7_halo:'Pad halo', pad_8_sweep:'Pad sweep',
+                sitar:'Sitar', banjo:'Banjo', shamisen:'Shamisen', koto:'Koto',
+                kalimba:'Kalimba', bagpipe:'Gaita de fole', fiddle:'Fiddle', shanai:'Shanai',
+                tinkle_bell:'Sino tintilante', agogo:'AgogÃ´', steel_drums:'Steel drums',
+                woodblock:'Woodblock', taiko_drum:'Taiko', melodic_tom:'Tom melÃ³dico',
+                synth_drum:'Bumbo sintetizado', reverse_cymbal:'Prato reverso'
             };
 
             var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
@@ -1328,21 +1492,25 @@
                 var safeMpsMode = JSON.stringify(mps.mode);
                 var safeMpsCount = String(mps.count);
 
-                var instOptions = [
-                    ['acoustic_grand_piano', 'Piano normal'],
-                    ['electric_piano_1', 'Piano elétrico Rhodes'],
-                    ['drawbar_organ', 'Órgão'],
-                    ['acoustic_guitar_nylon', 'Violão nylon'],
-                    ['electric_bass_finger', 'Contrabaixo elétrico'],
-                    ['marimba', 'Marimba'],
-                    ['recorder', 'Flauta doce'],
-                    ['flute', 'Flauta transversal'],
-                    ['oboe', 'Oboé'],
-                    ['clarinet', 'Clarineta'],
-                    ['french_horn', 'Trompa'],
-                    ['string_ensemble_1', 'Cordas']
-                ].map(function (o) {
-                    return '<option value="' + o[0] + '"' + (o[0] === instrumentName ? ' selected' : '') + '>' + o[1] + '</option>';
+                var GM_GROUPS = [
+                  ['Piano',[['acoustic_grand_piano','Piano de cauda'],['bright_acoustic_piano','Piano brilhante'],['electric_grand_piano','Piano elet. de cauda'],['honkytonk_piano','Piano honky-tonk'],['electric_piano_1','Piano elet. Rhodes'],['electric_piano_2','Piano elet. FM'],['harpsichord','Cravo'],['clavinet','Clavinet']]],
+                  ['Perc. Cromatica',[['celesta','Celesta'],['glockenspiel','Glockenspiel'],['music_box','Caixinha de musica'],['vibraphone','Vibrafone'],['marimba','Marimba'],['xylophone','Xilofone'],['tubular_bells','Sinos tubulares'],['dulcimer','Dulcimer']]],
+                  ['Orgao',[['drawbar_organ','Orgao de registros'],['percussive_organ','Orgao percussivo'],['rock_organ','Orgao rock'],['church_organ','Orgao de igreja'],['reed_organ','Orgao de palheta'],['accordion','Acordeom'],['harmonica','Gaita'],['tango_accordion','Acordeom de tango']]],
+                  ['Violao / Guitarra',[['acoustic_guitar_nylon','Violao nylon'],['acoustic_guitar_steel','Violao aco'],['electric_guitar_jazz','Guitarra jazz'],['electric_guitar_clean','Guitarra clean'],['electric_guitar_muted','Guitarra abafada'],['overdriven_guitar','Guitarra overdrive'],['distortion_guitar','Guitarra distorcao'],['guitar_harmonics','Guitarra flageolets']]],
+                  ['Baixo',[['acoustic_bass','Contrabaixo acustico'],['electric_bass_finger','Contrabaixo eletrico'],['electric_bass_pick','Contrabaixo c/ palheta'],['fretless_bass','Contrabaixo fretless'],['slap_bass_1','Slap bass 1'],['slap_bass_2','Slap bass 2'],['synth_bass_1','Synth bass 1'],['synth_bass_2','Synth bass 2']]],
+                  ['Cordas',[['violin','Violino'],['viola','Viola'],['cello','Violoncelo'],['contrabass','Contrabaixo orquestral'],['tremolo_strings','Cordas tremolo'],['pizzicato_strings','Cordas pizzicato'],['orchestral_harp','Harpa'],['timpani','Timpanos']]],
+                  ['Ensemble',[['string_ensemble_1','Cordas ensemble 1'],['string_ensemble_2','Cordas ensemble 2'],['synthstrings_1','Synth cordas 1'],['synthstrings_2','Synth cordas 2'],['choir_aahs','Coro (Aahs)'],['voice_oohs','Vozes (Oohs)'],['synth_voice','Voz sintetizada'],['orchestra_hit','Golpe orquestral']]],
+                  ['Metais',[['trumpet','Trompete'],['trombone','Trombone'],['tuba','Tuba'],['muted_trumpet','Trompete c/ surdina'],['french_horn','Trompa'],['brass_section','Naipe de metais'],['synthbrass_1','Synth metais 1'],['synthbrass_2','Synth metais 2']]],
+                  ['Palheta',[['soprano_sax','Sax soprano'],['alto_sax','Sax alto'],['tenor_sax','Sax tenor'],['baritone_sax','Sax baritono'],['oboe','Oboe'],['english_horn','Corno ingles'],['bassoon','Fagote'],['clarinet','Clarineta']]],
+                  ['Sopros',[['piccolo','Flautim'],['flute','Flauta transversal'],['recorder','Flauta doce'],['pan_flute','Flauta de Pa'],['blown_bottle','Sopro em garrafa'],['shakuhachi','Shakuhachi'],['whistle','Apito'],['ocarina','Ocarina']]],
+                  ['Synth Lead',[['lead_1_square','Lead quadrado'],['lead_2_sawtooth','Lead dente-de-serra'],['lead_3_calliope','Lead caliope'],['lead_4_chiff','Lead chiff'],['lead_5_charang','Lead charang'],['lead_6_voice','Lead voz'],['lead_7_fifths','Lead quintas'],['lead_8_bass_lead','Lead bass+lead']]],
+                  ['Synth Pad',[['pad_1_new_age','Pad new age'],['pad_2_warm','Pad warm'],['pad_3_polysynth','Pad polysynth'],['pad_4_choir','Pad choir'],['pad_5_bowed','Pad bowed'],['pad_6_metallic','Pad metalico'],['pad_7_halo','Pad halo'],['pad_8_sweep','Pad sweep']]],
+                  ['Etnico',[['sitar','Sitar'],['banjo','Banjo'],['shamisen','Shamisen'],['koto','Koto'],['kalimba','Kalimba'],['bagpipe','Gaita de fole'],['fiddle','Fiddle'],['shanai','Shanai']]],
+                  ['Percussao',[['tinkle_bell','Sino tintilante'],['agogo','Agogo'],['steel_drums','Steel drums'],['woodblock','Woodblock'],['taiko_drum','Taiko'],['melodic_tom','Tom melodico'],['synth_drum','Bumbo sintetizado'],['reverse_cymbal','Prato reverso']]]
+                ];
+                var instOptions = GM_GROUPS.map(function(g){
+                    var opts = g[1].map(function(o){ return '<option value="'+o[0]+'"'+(o[0]===instrumentName?' selected':'')+'>'+o[1]+'<\/option>'; }).join('');
+                    return '<optgroup label="'+g[0]+'">'+opts+'<\/optgroup>';
                 }).join('');
 
                 var C = 'display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #d1d5db;border-radius:5px;padding:3px 10px;white-space:nowrap;';
