@@ -206,7 +206,8 @@
         .bpm-wrap,
         .inst-wrap,
         .rev-wrap,
-        .met-wrap {
+        .met-wrap,
+        .mps-wrap {
             display: flex;
             align-items: center;
             gap: 7px;
@@ -219,12 +220,46 @@
         .bpm-wrap label,
         .inst-wrap label,
         .rev-wrap label,
-        .met-wrap label {
+        .met-wrap label,
+        .mps-wrap label {
             font-size: 11px;
             font-weight: 600;
             color: #64748b;
             text-transform: uppercase;
             letter-spacing: .6px;
+        }
+
+        .mps-wrap select {
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .mps-wrap select:focus {
+            outline: none;
+        }
+
+        .mps-wrap input[type="number"] {
+            width: 42px;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .mps-wrap input[type="number"]:focus {
+            outline: none;
+        }
+
+        .mps-wrap input[type="number"]:disabled {
+            opacity: .35;
         }
 
         .bpm-wrap input,
@@ -496,6 +531,16 @@
                     </select>
                 </div>
 
+                <div class="mps-wrap">
+                    <label for="layoutMode">Layout</label>
+                    <select id="layoutMode" title="Modo de layout dos sistemas">
+                        <option value="auto" selected>Automático</option>
+                        <option value="xml">Do arquivo</option>
+                        <option value="fixed">Fixar</option>
+                    </select>
+                    <input type="number" id="mpsCount" value="4" min="1" max="32" title="Compassos por sistema">
+                </div>
+
                 <button class="btn btn-export" id="bx" disabled>&#128203; Copiar HTML</button>
                 <button class="btn btn-download" id="bdl" disabled>&#11015; Baixar HTML</button>
             </div>
@@ -562,6 +607,40 @@
                 drawTitle: true,
                 followCursor: false
             });
+
+            function applyLayoutMode() {
+                var mode = document.getElementById('layoutMode').value;
+                var count = parseInt(document.getElementById('mpsCount').value, 10) || 4;
+                document.getElementById('mpsCount').disabled = (mode !== 'fixed');
+                if (osmd && osmd.EngravingRules) {
+                    /* zera as duas regras antes de aplicar */
+                    osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = 0;
+                    osmd.EngravingRules.NewSystemAtXMLNewSystemAttribute = false;
+                    osmd.EngravingRules.NewPageAtXMLNewPageAttribute = false;
+
+                    if (mode === 'fixed') {
+                        osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = count;
+                    } else if (mode === 'xml') {
+                        osmd.EngravingRules.NewSystemAtXMLNewSystemAttribute = true;
+                        osmd.EngravingRules.NewPageAtXMLNewPageAttribute = true;
+                    }
+                }
+            }
+
+            document.getElementById('layoutMode').addEventListener('change', function () {
+                applyLayoutMode();
+                if (rawXml) osmd.render();
+            });
+
+            document.getElementById('mpsCount').addEventListener('change', function () {
+                if (document.getElementById('layoutMode').value === 'fixed' && rawXml) {
+                    applyLayoutMode();
+                    osmd.render();
+                }
+            });
+
+            /* estado inicial: campo de N compassos desabilitado (modo automático) */
+            document.getElementById('mpsCount').disabled = true;
 
             var inst = null, evs = [], ac = null, sc = [], sat = 0, pat = 0, run = false, rawXml = '';
             var cursorTimer = null, cursorSteps = [], cursorIndex = 0;
@@ -653,7 +732,7 @@
                 wetGain = ac.createGain();
                 convolver = ac.createConvolver();
 
-                convolver.buffer = createImpulseResponse(ac, 2.8, 3.2);
+                convolver.buffer = createImpulseResponse(ac, 1.5, 2.5);
 
                 /* masterização: compressor limita distorção antes da saída */
                 var compressor = ac.createDynamicsCompressor();
@@ -1002,6 +1081,7 @@
                     document.getElementById('metaPanel').classList.add('visible');
 
                     await osmd.load(rawXml);
+                    applyLayoutMode();
                     osmd.render();
 
                     resetCursorToStart();
@@ -1053,6 +1133,7 @@
 
                 setStatus('Aplicando metadados...', 'info');
                 await osmd.load(rawXml);
+                applyLayoutMode();
                 osmd.render();
                 resetCursorToStart();
                 extractCursorSteps();
@@ -1229,6 +1310,12 @@
                 return m ? m[2].replace(/<[^>]+>/g, '').trim() : '';
             }
 
+            function getMpsState() {
+                var mode = document.getElementById('layoutMode').value;
+                var count = parseInt(document.getElementById('mpsCount').value, 10) || 4;
+                return { mode: mode, count: count };
+            }
+
             function buildExportHtml(xml, bpm, instrumentName, reverbAmount, metronomeChecked, octaveShift, transposeShift) {
                 var xmlB64 = encodeBase64Unicode(xml);
                 var safeBpm = String(bpm);
@@ -1237,6 +1324,9 @@
                 var metAttr = metronomeChecked ? 'checked' : '';
                 var safeOct = String(parseInt(octaveShift, 10) || 0);
                 var safeTransp = String(parseInt(transposeShift, 10) || 0);
+                var mps = getMpsState();
+                var safeMpsMode = JSON.stringify(mps.mode);
+                var safeMpsCount = String(mps.count);
 
                 var instOptions = [
                     ['acoustic_grand_piano', 'Piano normal'],
@@ -1255,33 +1345,51 @@
                     return '<option value="' + o[0] + '"' + (o[0] === instrumentName ? ' selected' : '') + '>' + o[1] + '</option>';
                 }).join('');
 
+                var C = 'display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #d1d5db;border-radius:5px;padding:3px 10px;white-space:nowrap;';
+                var L = 'font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;font-family:system-ui,sans-serif;';
+                var I = 'border:none;background:transparent;font-size:13px;font-weight:700;color:#111827;font-family:system-ui,sans-serif;';
+                var S = 'border:none;background:transparent;font-size:12px;font-weight:600;color:#111827;font-family:system-ui,sans-serif;cursor:pointer;';
+
                 return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"><\/script>
-<style>
-body{font-family:sans-serif;margin:10px;}
-.ctrls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:10px;background:#f1f5f9;border-radius:8px;align-items:center;font-size:12px;}
-#score{overflow-x:auto;cursor:pointer;}
-#hint{font-size:11px;color:#94a3b8;margin-bottom:6px;}
-</style>
-</head>
-<body>
-<div class="ctrls">
-  <label>&nbsp;Andamento: <input type="number" id="bpm" value="${safeBpm}" style="width:50px"></label>
-  <label>&nbsp;Metrônomo: <input type="checkbox" id="met" ${metAttr}></label>
-  <label>&nbsp;Reverb: <input type="number" id="rev" value="${safeRev}" style="width:50px"></label>
-  <label>&nbsp;Timbre: <select id="inst">${instOptions}<\/select></label>
-  <label>&nbsp;Oitava: <select id="oct"><option value="0"${safeOct === '0' ? ' selected' : ''}>In loco<\/option><option value="12"${safeOct === '12' ? ' selected' : ''}>8va &#9651;<\/option><option value="-12"${safeOct === '-12' ? ' selected' : ''}>8vb &#9661;<\/option><\/select></label>
-  <label>&nbsp;Transp.: <select id="trans"><option value="6"${safeTransp==='6'?' selected':''}>+6 st<\/option><option value="5"${safeTransp==='5'?' selected':''}>+5 st<\/option><option value="4"${safeTransp==='4'?' selected':''}>+4 st<\/option><option value="3"${safeTransp==='3'?' selected':''}>+3 st<\/option><option value="2"${safeTransp==='2'?' selected':''}>+2 st<\/option><option value="1"${safeTransp==='1'?' selected':''}>+1 st<\/option><option value="0"${safeTransp==='0'?' selected':''}>Original<\/option><option value="-1"${safeTransp==='-1'?' selected':''}>&#8722;1 st<\/option><option value="-2"${safeTransp==='-2'?' selected':''}>&#8722;2 st<\/option><option value="-3"${safeTransp==='-3'?' selected':''}>&#8722;3 st<\/option><option value="-4"${safeTransp==='-4'?' selected':''}>&#8722;4 st<\/option><option value="-5"${safeTransp==='-5'?' selected':''}>&#8722;5 st<\/option><option value="-6"${safeTransp==='-6'?' selected':''}>&#8722;6 st<\/option><\/select></label>
-  <span style="font-size:0.9375rem;">&nbsp; 💡Clique simples = ▶️/⏸️ • duplo clique = ⏹️ • triplo clique = ⏮️</span></div>
-<div id="score"></div>
+<\/head>
+<body style="font-family:system-ui,sans-serif;margin:10px;">
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:8px 12px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;align-items:center;">
+  <span style="${C}"><span style="${L}">BPM</span><input type="number" id="bpm" value="${safeBpm}" style="${I}width:44px;text-align:center;"></span>
+  <span style="${C}"><span style="${L}">Metr&#244;n.</span><input type="checkbox" id="met" ${metAttr} style="width:15px;height:15px;cursor:pointer;"></span>
+  <span style="${C}"><span style="${L}">Reverb</span><input type="number" id="rev" value="${safeRev}" style="${I}width:40px;text-align:center;"></span>
+  <span style="${C}"><span style="${L}">Timbre</span><select id="inst" style="${S}">${instOptions}<\/select></span>
+  <span style="${C}"><span style="${L}">Oitava</span><select id="oct" style="${S}"><option value="0"${safeOct === '0' ? ' selected' : ''}>In loco<\/option><option value="12"${safeOct === '12' ? ' selected' : ''}>8va &#9651;<\/option><option value="-12"${safeOct === '-12' ? ' selected' : ''}>8vb &#9661;<\/option><\/select></span>
+  <span style="${C}"><span style="${L}">Transp.</span><select id="trans" style="${S}"><option value="6"${safeTransp === '6' ? ' selected' : ''}>+6 st<\/option><option value="5"${safeTransp === '5' ? ' selected' : ''}>+5 st<\/option><option value="4"${safeTransp === '4' ? ' selected' : ''}>+4 st<\/option><option value="3"${safeTransp === '3' ? ' selected' : ''}>+3 st<\/option><option value="2"${safeTransp === '2' ? ' selected' : ''}>+2 st<\/option><option value="1"${safeTransp === '1' ? ' selected' : ''}>+1 st<\/option><option value="0"${safeTransp === '0' ? ' selected' : ''}>Original<\/option><option value="-1"${safeTransp === '-1' ? ' selected' : ''}>&#8722;1 st<\/option><option value="-2"${safeTransp === '-2' ? ' selected' : ''}>&#8722;2 st<\/option><option value="-3"${safeTransp === '-3' ? ' selected' : ''}>&#8722;3 st<\/option><option value="-4"${safeTransp === '-4' ? ' selected' : ''}>&#8722;4 st<\/option><option value="-5"${safeTransp === '-5' ? ' selected' : ''}>&#8722;5 st<\/option><option value="-6"${safeTransp === '-6' ? ' selected' : ''}>&#8722;6 st<\/option><\/select></span>
+  <span style="${C}"><span style="${L}">Layout</span><select id="layoutEx" style="${S}"><option value="auto"${mps.mode === 'auto' ? ' selected' : ''}>Autom&#225;tico<\/option><option value="xml"${mps.mode === 'xml' ? ' selected' : ''}>Do arquivo<\/option><option value="fixed"${mps.mode === 'fixed' ? ' selected' : ''}>Fixar<\/option><\/select><input type="number" id="mpsCountEx" value="${safeMpsCount}" min="1" max="32" style="${I}width:36px;text-align:center;" ${mps.mode !== 'fixed' ? 'disabled' : ''}></span>
+  <span style="font-size:12px;color:#9ca3af;padding:0 4px;">&#9654;/&#9646;&#9646;&nbsp;clique &nbsp;&bull;&nbsp; &#9632;&nbsp;duplo &nbsp;&bull;&nbsp; &#9198;&nbsp;triplo</span>
+</div>
+<div id="score" style="overflow-x:auto;cursor:pointer;"></div>
 
 <script>
 (function(){
   var raw = decodeURIComponent(escape(atob("${xmlB64}")));
+
+  function applyLayout(){
+    var mode = document.getElementById('layoutEx').value;
+    var count = parseInt(document.getElementById('mpsCountEx').value, 10) || 4;
+    document.getElementById('mpsCountEx').disabled = (mode !== 'fixed');
+    if(osmd && osmd.EngravingRules){
+      osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = 0;
+      osmd.EngravingRules.NewSystemAtXMLNewSystemAttribute = false;
+      osmd.EngravingRules.NewPageAtXMLNewPageAttribute    = false;
+      if(mode === 'fixed') osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = count;
+      else if(mode === 'xml'){
+        osmd.EngravingRules.NewSystemAtXMLNewSystemAttribute = true;
+        osmd.EngravingRules.NewPageAtXMLNewPageAttribute    = true;
+      }
+    }
+  }
+
   var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
     backend:'svg',
     autoResize:true,
@@ -1466,7 +1574,7 @@ body{font-family:sans-serif;margin:10px;}
     dryGain    = ac.createGain();
     wetGain    = ac.createGain();
     convolver  = ac.createConvolver();
-    convolver.buffer = createImpulse(2.8, 3.2);
+    convolver.buffer = createImpulse(1.5, 2.5);
     /* masterização: compressor limita distorção antes da saída */
     var comp = ac.createDynamicsCompressor();
     comp.threshold.value = -18;
@@ -1656,6 +1764,18 @@ body{font-family:sans-serif;margin:10px;}
     }
   });
 
+  document.getElementById('layoutEx').addEventListener('change', function(){
+    applyLayout();
+    osmd.render();
+  });
+
+  document.getElementById('mpsCountEx').addEventListener('change', function(){
+    if(document.getElementById('layoutEx').value === 'fixed'){
+      applyLayout();
+      osmd.render();
+    }
+  });
+
   document.getElementById('score').addEventListener('click', function(ev){
     if(clickTimer) clearTimeout(clickTimer);
 
@@ -1686,6 +1806,7 @@ body{font-family:sans-serif;margin:10px;}
   });
 
   osmd.load(raw).then(function(){
+    applyLayout();
     osmd.render();
     resetCursorToStart();
     extractCursorSteps();
