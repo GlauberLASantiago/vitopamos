@@ -4,11 +4,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Player de Partitura</title>
+    <title>ViToPaMoS - Visualizador e Tocador de Partituras</title>
     <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #cbd5e1;
+            --card-bg: #f8fafc;
+            --text-main: #1e293b;
+            --text-sub: #475569;
+            --header-grad: linear-gradient(120deg, #0f0c29, #302b1a, #1a1a2e);
+            --ctrl-bg: #e2e8f0;
+            --border: #94a3b8;
+            --status-bg: #f1f5f9;
+            --status-info: #e0e7ff;
+            --status-ok: #dcfce7;
+            --status-err: #fee2e2;
+            --score-filter: invert(0);
+            --body-text: #1e293b;
+            --footer-text: #64748b;
+            --footer-link: #302b63;
+        }
+
+        .dark {
+            --bg: #0f172a;
+            --card-bg: #e2e8f0;
+            --text-main: #1e293b;
+            --text-sub: #475569;
+            --header-grad: linear-gradient(120deg, #1e1b4b, #312e81, #1e1b4b);
+            --ctrl-bg: #cbd5e1;
+            --border: #94a3b8;
+            --status-bg: #cbd5e1;
+            --status-info: #eef2ff;
+            --status-ok: #f0fdf4;
+            --status-err: #fef2f2;
+            --score-filter: invert(0);
+            --body-text: #f1f5f9;
+            --footer-text: #94a3b8;
+            --footer-link: #818cf8;
+        }
 
         * {
             box-sizing: border-box;
@@ -18,24 +54,29 @@
 
         body {
             font-family: 'DM Sans', sans-serif;
-            background: #f0f2f5;
+            background: var(--bg);
             padding: 28px 16px;
+            color: var(--body-text);
+            transition: background 0.3s, color 0.3s;
         }
 
         .card {
             max-width: 1080px;
             margin: 0 auto;
-            background: #fff;
+            background: var(--card-bg);
             border-radius: 18px;
             box-shadow: 0 4px 32px rgba(0, 0, 0, .10);
             overflow: hidden;
+            border: 1px solid var(--border);
+            transition: background 0.3s, border-color 0.3s;
         }
 
         .hd {
-            background: linear-gradient(120deg, #0f0c29, #302b63, #24243e);
+            background: var(--header-grad);
             padding: 22px 28px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 16px;
         }
 
@@ -49,22 +90,42 @@
             justify-content: center;
             font-size: 24px;
             flex-shrink: 0;
+            display: none;
         }
 
         .hd-title {
             color: #fff;
-            font-size: 17px;
+            font-size: 20px;
             font-weight: 600;
         }
 
         .hd-sub {
-            color: rgba(255, 255, 255, .45);
-            font-size: 12px;
+            color: rgba(255, 255, 255, .65);
+            font-size: 13px;
             margin-top: 3px;
+        }
+
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .body {
             padding: 24px 28px;
+            background: var(--card-bg);
         }
 
         .load-btn {
@@ -104,29 +165,30 @@
             padding: 7px 12px;
             border-radius: 7px;
             margin-bottom: 14px;
-            background: #f8fafc;
-            border-left: 3px solid #e2e8f0;
-            color: #94a3b8;
+            background: var(--status-bg);
+            border-left: 3px solid var(--border);
+            color: var(--text-sub);
             min-height: 34px;
             line-height: 1.5;
+            transition: all 0.3s;
         }
 
         .status.info {
-            background: #eef2ff;
+            background: var(--status-info);
             border-color: #6366f1;
-            color: #4338ca;
+            color: #818cf8;
         }
 
         .status.ok {
-            background: #f0fdf4;
+            background: var(--status-ok);
             border-color: #22c55e;
-            color: #15803d;
+            color: #4ade80;
         }
 
         .status.err {
-            background: #fef2f2;
+            background: var(--status-err);
             border-color: #ef4444;
-            color: #b91c1c;
+            color: #f87171;
         }
 
         .controls {
@@ -211,10 +273,11 @@
             display: flex;
             align-items: center;
             gap: 7px;
-            background: #f1f5f9;
+            background: var(--ctrl-bg);
             border-radius: 9px;
             padding: 0 14px;
             height: 38px;
+            transition: background 0.3s;
         }
 
         .bpm-wrap label,
@@ -269,7 +332,7 @@
             background: transparent;
             font-size: 15px;
             font-weight: 600;
-            color: #1e293b;
+            color: var(--text-main);
             text-align: center;
             font-family: inherit;
         }
@@ -280,7 +343,7 @@
             background: transparent;
             font-size: 14px;
             font-weight: 600;
-            color: #1e293b;
+            color: var(--text-main);
             font-family: inherit;
         }
 
@@ -298,6 +361,8 @@
 
         #score {
             overflow-x: auto;
+            filter: var(--score-filter);
+            transition: filter 0.3s;
         }
 
         #score svg {
@@ -310,12 +375,12 @@
             margin: 24px auto 0;
             text-align: center;
             font-size: 13px;
-            color: #64748b;
+            color: var(--footer-text);
             line-height: 1.6;
         }
 
         .credits-footer a {
-            color: #302b63;
+            color: var(--footer-link);
             text-decoration: none;
             font-weight: 500;
         }
@@ -327,11 +392,12 @@
         .inst-guide {
             max-width: 1080px;
             margin: 32px auto 0;
-            background: #fff;
+            background: var(--card-bg);
             border-radius: 14px;
             padding: 24px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, .05);
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border);
+            color: var(--text-main);
         }
 
         .inst-guide h3 {
@@ -377,8 +443,8 @@
 
         .meta-edit-panel {
             display: none;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: var(--status-bg);
+            border: 1px solid var(--border);
             border-radius: 10px;
             padding: 14px 16px;
             margin-bottom: 16px;
@@ -440,10 +506,10 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            background: #fff;
+            background: var(--card-bg);
             padding: 12px;
             border-radius: 8px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border);
             margin-top: 5px;
             margin-bottom: 10px;
         }
@@ -497,6 +563,28 @@
             font-size: 12px;
             font-family: inherit;
         }
+
+        .icon-svg {
+            display: inline-block;
+            vertical-align: middle;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+            margin-top: -2px;
+        }
+
+        .btn .icon-svg {
+            margin-right: 2px;
+        }
+
+        .hd-icon .icon-svg {
+            width: 28px;
+            height: 28px;
+            color: #fff;
+        }
     </style>
 </head>
 
@@ -504,16 +592,20 @@
 
     <div class="card">
         <div class="hd">
-            <div class="hd-icon">&#127925;</div>
             <div>
-                <div class="hd-title">Visualizador e Tocador de Partituras</div>
-                <div class="hd-sub">MusicXML &mdash; Moodle/Web</div>
+                <div class="hd-title">ViToPaMoS</div>
+                <div class="hd-sub">Visualizador e Tocador de Partituras para Moodle e Sites (MusicXML &mdash; Moodle/Web)</div>
             </div>
+            <button class="theme-toggle" id="themeToggle" title="Alternar tema">
+                <svg id="themeIconSun" class="icon-svg" style="display:none;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg id="themeIconMoon" class="icon-svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
         </div>
 
         <div class="body">
             <label class="load-btn">
-                <span>&#128193; Carregar partitura</span>
+                <svg class="icon-svg" style="width:16px;height:16px;margin-right:6px;" viewBox="0 0 24 24"><path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.69.9H18a2 2 0 0 1 2 2v2"></path></svg>
+                <span>Carregar partitura</span>
                 <input type="file" id="fi" accept=".xml,.musicxml">
             </label>
 
@@ -525,13 +617,25 @@
                     <label for="metaTitle">Título</label>
                     <input type="text" id="metaTitle" placeholder="Título da peça">
                 </div>
-                <button class="btn btn-apply" id="btnApplyMeta">&#10003; Aplicar</button>
+                <button class="btn btn-apply" id="btnApplyMeta">
+                    <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Aplicar
+                </button>
             </div>
 
             <div class="controls">
-                <button class="btn btn-play" id="bp" disabled>&#9654; Play</button>
-                <button class="btn btn-pause" id="bpa" disabled>&#9646;&#9646; Pause</button>
-                <button class="btn btn-stop" id="bs" disabled>&#9632; Stop</button>
+                <button class="btn btn-play" id="bp" disabled>
+                    <svg class="icon-svg" style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    Play
+                </button>
+                <button class="btn btn-pause" id="bpa" disabled>
+                    <svg class="icon-svg" style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                    Pause
+                </button>
+                <button class="btn btn-stop" id="bs" disabled>
+                    <svg class="icon-svg" style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"></rect></svg>
+                    Stop
+                </button>
 
                 <div class="bpm-wrap">
                     <label for="bpm">BPM</label>
@@ -588,8 +692,14 @@
                     <input type="number" id="mpsCount" value="4" min="1" max="32" title="Compassos por sistema">
                 </div>
 
-                <button class="btn btn-export" id="bx" disabled>&#128203; Copiar HTML</button>
-                <button class="btn btn-download" id="bdl" disabled>&#11015; Baixar HTML</button>
+                <button class="btn btn-export" id="bx" disabled>
+                    <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copiar HTML
+                </button>
+                <button class="btn btn-download" id="bdl" disabled>
+                    <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Baixar HTML
+                </button>
                 <div id="partsPanel" class="parts-panel" style="display:none;"></div>
             </div>
 
@@ -598,7 +708,10 @@
     </div>
 
     <section class="inst-guide">
-        <h3>&#128221; Guia para Professores</h3>
+        <h3>
+            <svg class="icon-svg" style="width:18px;height:18px;color:#302b63;" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            Guia para Professores
+        </h3>
         <div class="inst-steps">
             <div class="step">
                 <span class="step-num">1</span>
@@ -627,13 +740,37 @@
     </section>
 
     <footer class="credits-footer">
-        Desenvolvido pelo professor <strong>Glauber Santiago</strong> &mdash; DAC/UFSCar<br>
+        <strong>ViToPaMoS</strong> &mdash; Desenvolvido pelo professor <strong>Glauber Santiago</strong> &mdash; DAC/UFSCar<br>
         <a href="https://servidores.ufscar.br/glauber/" target="_blank">servidores.ufscar.br/glauber/</a> &bull;
         <a href="https://sites.google.com/view/glauberia" target="_blank">sites.google.com/view/glauberia</a>
     </footer>
 
     <script>
         (function () {
+            /* Lógica de Tema */
+            var currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            if (currentTheme === 'dark') document.documentElement.classList.add('dark');
+            updateThemeIcons(currentTheme);
+
+            function updateThemeIcons(theme) {
+                var sun = document.getElementById('themeIconSun');
+                var moon = document.getElementById('themeIconMoon');
+                if (theme === 'dark') {
+                    sun.style.display = 'block';
+                    moon.style.display = 'none';
+                } else {
+                    sun.style.display = 'none';
+                    moon.style.display = 'block';
+                }
+            }
+
+            document.getElementById('themeToggle').onclick = function () {
+                var isDark = document.documentElement.classList.toggle('dark');
+                var newTheme = isDark ? 'dark' : 'light';
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcons(newTheme);
+            };
+
             var INSTRUMENTS = {
                 acoustic_grand_piano: 'Piano de cauda', bright_acoustic_piano: 'Piano brilhante',
                 electric_grand_piano: 'Piano elÃ©trico de cauda', honkytonk_piano: 'Piano honky-tonk',
@@ -683,6 +820,11 @@
                 tinkle_bell: 'Sino tintilante', agogo: 'AgogÃ´', steel_drums: 'Steel drums',
                 woodblock: 'Woodblock', taiko_drum: 'Taiko', melodic_tom: 'Tom melÃ³dico',
                 synth_drum: 'Bumbo sintetizado', reverse_cymbal: 'Prato reverso'
+            };
+
+            var ICONS = {
+                mute: '<svg class="icon-svg" style="width:12px;height:12px;" viewBox="0 0 24 24"><path d="M11 4.708V20M4.141 15.414A2 2 0 0 1 3 13.586V10.414A2 2 0 0 1 4.141 8.586L8.859 4.871A1 1 0 0 1 10.5 5.657v12.686a1 1 0 0 1-1.641.786l-4.718-3.715Z"></path><line x1="22" y1="9" x2="16" y2="15"></line><line x1="16" y1="9" x2="22" y2="15"></line></svg>',
+                solo: '<svg class="icon-svg" style="width:12px;height:12px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="1"></circle></svg>'
             };
 
             var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
@@ -878,19 +1020,19 @@
 
                     var nameSp = document.createElement('span');
                     nameSp.className = 'part-name';
-                    nameSp.innerHTML = '&#127925; ' + cfg.name;
+                    nameSp.innerHTML = cfg.name;
 
                     var ctrls = document.createElement('div');
                     ctrls.className = 'part-ctrls';
 
                     var bMute = document.createElement('button');
                     bMute.className = 'btn-mute' + (cfg.mute ? ' active' : '');
-                    bMute.innerHTML = '&#128263; Mute';
+                    bMute.innerHTML = ICONS.mute + ' Mute';
                     bMute.onclick = function () { cfg.mute = !cfg.mute; bMute.className = 'btn-mute' + (cfg.mute ? ' active' : ''); updatePartMix(); };
 
                     var bSolo = document.createElement('button');
                     bSolo.className = 'btn-solo' + (cfg.solo ? ' active' : '');
-                    bSolo.innerHTML = '&#11088; Solo';
+                    bSolo.innerHTML = ICONS.solo + ' Solo';
                     bSolo.onclick = function () { cfg.solo = !cfg.solo; bSolo.className = 'btn-solo' + (cfg.solo ? ' active' : ''); updatePartMix(); renderPartsPanel(); };
 
                     var sel = document.createElement('select');
@@ -1167,7 +1309,7 @@
                                 // OSMD: ve.ParentVoice.Parent é geralmente o próprio objeto Instrument
                                 var instObj = ve.ParentVoice.Parent;
                                 if (!instObj.NameLabel && instObj.ParentInstrument) instObj = instObj.ParentInstrument; // fallback caso seja Staff
-                                
+
                                 if (instObj && osmd.Sheet.Instruments) {
                                     var idx = osmd.Sheet.Instruments.indexOf(instObj);
                                     if (idx < 0) {
@@ -1413,95 +1555,95 @@
             });
 
             document.getElementById('bx').onclick = async function () {
-    try {
-        
-                if (!rawXml) return;
+                try {
 
-                var bpm = document.getElementById('bpm').value || 100;
-                var revAmt = getReverbAmount();
-                var metOn = document.getElementById('metCheck').checked;
-                var octShift = document.getElementById('octSel').value;
-                var transpShift = document.getElementById('transSel').value;
+                    if (!rawXml) return;
 
-                var html = buildExportHtml(rawXml, bpm, revAmt, metOn, octShift, transpShift);
-                html = "<!-- ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO USUÁRIO!!! ESTE É O INÍCIO DO CÓDIGO DA PARTITURA. SE DESEJAR EXCLUIR A PARTITURA, APAGUE TUDO ATÉ A INDICAÇÃO DE FIM DO CÓDIGO DA PARTITURA -->\n" + html + "\n<!-- ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO USUÁRIO!!! ESTE É O FIM DO CÓDIGO DA PARTITURA -->";
-                
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(html);
-        } else {
-            // Fallback for non-https/file:/// where clipboard API is blocked
-            var ta = document.createElement('textarea');
-            ta.value = html;
-            ta.style.position = 'fixed';
-            ta.style.top = '0';
-            ta.style.left = '0';
-            ta.style.width = '2em';
-            ta.style.height = '2em';
-            ta.style.padding = '0';
-            ta.style.border = 'none';
-            ta.style.outline = 'none';
-            ta.style.boxShadow = 'none';
-            ta.style.background = 'transparent';
-            document.body.appendChild(ta);
-            ta.focus();
-            ta.select();
-            try {
-                document.execCommand('copy');
-            } catch (err) {}
-            document.body.removeChild(ta);
-        }
-        
+                    var bpm = document.getElementById('bpm').value || 100;
+                    var revAmt = getReverbAmount();
+                    var metOn = document.getElementById('metCheck').checked;
+                    var octShift = document.getElementById('octSel').value;
+                    var transpShift = document.getElementById('transSel').value;
 
-                setStatus('HTML copiado!', 'ok');
+                    var html = buildExportHtml(rawXml, bpm, revAmt, metOn, octShift, transpShift);
+                    html = "<!-- ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO USUÁRIO!!! ESTE É O INÍCIO DO CÓDIGO DA PARTITURA. SE DESEJAR EXCLUIR A PARTITURA, APAGUE TUDO ATÉ A INDICAÇÃO DE FIM DO CÓDIGO DA PARTITURA -->\n" + html + "\n<!-- ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO ATENÇÃO USUÁRIO!!! ESTE É O FIM DO CÓDIGO DA PARTITURA -->";
 
-                var btn = document.getElementById('bx');
-                var old = btn.innerHTML;
-                btn.innerHTML = '✓ Copiado!';
-                setTimeout(function () { btn.innerHTML = old; }, 2000);
-            
-    } catch(err) {
-        alert("ERRO COPIAR HTML: " + err.stack);
-    }
-};
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(html);
+                    } else {
+                        // Fallback for non-https/file:/// where clipboard API is blocked
+                        var ta = document.createElement('textarea');
+                        ta.value = html;
+                        ta.style.position = 'fixed';
+                        ta.style.top = '0';
+                        ta.style.left = '0';
+                        ta.style.width = '2em';
+                        ta.style.height = '2em';
+                        ta.style.padding = '0';
+                        ta.style.border = 'none';
+                        ta.style.outline = 'none';
+                        ta.style.boxShadow = 'none';
+                        ta.style.background = 'transparent';
+                        document.body.appendChild(ta);
+                        ta.focus();
+                        ta.select();
+                        try {
+                            document.execCommand('copy');
+                        } catch (err) { }
+                        document.body.removeChild(ta);
+                    }
+
+
+                    setStatus('HTML copiado!', 'ok');
+
+                    var btn = document.getElementById('bx');
+                    var old = btn.innerHTML;
+                    btn.innerHTML = '✓ Copiado!';
+                    setTimeout(function () { btn.innerHTML = old; }, 2000);
+
+                } catch (err) {
+                    alert("ERRO COPIAR HTML: " + err.stack);
+                }
+            };
 
             document.getElementById('bdl').onclick = async function () {
-    try {
-        
-                if (!rawXml) return;
+                try {
 
-                var bpm = document.getElementById('bpm').value || 100;
-                var revAmt = getReverbAmount();
-                var metOn = document.getElementById('metCheck').checked;
-                var octShift = document.getElementById('octSel').value;
-                var transpShift = document.getElementById('transSel').value;
+                    if (!rawXml) return;
 
-                var html = buildExportHtml(rawXml, bpm, revAmt, metOn, octShift, transpShift);
+                    var bpm = document.getElementById('bpm').value || 100;
+                    var revAmt = getReverbAmount();
+                    var metOn = document.getElementById('metCheck').checked;
+                    var octShift = document.getElementById('octSel').value;
+                    var transpShift = document.getElementById('transSel').value;
 
-                /* sanitização do título para nome de arquivo */
-                var rawTitle = (document.getElementById('metaTitle').value ||
-                    extractTitleFromXml(rawXml) || 'partitura').trim();
-                var fileName = rawTitle
-                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  /* remove acentos */
-                    .replace(/[^a-zA-Z0-9 _\-]/g, '')                  /* remove especiais */
-                    .trim().replace(/\s+/g, '_') || 'partitura';
-                fileName += '.html';
+                    var html = buildExportHtml(rawXml, bpm, revAmt, metOn, octShift, transpShift);
 
-                var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+                    /* sanitização do título para nome de arquivo */
+                    var rawTitle = (document.getElementById('metaTitle').value ||
+                        extractTitleFromXml(rawXml) || 'partitura').trim();
+                    var fileName = rawTitle
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  /* remove acentos */
+                        .replace(/[^a-zA-Z0-9 _\-]/g, '')                  /* remove especiais */
+                        .trim().replace(/\s+/g, '_') || 'partitura';
+                    fileName += '.html';
 
-                setStatus('Arquivo salvo: ' + fileName, 'ok');
-            
-    } catch(err) {
-        alert("ERRO BAIXAR HTML: " + err.stack);
-    }
-};
+                    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+
+                    setStatus('Arquivo salvo: ' + fileName, 'ok');
+
+                } catch (err) {
+                    alert("ERRO BAIXAR HTML: " + err.stack);
+                }
+            };
 
             function encodeBase64Unicode(str) {
                 return btoa(unescape(encodeURIComponent(str)));
@@ -1522,7 +1664,7 @@
             function buildExportHtml(xml, bpm, reverbAmount, metronomeChecked, octaveShift, transposeShift) {
                 var xmlB64 = encodeBase64Unicode(xml);
                 var safeBpm = String(bpm);
-                                var safePartConfigs = JSON.stringify(partConfigs);
+                var safePartConfigs = JSON.stringify(partConfigs);
                 var metAttr = metronomeChecked ? 'checked' : '';
                 var safeRev = String(reverbAmount);
                 var safeOct = String(octaveShift);
@@ -1539,19 +1681,34 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ViToPaMoS - Player<\/title>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"><\/script>
+<style>
+body { background: #f3f4f6; color: #111827; }
+.icon-svg { display: inline-block; vertical-align: middle; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+#score { background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+<\/style>
 <\/head>
 <body style="font-family:system-ui,sans-serif;margin:10px;">
-<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:8px 12px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;align-items:center;">
-  <span style="${C}"><span style="${L}">BPM</span><input type="number" id="bpm" value="${safeBpm}" style="${I}width:44px;text-align:center;"></span>
-  <span style="${C}"><span style="${L}">Metr&#244;n.</span><input type="checkbox" id="met" ${metAttr} style="width:15px;height:15px;cursor:pointer;"></span>
-  <span style="${C}"><span style="${L}">Reverb</span><input type="number" id="rev" value="${safeRev}" style="${I}width:40px;text-align:center;"></span>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 4px;">
+  <div>
+    <div style="font-weight:700;font-size:18px;color:#111827;">ViToPaMoS<\/div>
+    <div style="font-size:12px;color:#6b7280;">Visualizador e Tocador de Partituras para Moodle e Sites<\/div>
+  </div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding:10px 14px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;align-items:center;">
+  <span style="${C}background:#eee;"><span style="${L}">BPM</span><input type="number" id="bpm" value="${safeBpm}" style="${I}width:44px;text-align:center;"></span>
+  <span style="${C}background:#eee;"><span style="${L}">Metr&#244;n.</span><input type="checkbox" id="met" ${metAttr} style="width:15px;height:15px;cursor:pointer;"></span>
+  <span style="${C}background:#eee;"><span style="${L}">Reverb</span><input type="number" id="rev" value="${safeRev}" style="${I}width:40px;text-align:center;"></span>
   
-  <span style="${C}"><span style="${L}">Oitava</span><select id="oct" style="${S}"><option value="0"${safeOct === '0' ? ' selected' : ''}>In loco<\/option><option value="12"${safeOct === '12' ? ' selected' : ''}>8va &#9651;<\/option><option value="-12"${safeOct === '-12' ? ' selected' : ''}>8vb &#9661;<\/option><\/select></span>
-  <span style="${C}"><span style="${L}">Transp.</span><select id="trans" style="${S}"><option value="6"${safeTransp === '6' ? ' selected' : ''}>+6 st<\/option><option value="5"${safeTransp === '5' ? ' selected' : ''}>+5 st<\/option><option value="4"${safeTransp === '4' ? ' selected' : ''}>+4 st<\/option><option value="3"${safeTransp === '3' ? ' selected' : ''}>+3 st<\/option><option value="2"${safeTransp === '2' ? ' selected' : ''}>+2 st<\/option><option value="1"${safeTransp === '1' ? ' selected' : ''}>+1 st<\/option><option value="0"${safeTransp === '0' ? ' selected' : ''}>Original<\/option><option value="-1"${safeTransp === '-1' ? ' selected' : ''}>&#8722;1 st<\/option><option value="-2"${safeTransp === '-2' ? ' selected' : ''}>&#8722;2 st<\/option><option value="-3"${safeTransp === '-3' ? ' selected' : ''}>&#8722;3 st<\/option><option value="-4"${safeTransp === '-4' ? ' selected' : ''}>&#8722;4 st<\/option><option value="-5"${safeTransp === '-5' ? ' selected' : ''}>&#8722;5 st<\/option><option value="-6"${safeTransp === '-6' ? ' selected' : ''}>&#8722;6 st<\/option><\/select></span>
-  <span style="${C}"><span style="${L}">Layout</span><select id="layoutEx" style="${S}"><option value="auto"${mps.mode === 'auto' ? ' selected' : ''}>Autom&#225;tico<\/option><option value="xml"${mps.mode === 'xml' ? ' selected' : ''}>Do arquivo<\/option><option value="fixed"${mps.mode === 'fixed' ? ' selected' : ''}>Fixar<\/option><\/select><input type="number" id="mpsCountEx" value="${safeMpsCount}" min="1" max="32" style="${I}width:36px;text-align:center;" ${mps.mode !== 'fixed' ? 'disabled' : ''}></span>
-  <span style="font-size:12px;color:#9ca3af;padding:0 4px;">&#9654;/&#9646;&#9646;&nbsp;clique &nbsp;&bull;&nbsp; &#9632;&nbsp;duplo &nbsp;&bull;&nbsp; &#9198;&nbsp;triplo</span>
+  <span style="${C}background:#eee;"><span style="${L}">Oitava</span><select id="oct" style="${S}"><option value="0"${safeOct === '0' ? ' selected' : ''}>In loco<\/option><option value="12"${safeOct === '12' ? ' selected' : ''}>8va &#9651;<\/option><option value="-12"${safeOct === '-12' ? ' selected' : ''}>8vb &#9661;<\/option><\/select></span>
+  <span style="${C}background:#eee;"><span style="${L}">Transp.</span><select id="trans" style="${S}"><option value="6"${safeTransp === '6' ? ' selected' : ''}>+6 st<\/option><option value="5"${safeTransp === '5' ? ' selected' : ''}>+5 st<\/option><option value="4"${safeTransp === '4' ? ' selected' : ''}>+4 st<\/option><option value="3"${safeTransp === '3' ? ' selected' : ''}>+3 st<\/option><option value="2"${safeTransp === '2' ? ' selected' : ''}>+2 st<\/option><option value="1"${safeTransp === '1' ? ' selected' : ''}>+1 st<\/option><option value="0"${safeTransp === '0' ? ' selected' : ''}>Original<\/option><option value="-1"${safeTransp === '-1' ? ' selected' : ''}>&#8722;1 st<\/option><option value="-2"${safeTransp === '-2' ? ' selected' : ''}>&#8722;2 st<\/option><option value="-3"${safeTransp === '-3' ? ' selected' : ''}>&#8722;3 st<\/option><option value="-4"${safeTransp === '-4' ? ' selected' : ''}>&#8722;4 st<\/option><option value="-5"${safeTransp === '-5' ? ' selected' : ''}>&#8722;5 st<\/option><option value="-6"${safeTransp === '-6' ? ' selected' : ''}>&#8722;6 st<\/option><\/select></span>
+  <span style="${C}background:#eee;"><span style="${L}">Layout</span><select id="layoutEx" style="${S}"><option value="auto"${mps.mode === 'auto' ? ' selected' : ''}>Autom&#225;tico<\/option><option value="xml"${mps.mode === 'xml' ? ' selected' : ''}>Do arquivo<\/option><option value="fixed"${mps.mode === 'fixed' ? ' selected' : ''}>Fixar<\/option><\/select><input type="number" id="mpsCountEx" value="${safeMpsCount}" min="1" max="32" style="${I}width:36px;text-align:center;" ${mps.mode !== 'fixed' ? 'disabled' : ''}></span>
+  <span style="font-size:12px;color:#6b7280;padding:0 4px;">
+    <svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>/<svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>&nbsp;clique &nbsp;&bull;&nbsp; <svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"></rect></svg>&nbsp;duplo &nbsp;&bull;&nbsp; &#9198;&nbsp;triplo
+  </span>
 </div>
 <p id="st" style="display:none;text-align:center;font-size:13px;color:#6b7280;"></p>
 <div id="score" style="overflow-x:auto;cursor:pointer;"></div>
@@ -1561,6 +1718,10 @@
   var partConfigs = ${safePartConfigs};
   var raw = decodeURIComponent(escape(atob("${xmlB64}")));
   var GM_OPTS_HTML = '${GM_OPTS_HTML}';
+  var ICONS = {
+    mute: '<svg class="icon-svg" style="width:11px;height:11px;margin-right:3px;" viewBox="0 0 24 24"><path d="M11 4.708V20M4.141 15.414A2 2 0 0 1 3 13.586V10.414A2 2 0 0 1 4.141 8.586L8.859 4.871A1 1 0 0 1 10.5 5.657v12.686a1 1 0 0 1-1.641.786l-4.718-3.715Z"></path><line x1="22" y1="9" x2="16" y2="15"></line><line x1="16" y1="9" x2="22" y2="15"></line></svg>',
+    solo: '<svg class="icon-svg" style="width:11px;height:11px;margin-right:3px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="1"></circle></svg>'
+  };
 
   function applyLayout(){
     var mode = document.getElementById('layoutEx').value;
@@ -2031,21 +2192,21 @@
           nameSp.style.fontSize = '12px';
           nameSp.style.fontWeight = '600';
           nameSp.style.minWidth = '120px';
-          nameSp.style.color = '#1e293b';
-          nameSp.innerHTML = '&#127925; ' + cfg.name;
+          nameSp.style.color = '#111827';
+          nameSp.innerHTML = cfg.name;
           
           var bMute = document.createElement('button');
-          bMute.innerHTML = '&#128263; Mute';
+          bMute.innerHTML = ICONS.mute + ' Mute';
           bMute.style.cssText = S_BTN + (cfg.mute ? 'background:#ef4444;color:#fff;border-color:#ef4444;' : '');
           bMute.onclick = function() { cfg.mute = !cfg.mute; bMute.style.cssText = S_BTN + (cfg.mute ? 'background:#ef4444;color:#fff;border-color:#ef4444;' : ''); updatePartMix(); };
           
           var bSolo = document.createElement('button');
-          bSolo.innerHTML = '&#11088; Solo';
+          bSolo.innerHTML = ICONS.solo + ' Solo';
           bSolo.style.cssText = S_BTN + (cfg.solo ? 'background:#eab308;color:#fff;border-color:#eab308;' : '');
           bSolo.onclick = function() { cfg.solo = !cfg.solo; bSolo.style.cssText = S_BTN + (cfg.solo ? 'background:#eab308;color:#fff;border-color:#eab308;' : ''); updatePartMix(); };
           
           var sel = document.createElement('select');
-          sel.style.cssText = 'border:1px solid #cbd5e1;border-radius:4px;padding:2px;font-size:11px;max-width:140px;';
+          sel.style.cssText = 'border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
           sel.innerHTML = GM_OPTS_HTML;
           sel.value = cfg.program;
           sel.onchange = function() {
