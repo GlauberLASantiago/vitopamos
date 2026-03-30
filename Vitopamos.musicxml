@@ -74,20 +74,16 @@
   </credit>
   <part-list>
     <score-part id="P1">
-      <part-name>Flauta doce soprano</part-name>
-      <part-name-display>
-        <display-text xml:space="preserve">Flauta doce
-soprano</display-text>
-      </part-name-display>
-      <part-abbreviation>S. Rec.</part-abbreviation>
+      <part-name>Oboe</part-name>
+      <part-abbreviation>Ob.</part-abbreviation>
       <group>score</group>
       <score-instrument id="P1-I1">
         <instrument-name>ARIA Player</instrument-name>
-        <instrument-sound>wind.flutes.recorder.soprano</instrument-sound>
+        <instrument-sound>wind.reed.oboe</instrument-sound>
       </score-instrument>
       <midi-instrument id="P1-I1">
         <midi-channel>1</midi-channel>
-        <midi-program>75</midi-program>
+        <midi-program>69</midi-program>
         <volume>80</volume>
         <pan>-70</pan>
       </midi-instrument>
@@ -111,7 +107,7 @@ soprano</display-text>
   <!--=========================================================-->
   <part id="P1">
     <?SmartMusic maxVoice=1?>
-    <measure implicit="yes" number="0" width="208">
+    <measure implicit="yes" number="0" width="210">
       <print>
         <system-layout>
           <system-margins>
@@ -135,13 +131,7 @@ soprano</display-text>
         <clef>
           <sign>G</sign>
           <line>2</line>
-          <clef-octave-change>1</clef-octave-change>
         </clef>
-        <transpose>
-          <diatonic>0</diatonic>
-          <chromatic>0</chromatic>
-          <octave-change>1</octave-change>
-        </transpose>
       </attributes>
       <sound>
         <swing>
@@ -165,18 +155,18 @@ soprano</display-text>
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-44.5">down</stem>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="1" width="552">
+    <measure number="1" width="538">
       <harmony default-y="40">
         <root>
           <root-step>G</root-step>
         </root>
         <kind halign="center" text="">major</kind>
       </harmony>
-      <note default-x="16">
+      <note default-x="13">
         <pitch>
           <step>B</step>
           <octave>4</octave>
@@ -184,9 +174,9 @@ soprano</display-text>
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="-55">down</stem>
       </note>
-      <note default-x="122">
+      <note default-x="117">
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -194,7 +184,7 @@ soprano</display-text>
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="5">up</stem>
       </note>
       <harmony default-y="40">
         <root>
@@ -205,7 +195,7 @@ soprano</display-text>
           <bass-step>C</bass-step>
         </bass>
       </harmony>
-      <note default-x="228">
+      <note default-x="221">
         <pitch>
           <step>A</step>
           <octave>4</octave>
@@ -213,14 +203,14 @@ soprano</display-text>
         <duration>1</duration>
         <voice>1</voice>
         <type>16th</type>
-        <stem default-y="-15">up</stem>
+        <stem default-y="-59">down</stem>
         <beam number="1">begin</beam>
         <beam number="2">begin</beam>
         <notations>
-          <slur bezier-x="33" bezier-y="-21" default-x="7" default-y="-70" number="1" placement="below" type="start"/>
+          <slur bezier-x="26" bezier-y="29" default-x="7" default-y="-15" number="1" placement="above" type="start"/>
         </notations>
       </note>
-      <note default-x="268">
+      <note default-x="260">
         <pitch>
           <step>B</step>
           <octave>4</octave>
@@ -228,11 +218,11 @@ soprano</display-text>
         <duration>1</duration>
         <voice>1</voice>
         <type>16th</type>
-        <stem default-y="-13">up</stem>
+        <stem default-y="-58">down</stem>
         <beam number="1">continue</beam>
         <beam number="2">continue</beam>
       </note>
-      <note default-x="308">
+      <note default-x="300">
         <pitch>
           <step>C</step>
           <octave>5</octave>
@@ -240,11 +230,11 @@ soprano</display-text>
         <duration>1</duration>
         <voice>1</voice>
         <type>16th</type>
-        <stem default-y="-11">up</stem>
+        <stem default-y="-56">down</stem>
         <beam number="1">continue</beam>
         <beam number="2">continue</beam>
       </note>
-      <note default-x="349">
+      <note default-x="340">
         <pitch>
           <step>D</step>
           <octave>5</octave>
@@ -252,14 +242,14 @@ soprano</display-text>
         <duration>1</duration>
         <voice>1</voice>
         <type>16th</type>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-55">down</stem>
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         <notations>
-          <slur bezier-x="-27" bezier-y="-28" default-x="7" default-y="-55" number="1" type="stop"/>
+          <slur bezier-x="-33" bezier-y="20" default-x="6" default-y="3" number="1" type="stop"/>
         </notations>
       </note>
-      <note default-x="389">
+      <note default-x="379">
         <pitch>
           <step>E</step>
           <octave>5</octave>
@@ -267,14 +257,14 @@ soprano</display-text>
         <duration>1</duration>
         <voice>1</voice>
         <type>16th</type>
-        <stem default-y="5">up</stem>
+        <stem default-y="-39">down</stem>
         <beam number="1">begin</beam>
         <beam number="2">begin</beam>
         <notations>
-          <slur bezier-x="34" bezier-y="-21" default-x="6" default-y="-50" number="1" placement="below" type="start"/>
+          <slur bezier-x="27" bezier-y="28" default-x="7" default-y="5" number="1" placement="above" type="start"/>
         </notations>
       </note>
-      <note default-x="430">
+      <note default-x="419">
         <pitch>
           <step>F</step>
           <alter>1</alter>
@@ -283,11 +273,11 @@ soprano</display-text>
         <duration>1</duration>
         <voice>1</voice>
         <type>16th</type>
-        <stem default-y="7">up</stem>
+        <stem default-y="-38">down</stem>
         <beam number="1">continue</beam>
         <beam number="2">continue</beam>
       </note>
-      <note default-x="470">
+      <note default-x="458">
         <pitch>
           <step>G</step>
           <octave>5</octave>
@@ -295,11 +285,11 @@ soprano</display-text>
         <duration>1</duration>
         <voice>1</voice>
         <type>16th</type>
-        <stem default-y="8.5">up</stem>
+        <stem default-y="-36">down</stem>
         <beam number="1">continue</beam>
         <beam number="2">continue</beam>
       </note>
-      <note default-x="511">
+      <note default-x="498">
         <pitch>
           <step>A</step>
           <octave>5</octave>
@@ -307,16 +297,16 @@ soprano</display-text>
         <duration>1</duration>
         <voice>1</voice>
         <type>16th</type>
-        <stem default-y="10">up</stem>
+        <stem default-y="-35">down</stem>
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         <notations>
-          <slur bezier-x="-27" bezier-y="-29" default-x="6" default-y="-35" number="1" type="stop"/>
+          <slur bezier-x="-33" bezier-y="21" default-x="6" default-y="20" number="1" type="stop"/>
         </notations>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="2" width="647">
+    <measure number="2" width="658">
       <harmony default-y="40">
         <root>
           <root-step>G</root-step>
@@ -334,10 +324,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="5">up</stem>
+        <stem default-y="-39">down</stem>
         <beam number="1">begin</beam>
       </note>
-      <note default-x="82">
+      <note default-x="83">
         <pitch>
           <step>F</step>
           <octave>5</octave>
@@ -346,10 +336,10 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>natural</accidental>
-        <stem default-y="3.5">up</stem>
+        <stem default-y="-39">down</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="148">
+      <note default-x="151">
         <pitch>
           <step>E</step>
           <octave>5</octave>
@@ -357,10 +347,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="2">up</stem>
+        <stem default-y="-39">down</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="214">
+      <note default-x="218">
         <pitch>
           <step>E</step>
           <alter>-1</alter>
@@ -370,7 +360,7 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>flat</accidental>
-        <stem default-y="0.5">up</stem>
+        <stem default-y="-39">down</stem>
         <beam number="1">end</beam>
       </note>
       <harmony default-y="40">
@@ -379,7 +369,7 @@ soprano</display-text>
         </root>
         <kind halign="center" text="">major</kind>
       </harmony>
-      <note default-x="280">
+      <note default-x="285">
         <pitch>
           <step>D</step>
           <octave>5</octave>
@@ -387,7 +377,7 @@ soprano</display-text>
         <duration>8</duration>
         <voice>1</voice>
         <type>half</type>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-44.5">down</stem>
       </note>
       <barline location="right">
         <bar-style>light-light</bar-style>
@@ -427,7 +417,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-15">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">begin</beam>
       </note>
       <note default-x="225">
@@ -439,7 +429,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="-55">down</stem>
         <beam number="1">end</beam>
       </note>
       <note default-x="271">
@@ -450,7 +440,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-10">up</stem>
+        <stem default-y="25">up</stem>
         <beam number="1">begin</beam>
       </note>
       <note default-x="317">
@@ -461,7 +451,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-8">up</stem>
+        <stem default-y="27">up</stem>
         <beam number="1">continue</beam>
       </note>
       <note default-x="364">
@@ -474,7 +464,7 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>sharp</accidental>
-        <stem default-y="-6">up</stem>
+        <stem default-y="28.5">up</stem>
         <beam number="1">continue</beam>
       </note>
       <note default-x="411">
@@ -486,12 +476,12 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-5">up</stem>
+        <stem default-y="30">up</stem>
         <beam number="1">end</beam>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="4" width="306">
+    <measure number="4" width="309">
       <harmony default-y="40">
         <root>
           <root-step text="">B</root-step>
@@ -507,7 +497,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-44.5">down</stem>
         <beam number="1">begin</beam>
       </note>
       <note default-x="54">
@@ -519,7 +509,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-5">up</stem>
+        <stem default-y="-39">down</stem>
         <beam number="1">end</beam>
       </note>
       <note default-x="93">
@@ -530,9 +520,9 @@ soprano</display-text>
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-44.5">down</stem>
       </note>
-      <note default-x="156">
+      <note default-x="157">
         <pitch>
           <step>C</step>
           <octave>5</octave>
@@ -540,9 +530,9 @@ soprano</display-text>
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <stem default-y="-15">up</stem>
+        <stem default-y="-49.5">down</stem>
       </note>
-      <note default-x="227">
+      <note default-x="229">
         <pitch>
           <step>F</step>
           <alter>1</alter>
@@ -552,10 +542,10 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>sharp</accidental>
-        <stem default-y="0.5">up</stem>
+        <stem default-y="-35">down</stem>
         <beam number="1">begin</beam>
       </note>
-      <note default-x="266">
+      <note default-x="269">
         <pitch>
           <step>F</step>
           <alter>1</alter>
@@ -565,7 +555,7 @@ soprano</display-text>
         <tie type="start"/>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="0.5">up</stem>
+        <stem default-y="-35">down</stem>
         <beam number="1">end</beam>
         <notations>
           <tied type="start"/>
@@ -584,7 +574,7 @@ soprano</display-text>
         <tie type="stop"/>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="0.5">up</stem>
+        <stem default-y="-39">down</stem>
         <beam number="1">begin</beam>
         <notations>
           <tied type="stop"/>
@@ -596,7 +586,7 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
       </note>
-      <note default-x="109">
+      <note default-x="108">
         <pitch>
           <step>E</step>
           <alter>-1</alter>
@@ -605,7 +595,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-3">up</stem>
+        <stem default-y="-43">down</stem>
         <beam number="1">continue</beam>
       </note>
       <note default-x="156">
@@ -616,7 +606,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-5">up</stem>
+        <stem default-y="-44.5">down</stem>
         <beam number="1">end</beam>
       </note>
       <note default-x="204">
@@ -629,7 +619,7 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>sharp</accidental>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">begin</beam>
       </note>
       <note default-x="252">
@@ -640,10 +630,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="299">
+      <note default-x="300">
         <pitch>
           <step>C</step>
           <octave>5</octave>
@@ -652,10 +642,10 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>natural</accidental>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="347">
+      <note default-x="348">
         <pitch>
           <step>C</step>
           <alter>1</alter>
@@ -665,12 +655,12 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>sharp</accidental>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">end</beam>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="6" width="320">
+    <measure number="6" width="317">
       <note default-x="13">
         <pitch>
           <step>E</step>
@@ -680,7 +670,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-5">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">begin</beam>
       </note>
       <note default-x="53">
@@ -691,10 +681,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-6">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="94">
+      <note default-x="92">
         <pitch>
           <step>C</step>
           <alter>1</alter>
@@ -704,10 +694,10 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>sharp</accidental>
-        <stem default-y="-8">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="134">
+      <note default-x="132">
         <pitch>
           <step>D</step>
           <octave>5</octave>
@@ -715,10 +705,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-10">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">end</beam>
       </note>
-      <note default-x="175">
+      <note default-x="172">
         <pitch>
           <step>C</step>
           <octave>5</octave>
@@ -727,10 +717,10 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>natural</accidental>
-        <stem default-y="-15">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">begin</beam>
       </note>
-      <note default-x="214">
+      <note default-x="212">
         <pitch>
           <step>C</step>
           <alter>1</alter>
@@ -740,10 +730,10 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>sharp</accidental>
-        <stem default-y="-15">up</stem>
+        <stem default-y="-49.5">down</stem>
         <beam number="1">end</beam>
       </note>
-      <note default-x="255">
+      <note default-x="252">
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -753,20 +743,20 @@ soprano</display-text>
         <tie type="start"/>
         <voice>1</voice>
         <type>quarter</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="-55">down</stem>
         <notations>
           <tied type="start"/>
         </notations>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="7" width="526">
+    <measure number="7" width="525">
       <print new-system="yes">
         <system-layout>
           <system-distance>81</system-distance>
         </system-layout>
       </print>
-      <note default-x="90">
+      <note default-x="88">
         <pitch>
           <step>B</step>
           <alter>-1</alter>
@@ -776,12 +766,12 @@ soprano</display-text>
         <tie type="stop"/>
         <voice>1</voice>
         <type>quarter</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="-54">down</stem>
         <notations>
           <tied type="stop"/>
         </notations>
       </note>
-      <note default-x="187">
+      <note default-x="185">
         <pitch>
           <step>A</step>
           <octave>4</octave>
@@ -789,9 +779,9 @@ soprano</display-text>
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="10">up</stem>
       </note>
-      <note default-x="284">
+      <note default-x="283">
         <pitch>
           <step>A</step>
           <alter>-1</alter>
@@ -801,10 +791,10 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
         <accidental>flat</accidental>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="10">up</stem>
         <beam number="1">begin</beam>
       </note>
-      <note default-x="345">
+      <note default-x="343">
         <pitch>
           <step>A</step>
           <alter>-1</alter>
@@ -813,10 +803,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="10">up</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="405">
+      <note default-x="403">
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -824,10 +814,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="10">up</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="465">
+      <note default-x="463">
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -835,13 +825,13 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="10">up</stem>
         <beam number="1">end</beam>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="8" width="483">
-      <note default-x="15">
+    <measure number="8" width="480">
+      <note default-x="13">
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -849,10 +839,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="0.5">up</stem>
         <beam number="1">begin</beam>
       </note>
-      <note default-x="77">
+      <note default-x="75">
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -860,10 +850,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="0.5">up</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="138">
+      <note default-x="135">
         <pitch>
           <step>E</step>
           <alter>-1</alter>
@@ -872,10 +862,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="0.5">up</stem>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="200">
+      <note default-x="197">
         <pitch>
           <step>E</step>
           <alter>-1</alter>
@@ -884,10 +874,10 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="0.5">up</stem>
         <beam number="1">end</beam>
       </note>
-      <note default-x="261">
+      <note default-x="258">
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -895,15 +885,15 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="-19.5">up</stem>
+        <stem default-y="-14">up</stem>
       </note>
-      <note default-x="322">
+      <note default-x="319">
         <rest/>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
       </note>
-      <note default-x="383">
+      <note default-x="380">
         <rest/>
         <duration>4</duration>
         <voice>1</voice>
@@ -911,7 +901,7 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="9" width="259">
+    <measure number="9" width="261">
       <attributes>
         <time>
           <beats>2</beats>
@@ -925,7 +915,7 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="10" width="213">
+    <measure number="10" width="215">
       <note default-x="13">
         <pitch>
           <step>G</step>
@@ -934,7 +924,7 @@ soprano</display-text>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <stem default-y="5.5">up</stem>
+        <stem default-y="-30">down</stem>
       </note>
       <note default-x="66">
         <rest/>
@@ -942,7 +932,7 @@ soprano</display-text>
         <voice>1</voice>
         <type>eighth</type>
       </note>
-      <note default-x="118">
+      <note default-x="119">
         <rest/>
         <duration>4</duration>
         <voice>1</voice>
@@ -955,7 +945,7 @@ soprano</display-text>
   </part>
   <!--=========================================================-->
   <part id="P2">
-    <measure implicit="yes" number="0" width="208">
+    <measure implicit="yes" number="0" width="210">
       <print>
         <measure-numbering multiple-rest-always="no" multiple-rest-range="no" system="also-top">system</measure-numbering>
       </print>
@@ -1011,8 +1001,8 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="1" width="552">
-      <note default-x="16">
+    <measure number="1" width="538">
+      <note default-x="13">
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -1027,7 +1017,7 @@ soprano</display-text>
           <text font-size="6.8">vou</text>
         </lyric>
       </note>
-      <note default-x="122">
+      <note default-x="117">
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -1042,7 +1032,7 @@ soprano</display-text>
           <text font-size="6.8">fa</text>
         </lyric>
       </note>
-      <note default-x="228">
+      <note default-x="221">
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -1058,7 +1048,7 @@ soprano</display-text>
           <text font-size="6.8">lar</text>
         </lyric>
       </note>
-      <note default-x="308">
+      <note default-x="300">
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -1074,7 +1064,7 @@ soprano</display-text>
           <text font-size="6.8">do</text>
         </lyric>
       </note>
-      <note default-x="389">
+      <note default-x="379">
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -1090,7 +1080,7 @@ soprano</display-text>
           <text font-size="6.8">Vi</text>
         </lyric>
       </note>
-      <note default-x="470">
+      <note default-x="458">
         <pitch>
           <step>D</step>
           <octave>4</octave>
@@ -1109,7 +1099,7 @@ soprano</display-text>
       <backup>
         <duration>16</duration>
       </backup>
-      <note default-x="16">
+      <note default-x="13">
         <pitch>
           <step>G</step>
           <octave>2</octave>
@@ -1120,7 +1110,7 @@ soprano</display-text>
         <stem default-y="23.5">up</stem>
         <staff>2</staff>
       </note>
-      <note default-x="16">
+      <note default-x="13">
         <chord/>
         <pitch>
           <step>G</step>
@@ -1132,7 +1122,7 @@ soprano</display-text>
         <stem>up</stem>
         <staff>2</staff>
       </note>
-      <note default-x="228">
+      <note default-x="221">
         <pitch>
           <step>C</step>
           <octave>3</octave>
@@ -1143,7 +1133,7 @@ soprano</display-text>
         <stem default-y="-52.5">down</stem>
         <staff>2</staff>
       </note>
-      <note default-x="228">
+      <note default-x="221">
         <chord/>
         <pitch>
           <step>F</step>
@@ -1156,7 +1146,7 @@ soprano</display-text>
         <stem>down</stem>
         <staff>2</staff>
       </note>
-      <note default-x="228">
+      <note default-x="221">
         <chord/>
         <pitch>
           <step>A</step>
@@ -1170,7 +1160,7 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="2" width="647">
+    <measure number="2" width="658">
       <note default-x="16">
         <pitch>
           <step>G</step>
@@ -1187,7 +1177,7 @@ soprano</display-text>
           <text font-size="6.8">pa</text>
         </lyric>
       </note>
-      <note default-x="82">
+      <note default-x="83">
         <pitch>
           <step>A</step>
           <octave>4</octave>
@@ -1199,7 +1189,7 @@ soprano</display-text>
         <staff>1</staff>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="148">
+      <note default-x="151">
         <pitch>
           <step>B</step>
           <octave>4</octave>
@@ -1211,7 +1201,7 @@ soprano</display-text>
         <staff>1</staff>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="214">
+      <note default-x="218">
         <pitch>
           <step>C</step>
           <octave>5</octave>
@@ -1223,7 +1213,7 @@ soprano</display-text>
         <staff>1</staff>
         <beam number="1">end</beam>
       </note>
-      <note default-x="280">
+      <note default-x="285">
         <pitch>
           <step>B</step>
           <octave>4</octave>
@@ -1276,14 +1266,14 @@ soprano</display-text>
         <stem>down</stem>
         <staff>2</staff>
       </note>
-      <note default-x="148">
+      <note default-x="151">
         <rest/>
         <duration>4</duration>
         <voice>2</voice>
         <type>quarter</type>
         <staff>2</staff>
       </note>
-      <note default-x="280">
+      <note default-x="285">
         <pitch>
           <step>G</step>
           <octave>2</octave>
@@ -1299,7 +1289,7 @@ soprano</display-text>
           <slur bezier-x="34" bezier-y="-21" default-x="6" default-y="-50" number="1" placement="below" type="start"/>
         </notations>
       </note>
-      <note default-x="321">
+      <note default-x="327">
         <pitch>
           <step>A</step>
           <octave>2</octave>
@@ -1312,7 +1302,7 @@ soprano</display-text>
         <beam number="1">continue</beam>
         <beam number="2">continue</beam>
       </note>
-      <note default-x="362">
+      <note default-x="369">
         <pitch>
           <step>B</step>
           <octave>2</octave>
@@ -1325,7 +1315,7 @@ soprano</display-text>
         <beam number="1">continue</beam>
         <beam number="2">continue</beam>
       </note>
-      <note default-x="402">
+      <note default-x="410">
         <pitch>
           <step>C</step>
           <octave>3</octave>
@@ -1338,10 +1328,10 @@ soprano</display-text>
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         <notations>
-          <slur bezier-x="-27" bezier-y="-29" default-x="6" default-y="-35" number="1" type="stop"/>
+          <slur bezier-x="-28" bezier-y="-29" default-x="6" default-y="-35" number="1" type="stop"/>
         </notations>
       </note>
-      <note default-x="443">
+      <note default-x="451">
         <pitch>
           <step>D</step>
           <octave>3</octave>
@@ -1354,10 +1344,10 @@ soprano</display-text>
         <beam number="1">begin</beam>
         <beam number="2">begin</beam>
         <notations>
-          <slur bezier-x="28" bezier-y="28" default-x="7" default-y="-7" number="1" placement="above" type="start"/>
+          <slur bezier-x="29" bezier-y="28" default-x="7" default-y="-7" number="1" placement="above" type="start"/>
         </notations>
       </note>
-      <note default-x="483">
+      <note default-x="492">
         <pitch>
           <step>E</step>
           <octave>3</octave>
@@ -1370,7 +1360,7 @@ soprano</display-text>
         <beam number="1">continue</beam>
         <beam number="2">continue</beam>
       </note>
-      <note default-x="525">
+      <note default-x="534">
         <pitch>
           <step>F</step>
           <alter>1</alter>
@@ -1384,7 +1374,7 @@ soprano</display-text>
         <beam number="1">continue</beam>
         <beam number="2">continue</beam>
       </note>
-      <note default-x="565">
+      <note default-x="576">
         <pitch>
           <step>G</step>
           <octave>3</octave>
@@ -1397,7 +1387,7 @@ soprano</display-text>
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         <notations>
-          <slur bezier-x="-33" bezier-y="22" default-x="7" default-y="5" number="1" type="stop"/>
+          <slur bezier-x="-33" bezier-y="22" default-x="6" default-y="5" number="1" type="stop"/>
         </notations>
       </note>
       <barline location="right">
@@ -1555,7 +1545,7 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="4" width="306">
+    <measure number="4" width="309">
       <note default-x="14">
         <pitch>
           <step>B</step>
@@ -1587,7 +1577,7 @@ soprano</display-text>
           <text font-size="6.8">go</text>
         </lyric>
       </note>
-      <note default-x="156">
+      <note default-x="157">
         <pitch>
           <step>A</step>
           <alter>-1</alter>
@@ -1604,7 +1594,7 @@ soprano</display-text>
           <text font-size="6.8">sim</text>
         </lyric>
       </note>
-      <note default-x="195">
+      <note default-x="197">
         <pitch>
           <step>A</step>
           <alter>-1</alter>
@@ -1620,7 +1610,7 @@ soprano</display-text>
           <text font-size="6.8">ples</text>
         </lyric>
       </note>
-      <note default-x="266">
+      <note default-x="269">
         <rest/>
         <duration>2</duration>
         <voice>1</voice>
@@ -1637,14 +1627,14 @@ soprano</display-text>
         <type>half</type>
         <staff>2</staff>
       </note>
-      <note default-x="156">
+      <note default-x="157">
         <rest/>
         <duration>4</duration>
         <voice>2</voice>
         <type>quarter</type>
         <staff>2</staff>
       </note>
-      <note default-x="227">
+      <note default-x="229">
         <pitch>
           <step>F</step>
           <alter>1</alter>
@@ -1658,7 +1648,7 @@ soprano</display-text>
         <staff>2</staff>
         <beam number="1">begin</beam>
       </note>
-      <note default-x="266">
+      <note default-x="269">
         <pitch>
           <step>F</step>
           <alter>1</alter>
@@ -1711,7 +1701,7 @@ soprano</display-text>
           <text font-size="6.8">de</text>
         </lyric>
       </note>
-      <note default-x="109">
+      <note default-x="108">
         <pitch>
           <step>C</step>
           <alter>1</alter>
@@ -1780,7 +1770,7 @@ soprano</display-text>
           <text font-size="6.8">te</text>
         </lyric>
       </note>
-      <note default-x="299">
+      <note default-x="300">
         <pitch>
           <step>B</step>
           <octave>4</octave>
@@ -1797,7 +1787,7 @@ soprano</display-text>
           <text font-size="6.8">co</text>
         </lyric>
       </note>
-      <note default-x="347">
+      <note default-x="348">
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -1834,7 +1824,7 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="6" width="320">
+    <measure number="6" width="317">
       <note default-x="13">
         <pitch>
           <step>B</step>
@@ -1861,16 +1851,16 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="7" width="526">
+    <measure number="7" width="525">
       <print new-system="yes"/>
-      <note default-x="90">
+      <note default-x="88">
         <rest/>
         <duration>4</duration>
         <voice>1</voice>
         <type>quarter</type>
         <staff>1</staff>
       </note>
-      <note default-x="187">
+      <note default-x="185">
         <pitch>
           <step>A</step>
           <octave>4</octave>
@@ -1885,7 +1875,7 @@ soprano</display-text>
           <text font-size="6.8">En</text>
         </lyric>
       </note>
-      <note default-x="284">
+      <note default-x="283">
         <pitch>
           <step>A</step>
           <alter>-1</alter>
@@ -1903,7 +1893,7 @@ soprano</display-text>
           <text font-size="6.8">tão</text>
         </lyric>
       </note>
-      <note default-x="345">
+      <note default-x="343">
         <pitch>
           <step>A</step>
           <alter>-1</alter>
@@ -1920,7 +1910,7 @@ soprano</display-text>
           <text font-size="6.8">car</text>
         </lyric>
       </note>
-      <note default-x="405">
+      <note default-x="403">
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -1936,7 +1926,7 @@ soprano</display-text>
           <text font-size="6.8">re</text>
         </lyric>
       </note>
-      <note default-x="465">
+      <note default-x="463">
         <pitch>
           <step>G</step>
           <octave>4</octave>
@@ -1955,14 +1945,14 @@ soprano</display-text>
       <backup>
         <duration>16</duration>
       </backup>
-      <note default-x="90">
+      <note default-x="88">
         <rest/>
         <duration>4</duration>
         <voice>2</voice>
         <type>quarter</type>
         <staff>2</staff>
       </note>
-      <note default-x="187">
+      <note default-x="185">
         <pitch>
           <step>A</step>
           <octave>2</octave>
@@ -1973,7 +1963,7 @@ soprano</display-text>
         <stem default-y="0.5">up</stem>
         <staff>2</staff>
       </note>
-      <note default-x="284">
+      <note default-x="283">
         <pitch>
           <step>A</step>
           <alter>-1</alter>
@@ -1987,7 +1977,7 @@ soprano</display-text>
         <staff>2</staff>
         <beam number="1">begin</beam>
       </note>
-      <note default-x="345">
+      <note default-x="343">
         <pitch>
           <step>A</step>
           <alter>-1</alter>
@@ -2000,7 +1990,7 @@ soprano</display-text>
         <staff>2</staff>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="405">
+      <note default-x="403">
         <pitch>
           <step>G</step>
           <octave>2</octave>
@@ -2012,7 +2002,7 @@ soprano</display-text>
         <staff>2</staff>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="465">
+      <note default-x="463">
         <pitch>
           <step>G</step>
           <octave>2</octave>
@@ -2026,8 +2016,8 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="8" width="483">
-      <note default-x="15">
+    <measure number="8" width="480">
+      <note default-x="13">
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -2043,7 +2033,7 @@ soprano</display-text>
           <text font-size="6.8">o</text>
         </lyric>
       </note>
-      <note default-x="77">
+      <note default-x="75">
         <pitch>
           <step>F</step>
           <octave>4</octave>
@@ -2059,7 +2049,7 @@ soprano</display-text>
           <text font-size="6.8">ar</text>
         </lyric>
       </note>
-      <note default-x="138">
+      <note default-x="135">
         <pitch>
           <step>E</step>
           <alter>-1</alter>
@@ -2076,7 +2066,7 @@ soprano</display-text>
           <text font-size="6.8">qui</text>
         </lyric>
       </note>
-      <note default-x="200">
+      <note default-x="197">
         <pitch>
           <step>E</step>
           <alter>-1</alter>
@@ -2096,7 +2086,7 @@ soprano</display-text>
           <text font-size="6.8">a</text>
         </lyric>
       </note>
-      <note default-x="261">
+      <note default-x="258">
         <pitch>
           <step>C</step>
           <octave>4</octave>
@@ -2111,14 +2101,14 @@ soprano</display-text>
           <text font-size="6.8">qui!</text>
         </lyric>
       </note>
-      <note default-x="322">
+      <note default-x="319">
         <rest/>
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note default-x="383">
+      <note default-x="380">
         <rest/>
         <duration>4</duration>
         <voice>1</voice>
@@ -2128,7 +2118,7 @@ soprano</display-text>
       <backup>
         <duration>16</duration>
       </backup>
-      <note default-x="15">
+      <note default-x="13">
         <pitch>
           <step>F</step>
           <octave>2</octave>
@@ -2140,7 +2130,7 @@ soprano</display-text>
         <staff>2</staff>
         <beam number="1">begin</beam>
       </note>
-      <note default-x="77">
+      <note default-x="75">
         <pitch>
           <step>F</step>
           <octave>2</octave>
@@ -2152,7 +2142,7 @@ soprano</display-text>
         <staff>2</staff>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="138">
+      <note default-x="135">
         <pitch>
           <step>E</step>
           <alter>-1</alter>
@@ -2165,7 +2155,7 @@ soprano</display-text>
         <staff>2</staff>
         <beam number="1">continue</beam>
       </note>
-      <note default-x="200">
+      <note default-x="197">
         <pitch>
           <step>E</step>
           <alter>-1</alter>
@@ -2178,7 +2168,7 @@ soprano</display-text>
         <staff>2</staff>
         <beam number="1">end</beam>
       </note>
-      <note default-x="261">
+      <note default-x="258">
         <pitch>
           <step>C</step>
           <octave>2</octave>
@@ -2189,14 +2179,14 @@ soprano</display-text>
         <stem default-y="-19.5">up</stem>
         <staff>2</staff>
       </note>
-      <note default-x="322">
+      <note default-x="319">
         <rest/>
         <duration>2</duration>
         <voice>2</voice>
         <type>eighth</type>
         <staff>2</staff>
       </note>
-      <note default-x="383">
+      <note default-x="380">
         <rest/>
         <duration>4</duration>
         <voice>2</voice>
@@ -2205,7 +2195,7 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="9" width="259">
+    <measure number="9" width="261">
       <attributes>
         <time>
           <beats>2</beats>
@@ -2229,7 +2219,7 @@ soprano</display-text>
       </note>
     </measure>
     <!--=======================================================-->
-    <measure number="10" width="213">
+    <measure number="10" width="215">
       <note default-x="13">
         <pitch>
           <step>G</step>
@@ -2260,7 +2250,7 @@ soprano</display-text>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note default-x="118">
+      <note default-x="119">
         <rest/>
         <duration>4</duration>
         <voice>1</voice>
@@ -2300,7 +2290,7 @@ soprano</display-text>
         <type>eighth</type>
         <staff>2</staff>
       </note>
-      <note default-x="118">
+      <note default-x="119">
         <rest/>
         <duration>4</duration>
         <voice>2</voice>
