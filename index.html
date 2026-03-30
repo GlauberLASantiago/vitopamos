@@ -55,13 +55,13 @@
         body {
             font-family: 'DM Sans', sans-serif;
             background: var(--bg);
-            padding: 28px 16px;
+            padding: 20px 12px;
             color: var(--body-text);
             transition: background 0.3s, color 0.3s;
         }
 
         .card {
-            max-width: 1080px;
+            max-width: 1440px;
             margin: 0 auto;
             background: var(--card-bg);
             border-radius: 18px;
@@ -1458,6 +1458,51 @@
                     setStatus('Erro: ' + err.message, 'err');
                 }
             };
+
+            async function loadFromUrl(url) {
+                setStatus('A carregar partitura de exemplo...', 'info');
+                try {
+                    var resp = await fetch(url);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    rawXml = await resp.text();
+
+                    var detectedBpm = extractTempoFromXml(rawXml);
+                    if (detectedBpm) document.getElementById('bpm').value = detectedBpm;
+
+                    var meta = extractMetaFromXml(rawXml);
+                    document.getElementById('metaTitle').value = meta.title;
+                    document.getElementById('fname').textContent = meta.title || 'Vitopamos.musicxml';
+                    document.getElementById('metaPanel').classList.add('visible');
+
+                    await osmd.load(rawXml);
+                    applyLayoutMode();
+                    osmd.render();
+
+                    resetCursorToStart();
+                    extractCursorSteps();
+
+                    if (ac && ac.state !== 'closed') {
+                        try { await ac.close(); } catch (_) { }
+                    }
+
+                    ac = new (window.AudioContext || window.webkitAudioContext)();
+                    setupFx();
+                    initParts();
+
+                    sat = 0; pat = 0; run = false; evs = []; sc = []; pieceEnd = 0;
+                    clearPlaybackEndTimer();
+
+                    setStatus('Pronto!', 'ok');
+
+                    ['bp', 'bpa', 'bs', 'bx', 'bdl', 'reverbAmt', 'btnApplyMeta'].forEach(function (id) {
+                        document.getElementById(id).disabled = false;
+                    });
+                } catch (err) {
+                    setStatus('Não foi possível carregar a partitura de exemplo.', 'err');
+                }
+            }
+
+            loadFromUrl('https://raw.githubusercontent.com/GlauberLASantiago/vitopamos/main/Vitopamos.musicxml');
 
             document.getElementById('bp').onclick = async function () {
                 if (run || !partInsts.length || !ac) return;
