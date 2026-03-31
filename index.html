@@ -1052,7 +1052,7 @@
                         var chEl = mi.querySelector('midi-channel');
                         if (chEl && chEl.textContent.trim() === '10') drumPartIds[pid] = true;
                         var unpEl = mi.querySelector('midi-unpitched');
-                        if (unpEl) instIdToUnpitched[mi.getAttribute('id')] = parseInt(unpEl.textContent.trim(), 10);
+                        if (unpEl) instIdToUnpitched[mi.getAttribute('id')] = parseInt(unpEl.textContent.trim(), 10) - 1;
                     }
                     var nameEl = sp.querySelector('part-name');
                     if (nameEl) {
