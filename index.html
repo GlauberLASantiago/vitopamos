@@ -1196,7 +1196,8 @@
                     ac, noteGain, window[instrumentName], when, midiNote, dur
                 );
 
-                /* disconnect gain node after playback to free memory */
+                /* disconnect gain node after playback to free memory;
+                   +0.5s buffer accounts for release envelope and reverb tail */
                 var disconnectTime = (when - ac.currentTime + dur + 0.5) * 1000;
                 if (disconnectTime > 0) {
                     setTimeout(function () { try { noteGain.disconnect(); } catch (_) { } }, disconnectTime);
@@ -1390,10 +1391,10 @@
             }
 
             function extractCursorSteps() {
+                if (!osmd || !osmd.cursor) return;
                 var bpm = +document.getElementById('bpm').value || 100;
                 if (cursorStepsCache.bpm === bpm && cursorStepsCache.xml === rawXml && cursorSteps.length > 0) return;
                 cursorSteps = [];
-                if (!osmd || !osmd.cursor) return;
                 try {
                     osmd.cursor.reset();
                     var iterator = osmd.cursor.Iterator;
@@ -1432,12 +1433,10 @@
                     if (!run || !ac || !osmd || !osmd.cursor || !cursorSteps.length) return;
 
                     var current = ac.currentTime - sat;
-                    var moved = false;
                     while (cursorIndex + 1 < cursorSteps.length && current >= cursorSteps[cursorIndex + 1].t - 0.01) {
                         try {
                             osmd.cursor.next();
                             cursorIndex++;
-                            moved = true;
                         } catch (_) {
                             break;
                         }
