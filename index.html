@@ -2030,39 +2030,6 @@
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.7/build/opensheetmusicdisplay.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"><\/script>
 <script src="https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12835_17_JCLive_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12836_1_JCLive_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12837_1_JCLive_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12838_1_JCLive_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12839_1_JCLive_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12840_1_JCLive_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12841_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12842_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12843_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12844_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12845_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12846_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12847_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12848_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12849_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12850_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12851_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12852_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12853_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12854_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12855_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12856_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12857_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12858_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12859_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12860_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12861_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12863_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12864_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12865_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12866_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12880_0_FluidR3_GM_sf2_file.js"><\/script>
-<script src="https://surikov.github.io/webaudiofontdata/sound/12881_0_FluidR3_GM_sf2_file.js"><\/script>
 <style>
 body { background: #f3f4f6; color: #111827; }
 .icon-svg { display: inline-block; vertical-align: middle; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
@@ -2124,6 +2091,8 @@ body { background: #f3f4f6; color: #111827; }
   var playbackEndTimer = null, pieceEnd = 0;
   var clickTimer = null;
   var inputGain = null, dryGain = null, wetGain = null, masterGain = null, convolver = null;
+  var cursorStepsCache = { bpm: null };
+  var eventsCache = { bpm: null, evs: [], pieceEnd: 0 };
 
   var DRUM_MIDI_MAP = {
     35:'_drum_35_17_JCLive_sf2_file',36:'_drum_36_1_JCLive_sf2_file',37:'_drum_37_1_JCLive_sf2_file',
@@ -2138,12 +2107,63 @@ body { background: #f3f4f6; color: #111827; }
     63:'_drum_63_0_FluidR3_GM_sf2_file',64:'_drum_64_0_FluidR3_GM_sf2_file',65:'_drum_65_0_FluidR3_GM_sf2_file',
     66:'_drum_66_0_FluidR3_GM_sf2_file',80:'_drum_80_0_FluidR3_GM_sf2_file',81:'_drum_81_0_FluidR3_GM_sf2_file'
   };
+  var DRUM_SCRIPT_URLS = {
+    '_drum_35_17_JCLive_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12835_17_JCLive_sf2_file.js',
+    '_drum_36_1_JCLive_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12836_1_JCLive_sf2_file.js',
+    '_drum_37_1_JCLive_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12837_1_JCLive_sf2_file.js',
+    '_drum_38_1_JCLive_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12838_1_JCLive_sf2_file.js',
+    '_drum_39_1_JCLive_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12839_1_JCLive_sf2_file.js',
+    '_drum_40_1_JCLive_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12840_1_JCLive_sf2_file.js',
+    '_drum_41_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12841_0_FluidR3_GM_sf2_file.js',
+    '_drum_42_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12842_0_FluidR3_GM_sf2_file.js',
+    '_drum_43_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12843_0_FluidR3_GM_sf2_file.js',
+    '_drum_44_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12844_0_FluidR3_GM_sf2_file.js',
+    '_drum_45_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12845_0_FluidR3_GM_sf2_file.js',
+    '_drum_46_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12846_0_FluidR3_GM_sf2_file.js',
+    '_drum_47_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12847_0_FluidR3_GM_sf2_file.js',
+    '_drum_48_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12848_0_FluidR3_GM_sf2_file.js',
+    '_drum_49_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12849_0_FluidR3_GM_sf2_file.js',
+    '_drum_50_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12850_0_FluidR3_GM_sf2_file.js',
+    '_drum_51_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12851_0_FluidR3_GM_sf2_file.js',
+    '_drum_52_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12852_0_FluidR3_GM_sf2_file.js',
+    '_drum_53_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12853_0_FluidR3_GM_sf2_file.js',
+    '_drum_54_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12854_0_FluidR3_GM_sf2_file.js',
+    '_drum_55_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12855_0_FluidR3_GM_sf2_file.js',
+    '_drum_56_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12856_0_FluidR3_GM_sf2_file.js',
+    '_drum_57_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12857_0_FluidR3_GM_sf2_file.js',
+    '_drum_58_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12858_0_FluidR3_GM_sf2_file.js',
+    '_drum_59_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12859_0_FluidR3_GM_sf2_file.js',
+    '_drum_60_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12860_0_FluidR3_GM_sf2_file.js',
+    '_drum_61_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12861_0_FluidR3_GM_sf2_file.js',
+    '_drum_63_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12863_0_FluidR3_GM_sf2_file.js',
+    '_drum_64_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12864_0_FluidR3_GM_sf2_file.js',
+    '_drum_65_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12865_0_FluidR3_GM_sf2_file.js',
+    '_drum_66_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12866_0_FluidR3_GM_sf2_file.js',
+    '_drum_80_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12880_0_FluidR3_GM_sf2_file.js',
+    '_drum_81_0_FluidR3_GM_sf2_file':'https://surikov.github.io/webaudiofontdata/sound/12881_0_FluidR3_GM_sf2_file.js'
+  };
   var DRUM_DURATIONS = {53:4,80:0.12,46:20,49:20,51:20,52:20,55:20,57:20,59:20,81:20};
   var drumPlayer = null, lastOpenHiHat = null, lastOpenTriangle = null;
+  var drumSoundsLoaded = false;
+
+  function loadDrumSounds(){
+    if(drumSoundsLoaded) return Promise.resolve();
+    var promises = Object.keys(DRUM_SCRIPT_URLS).map(function(v){
+      if(window[v]) return Promise.resolve();
+      return new Promise(function(resolve){
+        var s = document.createElement('script');
+        s.src = DRUM_SCRIPT_URLS[v];
+        s.onload = resolve;
+        s.onerror = function(){ console.warn('Drum sound failed to load: ' + DRUM_SCRIPT_URLS[v]); resolve(); };
+        document.head.appendChild(s);
+      });
+    });
+    return Promise.all(promises).then(function(){ drumSoundsLoaded = true; });
+  }
 
   function initDrumEngine(){
     if(!drumPlayer) drumPlayer = new WebAudioFontPlayer();
-    Object.keys(DRUM_MIDI_MAP).forEach(function(p){ drumPlayer.loader.decodeAfterLoading(ac, DRUM_MIDI_MAP[p]); });
+    Object.keys(DRUM_MIDI_MAP).forEach(function(p){ if(window[DRUM_MIDI_MAP[p]]) drumPlayer.loader.decodeAfterLoading(ac, DRUM_MIDI_MAP[p]); });
   }
 
   function playDrumNote(midiNote, when, dest){
@@ -2185,8 +2205,9 @@ body { background: #f3f4f6; color: #111827; }
   }
 
   function extractCursorSteps(){
-    cursorSteps = [];
     var bpm = +document.getElementById('bpm').value || 100;
+    if(cursorStepsCache.bpm === bpm) return;
+    cursorSteps = [];
     try{
       osmd.cursor.reset();
       var it = osmd.cursor.Iterator;
@@ -2197,6 +2218,7 @@ body { background: #f3f4f6; color: #111827; }
         it.moveToNext();
       }
       osmd.cursor.reset();
+      cursorStepsCache.bpm = bpm;
     }catch(_){}
   }
 
@@ -2373,11 +2395,25 @@ body { background: #f3f4f6; color: #111827; }
   }
 
   function extract(){
+    var b = +document.getElementById('bpm').value || 100;
+    if(eventsCache.bpm === b && eventsCache.evs.length > 0){
+      evs = eventsCache.evs;
+      pieceEnd = eventsCache.pieceEnd;
+      return;
+    }
     evs = [];
     pieceEnd = 0;
 
-    var b = +document.getElementById('bpm').value || 100;
     var bl = 60 / b;
+
+    /* pre-build instrument ID → index map for O(1) lookups */
+    var instIdMap = {};
+    if(osmd.Sheet && osmd.Sheet.Instruments){
+      for(var ii = 0; ii < osmd.Sheet.Instruments.length; ii++){
+        var inst = osmd.Sheet.Instruments[ii];
+        if(inst.Id !== undefined) instIdMap[inst.Id] = ii;
+      }
+    }
 
     osmd.cursor.reset();
     var it = osmd.cursor.Iterator;
@@ -2399,10 +2435,8 @@ body { background: #f3f4f6; color: #111827; }
             if(!instObj.NameLabel && instObj.ParentInstrument) instObj = instObj.ParentInstrument;
             if(instObj && osmd.Sheet.Instruments){
               var idx = osmd.Sheet.Instruments.indexOf(instObj);
-              if(idx < 0){
-                for(var k = 0; k < osmd.Sheet.Instruments.length; k++){
-                  if(osmd.Sheet.Instruments[k].Id === instObj.Id || osmd.Sheet.Instruments[k] === instObj){ idx = k; break; }
-                }
+              if(idx < 0 && instObj.Id !== undefined && instIdMap[instObj.Id] !== undefined){
+                idx = instIdMap[instObj.Id];
               }
               if(idx >= 0) partIdx = idx;
             }
@@ -2429,6 +2463,9 @@ body { background: #f3f4f6; color: #111827; }
     }
 
     evs.sort(function(a,b){ return a.t - b.t; });
+    eventsCache.bpm = b;
+    eventsCache.evs = evs;
+    eventsCache.pieceEnd = pieceEnd;
   }
 
   function getOctShift(){
@@ -2450,33 +2487,29 @@ body { background: #f3f4f6; color: #111827; }
       });
   }
 
-  function ensureInst(){
-    return new Promise(function(resolve){
-      if(partInsts.length === partConfigs.length) return resolve();
-      document.getElementById('st').textContent = 'A carregar timbres...';
-      document.getElementById('st').style.display = 'block';
-      var hasDrumKit = partConfigs.some(function(c){ return c.program === '_drum_kit_gm'; });
-      if(hasDrumKit) initDrumEngine();
-      var promises = partConfigs.map(function(cfg, idx){
-          var gain = ac.createGain();
-          gain.connect(inputGain);
-          partGains[idx] = gain;
-          if(cfg.program === '_drum_kit_gm'){
-              partInsts[idx] = { isDrumKit: true };
-              return Promise.resolve();
-          }
-          return Soundfont.instrument(ac, cfg.program, {
-              soundfont: 'FluidR3_GM',
-              destination: gain,
-              nameToUrl: function(n, f) { return 'https://gleitz.github.io/midi-js-soundfonts/' + f + '/' + n + '-mp3.js'; }
-          }).then(function(s){ partInsts[idx] = s; });
-      });
-      Promise.all(promises).then(function(){
-          updatePartMix();
-          document.getElementById('st').style.display = 'none';
-          resolve();
-      });
+  async function ensureInst(){
+    if(partInsts.length === partConfigs.length) return;
+    document.getElementById('st').textContent = 'A carregar timbres...';
+    document.getElementById('st').style.display = 'block';
+    var hasDrumKit = partConfigs.some(function(c){ return c.program === '_drum_kit_gm'; });
+    if(hasDrumKit){ await loadDrumSounds(); initDrumEngine(); }
+    var promises = partConfigs.map(function(cfg, idx){
+        var gain = ac.createGain();
+        gain.connect(inputGain);
+        partGains[idx] = gain;
+        if(cfg.program === '_drum_kit_gm'){
+            partInsts[idx] = { isDrumKit: true };
+            return Promise.resolve();
+        }
+        return Soundfont.instrument(ac, cfg.program, {
+            soundfont: 'FluidR3_GM',
+            destination: gain,
+            nameToUrl: function(n, f) { return 'https://gleitz.github.io/midi-js-soundfonts/' + f + '/' + n + '-mp3.js'; }
+        }).then(function(s){ partInsts[idx] = s; });
     });
+    await Promise.all(promises);
+    updatePartMix();
+    document.getElementById('st').style.display = 'none';
   }
 
   async function play(off){
@@ -2513,7 +2546,7 @@ body { background: #f3f4f6; color: #111827; }
     });
 
     if(document.getElementById('met').checked){
-      if(!drumPlayer) initDrumEngine();
+      if(!drumPlayer){ await loadDrumSounds(); initDrumEngine(); }
       var bl = getMetronomeBeatLen();
       var firstBeat = Math.ceil(off / bl) * bl;
       var lastBeat = pieceEnd + bl;
@@ -2644,6 +2677,8 @@ body { background: #f3f4f6; color: #111827; }
               cfg.program = sel.value;
               cfg.isDrum = (sel.value === '_drum_kit_gm');
               partInsts = [];
+              eventsCache.bpm = null;
+              cursorStepsCache.bpm = null;
               ensureInst();
           };
           
