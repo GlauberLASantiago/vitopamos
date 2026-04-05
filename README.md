@@ -1,40 +1,76 @@
-# ViToPaMoS - Visualizador e Tocador de Partituras para Moodle e Sites
+# ViToPaMoS 🎼
 
-**ViToPaMoS** é uma ferramenta pedagógica e profissional desenvolvida para transformar arquivos **MusicXML** em players de partitura interativos e responsivos, ideais para serem embutidos no **Moodle** ou em sites institucionais.
+**Visualizador e Tocador de Partituras para Moodle e Sites**
 
-## 🎵 O que o ViToPaMoS faz?
+O **ViToPaMoS** é uma ferramenta web desenvolvida para facilitar o ensino e a prática musical através da visualização e execução de partituras no formato **MusicXML**. Criado pelo professor **Glauber Santiago** (DAC/UFSCar), ele permite transformar arquivos de partitura em players interativos que podem ser facilmente incorporados em ambientes virtuais de aprendizagem como o **Moodle**.
 
-- **Visualização de Partituras**: Renderização de alta fidelidade usando a biblioteca **OpenSheetMusicDisplay (OSMD)**.
-- **Reprodução de Áudio MIDI**: Toca a música diretamente no navegador com timbres de piano e outros instrumentos de alta qualidade via **Soundfont-player**.
-- **Controle Total**: Ajuste de **BPM**, **Transposição**, **Oitava**, **Reverb** e **Metrônomo**.
-- **Mixagem de Instrumentos**: Painel para controlar **Mute** e **Solo** de cada parte/instrumento da partitura em tempo real.
-- **Edição de Metadados**: Permite alterar o título, compositor e direitos autorais da peça antes da exportação.
-- **Exportação "Moodle-Safe"**: Gera um código HTML único, autodependente (usando CDNs confiáveis) e com CSS defensivo para garantir que o visual não seja corrompido pelos estilos globais do Moodle.
-- **Tema Híbrido**: Interface principal com modos Diurno e Noturno (ajustado para conforto visual).
+<img width="1122" height="927" alt="image" src="https://github.com/user-attachments/assets/b61711d9-ed4c-468a-9b1c-2a1542355b76" />
 
-## 🚀 Como usar
+---
 
-1.  **Carregar**: Clique em "Carregar Partitura (MusicXML)" e escolha seu arquivo `.xml`, `.musicxml` ou `.mxl`.
-2.  **Configurar**: Ajuste o andamento (BPM), instrumentos e outros parâmetros no painel superior.
-3.  **Tocar**: Use os botões de controle ou atalhos:
-    - **Clique**: Play / Pause.
-    - **Duplo Clique**: Parar.
-    - **Triplo Clique**: Reiniciar do início.
-4.  **Personalizar**: Abra o painel "Editar Metadados" para ajustar as informações da peça.
-5.  **Exportar**: 
-    - Use **"Copiar HTML para o Moodle"** para obter o código e colar diretamente no editor de páginas do Moodle (visão de código).
-    - Use **"Baixar HTML do Player"** para salvar um arquivo `.html` independente com a partitura embutida.
+## ✨ Principais Funcionalidades
 
-## 🛠 Tecnologias utilizadas
+- 📄 **Suporte Abrangente**: Carrega arquivos `.xml`, `.musicxml` e comprimidos `.mxl`.
+- 🎹 **Áudio de Alta Qualidade**: Utiliza Soundfonts de General MIDI para uma reprodução fiel de diversos instrumentos.
+- 🥁 **Percussão Inteligente**: 
+  - Mapeamento customizado de peças de bateria.
+  - Interface dedicada para ajustar sons individuais de percussão.
+- 🎸 **Baixo das Cifras**: Recurso pedagógico exclusivo que toca a nota fundamental dos acordes cifrados de forma independente, ideal para treino de harmonia e ritmo.
+- 🔄 **Transposição em Tempo Real**: Altere o tom da música e do acompanhamento instantaneamente.
+- ⏱️ **Controle Total**:
+  - Ajuste de **BPM** (andamento).
+  - **Metrônomo** integrado e sincronizado.
+  - Controle de volume, **Mute** e **Solo** por instrumento.
+- 🎨 **Interface Premium**:
+  - Temas **Claro** e **Noturno** (Dark Mode).
+  - Controle de **Zoom** e layout de compassos por linha.
+  - **Cursor Inteligente**: Destaque por Nota ou Compasso, otimizado para performance.
+- 🌍 **Exportação Facilitada**: Gere um arquivo HTML **individual e completo** (self-contained) pronto para ser colado em blocos HTML do Moodle ou qualquer site.
 
-- **OSMD (OpenSheetMusicDisplay)**: Renderização vetorial de partituras.
-- **Soundfont-player**: Motor de som MIDI baseado em samples.
-- **Vanilla JS & CSS**: Performance otimizada sem frameworks pesados.
-- **Lucide Icons (SVG)**: Ícones profissionais integrados.
+---
+
+## 🚀 Como Usar
+
+1. **Carregamento**: Clique em **"Carregar partitura"** e selecione seu arquivo MusicXML.
+2. **Configuração**:
+   - Ajuste o título, andamento e escolha os instrumentos desejados no painel de mixagem.
+   - Configure o **Baixo das Cifras** se desejar um reforço harmônico.
+   - Use a **Ferramenta de Percussão** para mapear sons de bateria.
+3. **Player**: Use os botões de Play, Pause e Stop. Clique na partitura para mover o cursor para um ponto específico.
+4. **Exportar**: Clique em **"Copiar HTML"** para salvar o código do player na sua área de transferência e use no seu site ou Moodle.
+
+---
+
+## 🎓 Uso Pedagógico (Moodle)
+
+O ViToPaMoS foi desenhado pensando no professor de música. Ao exportar o HTML, o professor pode criar atividades interativas onde o aluno ouve a partitura, altera o andamento para praticar, isola apenas o seu instrumento (Mute/Solo) ou transpõe para o seu instrumento específico.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+- **[OpenSheetMusicDisplay (OSMD)](https://github.com/opensheetmusicdisplay/opensheetmusicdisplay)**: Renderização vetorial da partitura.
+- **[Soundfont-player](https://github.com/danigb/soundfont-player)**: Engine de áudio para instrumentos melódicos.
+- **[WebAudioFont](https://github.com/surikov/webaudiofont)**: Motor de áudio para percussão e bateria.
+- **[JSZip](https://stuk.github.io/jszip/)**: Suporte a arquivos MusicXML comprimidos (.mxl).
+- **Vanilla JS & CSS**: Performance otimizada sem dependências pesadas de frameworks.
+
+---
 
 ## 👨‍🏫 Créditos
 
-Desenvolvido pelo professor **Glauber Santiago** (DAC/UFSCar).
+Desenvolvido pelo professor **Glauber Santiago**
+**Departamento de Artes e Comunicação (DAC) — UFSCar**
+
+Acesse outros projetos e materiais:
+- [Página Institucional](https://servidores.ufscar.br/glauber/)
+- [Portfólio de Projetos](https://sites.google.com/view/glauberia)
 
 ---
-*ViToPaMoS — Transformando partituras digitais em ferramentas de ensino acessíveis.*
+
+## 📄 Licença
+
+Este projeto é disponibilizado para fins educacionais e acadêmicos. Para outros usos, entre em contato com o autor.
+
+---
+*Powered by ViToPaMoS*
