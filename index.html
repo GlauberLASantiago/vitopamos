@@ -1148,14 +1148,11 @@
                 fromEl.max = maxMeasureNumber;
                 toEl.min = minMeasureNumber;
                 toEl.max = maxMeasureNumber;
-                // Only set default if not yet set properly or empty
-                if (!toEl.value || parseInt(toEl.value, 10) < minMeasureNumber || parseInt(toEl.value, 10) > maxMeasureNumber) {
-                    toEl.value = maxMeasureNumber;
-                }
-                if (parseInt(fromEl.value, 10) < minMeasureNumber) fromEl.value = minMeasureNumber;
-                if (parseInt(fromEl.value, 10) > maxMeasureNumber) fromEl.value = maxMeasureNumber;
-                rangeFrom = parseInt(fromEl.value, 10) || minMeasureNumber;
-                rangeTo = parseInt(toEl.value, 10) || maxMeasureNumber;
+                // Always reset to full range on load
+                fromEl.value = minMeasureNumber;
+                toEl.value = maxMeasureNumber;
+                rangeFrom = minMeasureNumber;
+                rangeTo = maxMeasureNumber;
             }
 
             function getRangeStartTime() {
@@ -2380,11 +2377,9 @@ body{background:#f3f4f6;color:#111827;}
   function updateRangeInputs(){
     var fromEl=document.getElementById('rangeFromEx');
     var toEl=document.getElementById('rangeToEx');
-    if(fromEl){fromEl.min=minMeasureNumber;fromEl.max=maxMeasureNumber;}
-    if(toEl){
-      toEl.min=minMeasureNumber;toEl.max=maxMeasureNumber;
-      if(!toEl.value||parseInt(toEl.value,10)<minMeasureNumber||parseInt(toEl.value,10)>maxMeasureNumber)toEl.value=maxMeasureNumber;
-    }
+    if(fromEl){fromEl.min=minMeasureNumber;fromEl.max=maxMeasureNumber;fromEl.value=minMeasureNumber;}
+    if(toEl){toEl.min=minMeasureNumber;toEl.max=maxMeasureNumber;toEl.value=maxMeasureNumber;}
+    rangeFrom=minMeasureNumber;rangeTo=maxMeasureNumber;
   }
 
   document.getElementById('rangeFromEx').addEventListener('change',function(){
