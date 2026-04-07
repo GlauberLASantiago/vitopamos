@@ -266,8 +266,7 @@
         .zoom-wrap,
         .mps-wrap,
         .cursor-wrap,
-        .range-wrap,
-        .loop-wrap {
+        .range-wrap {
             display: flex;
             align-items: center;
             gap: 7px;
@@ -285,8 +284,7 @@
         .zoom-wrap label,
         .mps-wrap label,
         .cursor-wrap label,
-        .range-wrap label,
-        .loop-wrap label {
+        .range-wrap label {
             font-size: 11px;
             font-weight: 600;
             color: var(--text-sub);
@@ -343,8 +341,7 @@
             font-family: inherit;
         }
 
-        .met-wrap input[type="checkbox"],
-        .loop-wrap input[type="checkbox"] {
+        .met-wrap input[type="checkbox"] {
             width: 16px;
             height: 16px;
             cursor: pointer;
@@ -391,27 +388,6 @@
             user-select: none;
         }
 
-        /* Loop button style */
-        .btn-loop {
-            background: var(--ctrl-bg);
-            color: var(--text-sub);
-            border: 1.5px solid var(--border);
-            transition: all .15s;
-        }
-
-        .btn-loop:not(:disabled):hover {
-            background: #7c3aed;
-            color: #fff;
-            border-color: #7c3aed;
-        }
-
-        .btn-loop.active {
-            background: #7c3aed;
-            color: #fff;
-            border-color: #7c3aed;
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
-        }
-
         .range-num {
             width: 44px;
             border: none;
@@ -436,27 +412,6 @@
             font-weight: 700;
             color: var(--text-sub);
             user-select: none;
-        }
-
-        /* Loop button with active state */
-        .btn-loop {
-            background: var(--ctrl-bg);
-            color: var(--text-sub);
-            border: 1.5px solid var(--border);
-            transition: all .15s;
-        }
-
-        .btn-loop:not(:disabled):hover {
-            background: #7c3aed;
-            color: #fff;
-            border-color: #7c3aed;
-        }
-
-        .btn-loop.active {
-            background: #7c3aed;
-            color: #fff;
-            border-color: #7c3aed;
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
         }
 
         #score {
@@ -836,16 +791,6 @@
                         disabled>
                 </div>
 
-                <button class="btn btn-loop" id="btnLoop" disabled title="Ativar/desativar loop do trecho">
-                    <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24">
-                        <polyline points="17 1 21 5 17 9"></polyline>
-                        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-                        <polyline points="7 23 3 19 7 15"></polyline>
-                        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-                    </svg>
-                    Loop
-                </button>
-
                 <button class="btn btn-export" id="bx" disabled>
                     <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24">
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -882,9 +827,8 @@
             <div class="step"><span class="step-num">2</span><b>Carregar & Ajustar</b>Use o botão azul acima para
                 carregar o arquivo. Ajuste Título, Andamento (BPM), Timbre, Oitava e outras opções conforme desejado.
             </div>
-            <div class="step"><span class="step-num">3</span><b>Trecho & Loop</b>Defina o compasso inicial e final em
-                <b>Trecho</b> para executar apenas uma parte da música. Ative o botão <b>Loop</b> para repetir o
-                trecho indefinidamente.
+            <div class="step"><span class="step-num">3</span><b>Trecho</b>Defina o compasso inicial e final em
+                <b>Trecho</b> para executar apenas uma parte da música.
             </div>
             <div class="step"><span class="step-num">4</span><b>Baixo das Cifras</b>Ative "Baixo das Cifras" para
                 ouvir a fundamental de cada acorde cifrado tocada em baixo grave.</div>
@@ -1146,8 +1090,7 @@
             var cursorStepsCache = { bpm: null, xml: null, mode: 3 };
             var totalMeasures = 0;
 
-            /* ─── Range & Loop state ─────────────────────────────────────────── */
-            var loopActive = false;
+            /* ─── Range state ─────────────────────────────────────────── */
             var rangeFrom = 1, rangeTo = 1;
             /* measureTimeMap: object mapping MusicXML measure number → start time in seconds */
             var measureTimeMap = {};
@@ -1244,11 +1187,6 @@
                     rangeFrom = rangeTo;
                     document.getElementById('rangeFrom').value = rangeFrom;
                 }
-            });
-
-            document.getElementById('btnLoop').addEventListener('click', function () {
-                loopActive = !loopActive;
-                this.classList.toggle('active', loopActive);
             });
 
             /* ─── Dicionário de Bateria ──────────────────────────────────────── */
@@ -1527,7 +1465,6 @@
                 updateRangeInputs();
                 document.getElementById('rangeFrom').disabled = false;
                 document.getElementById('rangeTo').disabled = false;
-                document.getElementById('btnLoop').disabled = false;
 
                 renderPartsPanel();
                 loadAllInstruments();
@@ -1865,14 +1802,6 @@
             }
 
             function finishPlayback() {
-                if (loopActive) {
-                    /* Loop: restart from rangeFrom */
-                    var startT = getRangeStartTime();
-                    stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer();
-                    scheduleFrom(startT).then(function () { startCursorFollow(startT); });
-                    setStatus('Loop: compasso ' + rangeFrom + ' → ' + rangeTo, 'ok');
-                    return;
-                }
                 run = false; pat = 0; stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); resetCursorToStart();
                 setStatus('Fim da música. Voltou ao início.', 'ok');
             }
@@ -2117,7 +2046,7 @@
                 sat = 0; pat = 0; run = false; evs = []; sc = []; pieceEnd = 0;
                 clearPlaybackEndTimer();
                 setStatus('Pronto!', 'ok');
-                ['bp', 'bpa', 'bs', 'bx', 'bdl', 'reverbAmt', 'btnApplyMeta', 'rangeFrom', 'rangeTo', 'btnLoop'].forEach(function (id) {
+                ['bp', 'bpa', 'bs', 'bx', 'bdl', 'reverbAmt', 'btnApplyMeta', 'rangeFrom', 'rangeTo'].forEach(function (id) {
                     document.getElementById(id).disabled = false;
                 });
             }
@@ -2150,8 +2079,7 @@
                 run = true;
                 var startT = getRangeStartTime();
                 await scheduleFrom(startT); startCursorFollow(startT); pat = 0;
-                var loopMsg = loopActive ? ' [Loop: ' + rangeFrom + '→' + rangeTo + ']' : '';
-                setStatus('A tocar...' + loopMsg, 'ok');
+                setStatus('A tocar...', 'ok');
             };
 
             document.getElementById('btnApplyMeta').onclick = async function () {
@@ -2284,7 +2212,6 @@
                 var curMode = document.getElementById('cursorMode').value;
                 var exportRangeFrom = rangeFrom;
                 var exportRangeTo = rangeTo;
-                var exportLoopActive = loopActive;
                 var exportTotalMeasures = totalMeasures;
                 var exportMinMeasureNumber = minMeasureNumber;
                 var exportMaxMeasureNumber = maxMeasureNumber;
@@ -2303,10 +2230,6 @@
                 var cursorOptions = [['0', 'Nota'], ['3', 'Compasso'], ['-1', 'Sem cursor']].map(function (o) {
                     return '<option value="' + o[0] + '"' + (String(curMode) === String(o[0]) ? ' selected' : '') + '>' + o[1] + '<\/option>';
                 }).join('');
-
-                var loopBtnStyle = exportLoopActive
-                    ? 'background:#7c3aed;color:#fff;border:1.5px solid #7c3aed;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;box-shadow:0 0 0 3px rgba(124,58,237,0.25);'
-                    : 'background:#f3f4f6;color:#6b7280;border:1.5px solid #d1d5db;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;';
 
                 return `<!DOCTYPE html>
 <html>
@@ -2337,9 +2260,6 @@ body{background:#f3f4f6;color:#111827;}
     <span style="font-size:11px;font-weight:700;color:#6b7280;">–<\/span>
     <input type="number" id="rangeToEx" value="${exportRangeTo}" min="${exportMinMeasure}" max="${exportMaxMeasure}" style="${I}width:38px;text-align:center;" title="Compasso final">
   <\/span>
-  <button id="btnLoopEx" style="${loopBtnStyle}" title="Ativar/desativar loop">
-    <svg style="width:11px;height:11px;display:inline-block;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-right:3px;" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"><\/polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"><\/path><polyline points="7 23 3 19 7 15"><\/polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"><\/path><\/svg>Loop
-  <\/button>
   <span style="font-size:12px;color:#6b7280;padding:0 4px;">
     <svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"><\/polygon><\/svg>/<svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"><\/rect><rect x="14" y="4" width="4" height="16"><\/rect><\/svg>&nbsp;clique &nbsp;&bull;&nbsp; <svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"><\/rect><\/svg>&nbsp;duplo &nbsp;&bull;&nbsp; &#9198;&nbsp;triplo &nbsp;&bull;&nbsp; <a href="https://glauberlasantiago.github.io/vitopamos/" target="_blank" style="text-decoration:none;color:#94a3b8;font-size:10px;">Powered by ViToPaMos<\/a>
   <\/span>
@@ -2359,8 +2279,7 @@ body{background:#f3f4f6;color:#111827;}
     solo: '<svg class="icon-svg" style="width:11px;height:11px;margin-right:3px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"><\/circle><circle cx="12" cy="12" r="1"><\/circle><\/svg>'
   };
 
-  /* ── Range & Loop state ── */
-  var loopActive = ${exportLoopActive ? 'true' : 'false'};
+  /* ── Range state ── */
   var rangeFrom = ${exportRangeFrom};
   var rangeTo = ${exportRangeTo};
   var totalMeasures = ${exportTotalMeasures};
@@ -2475,13 +2394,6 @@ body{background:#f3f4f6;color:#111827;}
     if(v<minMeasureNumber)v=minMeasureNumber;if(v>maxMeasureNumber)v=maxMeasureNumber;
     this.value=v;rangeTo=v;
     if(rangeFrom>rangeTo){rangeFrom=rangeTo;document.getElementById('rangeFromEx').value=rangeFrom;}
-  });
-
-  var LOOP_ACTIVE_STYLE='background:#7c3aed;color:#fff;border:1.5px solid #7c3aed;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;box-shadow:0 0 0 3px rgba(124,58,237,0.25);';
-  var LOOP_INACTIVE_STYLE='background:#f3f4f6;color:#6b7280;border:1.5px solid #d1d5db;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;';
-  document.getElementById('btnLoopEx').addEventListener('click',function(){
-    loopActive=!loopActive;
-    this.style.cssText=loopActive?LOOP_ACTIVE_STYLE:LOOP_INACTIVE_STYLE;
   });
 
   function applyLayout(){
@@ -2647,12 +2559,6 @@ body{background:#f3f4f6;color:#111827;}
   }
 
   function finishPlayback(){
-    if(loopActive){
-      var startT=getRangeStartTime();
-      stopAll();clearCursorTimer();clearPlaybackEndTimer();
-      play(startT).then(function(){startCursorFollow(startT);});
-      return;
-    }
     run=false;pat=0;stopAll();clearCursorTimer();clearPlaybackEndTimer();resetCursorToStart();
   }
   function pausePlayback(){if(!run||!ac)return;run=false;pat=Math.max(0,ac.currentTime-sat);stopAll();clearCursorTimer();clearPlaybackEndTimer();}
