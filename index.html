@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -423,17 +422,23 @@
 
         #score {
             overflow-x: auto;
-            filter: var(--score-filter);
-            transition: filter 0.3s;
             background: #fff;
             border-radius: 8px;
             padding: 10px;
             margin-top: 15px;
             border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-family: system-ui, -apple-system, sans-serif;
+            box-sizing: content-box;
+        }
+
+        #score * {
+            box-sizing: content-box;
         }
 
         #score svg {
-            max-width: 100%;
+            display: block;
+            width: auto;
             height: auto;
         }
 
@@ -933,7 +938,7 @@
             };
 
             var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
-                backend: 'svg', autoResize: true, drawTitle: true, followCursor: false
+                backend: 'svg', autoResize: true, followCursor: false
             });
             if (osmd.cursor) osmd.cursor.cursorOptions.color = '#86efac44';
 
@@ -1503,7 +1508,11 @@
                 loadAllInstruments();
             }
 
-            var OCT_OPTIONS = [['24', '8va²↑'], ['12', '8va↑'], ['0', 'In loco'], ['-12', '8vb↓'], ['-24', '8vb²↓']];
+            var OCT_OPTIONS = [
+                ['24', '8va²↑'], ['12', '8va↑'], ['9', 'Eb↑'], ['0', 'In loco'],
+                ['-2', 'Bb↓'], ['-5', 'G↓'], ['-7', 'F↓'], ['-9', 'Eb↓'],
+                ['-12', '8vb↓'], ['-14', 'Bb8vb↓'], ['-21', 'Eb8vb↓'], ['-24', '8vb²↓']
+            ];
 
             function makeOctSelect(val, onchange) {
                 var s = document.createElement('select'); s.className = 'part-sel';
@@ -2896,7 +2905,11 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     },250);
   });
 
-  var OCT_OPTIONS_EX=[['24','8va²↑'],['12','8va↑'],['0','In loco'],['-12','8vb↓'],['-24','8vb²↓']];
+  var OCT_OPTIONS_EX = [
+    ['24', '8va²↑'], ['12', '8va↑'], ['9', 'Eb↑'], ['0', 'In loco'],
+    ['-2', 'Bb↓'], ['-5', 'G↓'], ['-7', 'F↓'], ['-9', 'Eb↓'],
+    ['-12', '8vb↓'], ['-14', 'Bb8vb↓'], ['-21', 'Eb8vb↓'], ['-24', '8vb²↓']
+  ];
   function makeOctSelEx(val,onchange){
     var s=document.createElement('select');
     s.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px 4px;font-size:11px;background:#fff;color:#111827;cursor:pointer;';
