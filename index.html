@@ -2346,6 +2346,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     <span style="font-size:11px;font-weight:700;color:#6b7280;">–<\/span>
     <input type="number" id="rangeToEx" value="${exportRangeTo}" min="${exportMinMeasureNumber}" max="${exportMaxMeasureNumber}" style="${I}width:38px;text-align:center;" title="Compasso final">
   <\/span>
+  <span style="${C}background:#eee;"><span style="${L}">Scroll<\/span><input type="checkbox" id="autoScrollEx" style="width:15px;height:15px;cursor:pointer;" title="Rolagem automática"><\/span>
 <\/div>
 <div id="helpEx" style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:10px;padding:0 10px;font-size:11px;color:#6b7280;">
   <span><svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>/<svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>&nbsp;clique</span>
@@ -2506,6 +2507,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   var cursorTimer=null,cursorSteps=[],cursorIndex=0;
   var playbackEndTimer=null,pieceEnd=0;
   var clickTimer=null;
+  var autoScrollEnabled=false;
   var inputGain=null,dryGain=null,wetGain=null,masterGain=null,convolver=null;
   var cursorStepsCache={bpm:null,mode:null};
   var eventsCache={bpm:null,evs:[],pieceEnd:0};
@@ -2678,11 +2680,33 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     }catch(_){}
   }
 
+  function autoScrollToCursor(){
+    if(!autoScrollEnabled)return;
+    try{
+      var cel=osmd.cursor.cursorElement;
+      if(!cel)return;
+      var scoreEl=document.getElementById('score');
+      var scoreRect=scoreEl.getBoundingClientRect();
+      var cursorRect=cel.getBoundingClientRect();
+      var cursorYInScore=cursorRect.top-scoreRect.top;
+      /* Estimate system height: cursor element height is roughly one system */
+      var sysH=cel.offsetHeight||cursorRect.height||120;
+      var maxOffset=sysH*3;
+      if(cursorYInScore>maxOffset){
+        var scrollTarget=scoreEl.offsetTop+cursorYInScore-sysH*1.5;
+        window.scrollTo({top:scrollTarget,behavior:'smooth'});
+      }else if(cursorYInScore<0){
+        var scrollTarget2=window.scrollY+cursorYInScore-20;
+        window.scrollTo({top:Math.max(0,scrollTarget2),behavior:'smooth'});
+      }
+    }catch(_){}
+  }
+
   function startCursorFollow(offset){
     var mode=+document.getElementById('curEx').value;
     if(mode===-1)return;
     clearCursorTimer();moveCursorToTime(offset);
-    var lastTime=0;
+    var lastTime=0,lastScrollCheck=0;
     function step(now){
       if(!run||!ac||!cursorSteps.length)return;
       if(now-lastTime>=80){
@@ -2690,15 +2714,17 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
         var current=ac.currentTime-sat;
         var curMode=+document.getElementById('curEx').value;
         if(curMode===-1)return;
+        var moved=false;
         while(cursorIndex+1<cursorSteps.length&&current>=cursorSteps[cursorIndex+1].t-0.01){
           try{
             var targetM=cursorSteps[cursorIndex+1].m;
             if(curMode===3){
               while(!osmd.cursor.Iterator.EndReached&&osmd.cursor.Iterator.CurrentMeasureIndex<targetM){osmd.cursor.next();}
             }else if(curMode===0){osmd.cursor.next();}
-            cursorIndex++;
+            cursorIndex++;moved=true;
           }catch(_){break;}
         }
+        if(moved&&now-lastScrollCheck>=300){lastScrollCheck=now;autoScrollToCursor();}
       }
       cursorTimer=requestAnimationFrame(step);
     }
@@ -2928,6 +2954,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     if(mode===-1){osmd.cursor.hide();clearCursorTimer();}
     else{osmd.cursor.cursorOptions.type=mode;osmd.cursor.show();moveCursorToTime(run?Math.max(0,ac.currentTime-sat):(pat||0));}
   });
+  document.getElementById('autoScrollEx').addEventListener('change',function(){autoScrollEnabled=this.checked;});
 
   document.getElementById('score').addEventListener('click',function(ev){
     if(clickTimer)clearTimeout(clickTimer);
