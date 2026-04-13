@@ -2208,6 +2208,21 @@
                 }, 250);
             });
 
+            /* ─── Atalhos de teclado: teclas 1–5 alternam solo nos tracks ───── */
+            document.addEventListener('keydown', function (e) {
+                var tag = e.target.tagName;
+                if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+                var key = e.key;
+                if (key >= '1' && key <= '5') {
+                    var idx = parseInt(key, 10) - 1;
+                    if (idx < partConfigs.length) {
+                        partConfigs[idx].solo = !partConfigs[idx].solo;
+                        updateFullMix();
+                        renderPartsPanel();
+                    }
+                }
+            });
+
             /* ─── Export helpers ──────────────────────────────────────────────── */
             function encodeBase64Unicode(str) { return btoa(unescape(encodeURIComponent(str))); }
             function extractTitleFromXml(xml) {
@@ -2337,6 +2352,8 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   <span>&bull;</span>
   <span><svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"></rect></svg>&nbsp;duplo</span>
   <span>&#9198;&nbsp;triplo</span>
+  <span>&bull;</span>
+  <span><b>1-5</b>&nbsp;solo</span>
   <span>&bull;</span>
   <a href="https://glauberlasantiago.github.io/vitopamos/" target="_blank" style="text-decoration:none;color:#94a3b8;font-size:10px;">Powered by ViToPaMos</a>
 </div>
@@ -2967,6 +2984,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       var bMute=document.createElement('button');bMute.innerHTML=ICONS.mute+' Mute';bMute.style.cssText=S_BTN+(cfg.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
       bMute.onclick=function(){cfg.mute=!cfg.mute;bMute.style.cssText=S_BTN+(cfg.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
       var bSolo=document.createElement('button');bSolo.innerHTML=ICONS.solo+' Solo';bSolo.style.cssText=S_BTN+(cfg.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');
+      bSolo.setAttribute('data-solo-idx',idx);
       bSolo.onclick=function(){cfg.solo=!cfg.solo;bSolo.style.cssText=S_BTN+(cfg.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');updateFullMix();};
       var volRange=document.createElement('input');volRange.type='range';volRange.min=0;volRange.max=100;volRange.value=cfg.vol||100;volRange.style.width='55px';
       volRange.oninput=function(){cfg.vol=+volRange.value;updateFullMix();};
@@ -3023,6 +3041,24 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     resetCursorToStart();
     extractCursorSteps();
   });
+
+  /* ── Atalhos de teclado: teclas 1–5 alternam solo nos tracks ── */
+  document.addEventListener('keydown',function(e){
+    var tag=e.target.tagName;
+    if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+    var key=e.key;
+    if(key>='1'&&key<='5'){
+      var idx=parseInt(key,10)-1;
+      if(idx<partConfigs.length){
+        partConfigs[idx].solo=!partConfigs[idx].solo;
+        updateFullMix();
+        var S_BTN_K='border:1px solid #d1d5db;border-radius:4px;padding:3px 6px;font-size:11px;font-weight:600;cursor:pointer;font-family:system-ui,sans-serif;color:#475569;background:#f8fafc;';
+        var btn=document.querySelector('[data-solo-idx=\"'+idx+'\"]');
+        if(btn)btn.style.cssText=S_BTN_K+(partConfigs[idx].solo?'background:#eab308;color:#fff;border-color:#eab308;':'');
+      }
+    }
+  });
+
 })();
 <\/script>
 <\/body>
