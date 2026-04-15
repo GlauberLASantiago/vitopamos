@@ -660,6 +660,115 @@
             height: 28px;
             color: #fff;
         }
+
+        /* ── Bluetooth Delay Panel ── */
+        .bt-wrap {
+            position: relative;
+        }
+        .btn-bt {
+            background: #7c3aed;
+            color: #fff;
+        }
+        .btn-bt:hover {
+            background: #6d28d9;
+        }
+        .btn-bt.active {
+            background: #5b21b6;
+            box-shadow: 0 0 0 3px rgba(124,58,237,.35);
+        }
+        .bt-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            z-index: 999;
+            background: var(--card-bg);
+            border: 1.5px solid #7c3aed;
+            border-radius: 12px;
+            padding: 14px 18px 16px;
+            box-shadow: 0 8px 32px rgba(124,58,237,.18);
+            min-width: 240px;
+            transition: background 0.3s;
+        }
+        .bt-panel.open {
+            display: block;
+        }
+        .bt-panel-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #7c3aed;
+            text-transform: uppercase;
+            letter-spacing: .7px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .bt-panel-title svg {
+            flex-shrink: 0;
+        }
+        .bt-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bt-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            background: linear-gradient(
+                to right,
+                #7c3aed calc(var(--pct, 0) * 1%),
+                #e2e8f0 calc(var(--pct, 0) * 1%)
+            );
+        }
+        .dark .bt-slider {
+            background: linear-gradient(
+                to right,
+                #a78bfa calc(var(--pct, 0) * 1%),
+                #334155 calc(var(--pct, 0) * 1%)
+            );
+        }
+        .bt-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #7c3aed;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 6px rgba(124,58,237,.4);
+            transition: transform .15s, box-shadow .15s;
+        }
+        .bt-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.18);
+            box-shadow: 0 2px 12px rgba(124,58,237,.55);
+        }
+        .bt-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #7c3aed;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 6px rgba(124,58,237,.4);
+        }
+        .bt-val {
+            font-size: 13px;
+            font-weight: 700;
+            color: #7c3aed;
+            min-width: 56px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .bt-hint {
+            font-size: 10.5px;
+            color: var(--text-sub);
+            margin-top: 8px;
+            line-height: 1.45;
+        }
     </style>
 </head>
 
@@ -828,6 +937,29 @@
                     Baixar HTML
                 </button>
                 <div id="partsPanel" class="parts-panel" style="display:none;"></div>
+
+                <!-- Bluetooth Delay Button & Panel -->
+                <div class="bt-wrap" id="btWrap">
+                    <button class="btn btn-bt" id="btnBtDelay" title="Ajuste de Atraso Bluetooth">
+                        <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24">
+                            <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"></polyline>
+                        </svg>
+                        BT Delay
+                    </button>
+                    <div class="bt-panel" id="btPanel">
+                        <div class="bt-panel-title">
+                            <svg style="width:13px;height:13px;fill:none;stroke:#7c3aed;stroke-width:2;" viewBox="0 0 24 24">
+                                <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"></polyline>
+                            </svg>
+                            Ajuste de Atraso Bluetooth
+                        </div>
+                        <div class="bt-slider-row">
+                            <input type="range" id="btSlider" class="bt-slider" min="0" max="1200" step="50" value="0" style="--pct:0">
+                            <span class="bt-val" id="btValDisplay">0 ms</span>
+                        </div>
+                        <div class="bt-hint">Atrasa o cursor/visual para sincronizar com fones Bluetooth. Não afeta o áudio.</div>
+                    </div>
+                </div>
             </div>
 
             <div id="score"></div>
@@ -879,6 +1011,39 @@
 
     <script>
         (function () {
+            /* ── Bluetooth Delay ── */
+            var btDelayMs = 0;
+            (function initBtDelay() {
+                var saved = localStorage.getItem('btDelayMs');
+                if (saved !== null) btDelayMs = Math.max(0, Math.min(1200, parseInt(saved, 10) || 0));
+                var slider = document.getElementById('btSlider');
+                var display = document.getElementById('btValDisplay');
+                slider.value = btDelayMs;
+                var pct = btDelayMs / 12;
+                slider.style.setProperty('--pct', pct);
+                display.textContent = btDelayMs + ' ms';
+                slider.oninput = function () {
+                    btDelayMs = parseInt(slider.value, 10) || 0;
+                    var p = btDelayMs / 12;
+                    slider.style.setProperty('--pct', p);
+                    display.textContent = btDelayMs + ' ms';
+                    localStorage.setItem('btDelayMs', btDelayMs);
+                };
+            })();
+            /* Toggle painel BT */
+            document.getElementById('btnBtDelay').addEventListener('click', function () {
+                var panel = document.getElementById('btPanel');
+                var btn = document.getElementById('btnBtDelay');
+                var open = panel.classList.toggle('open');
+                btn.classList.toggle('active', open);
+            });
+            document.addEventListener('click', function (e) {
+                if (!document.getElementById('btWrap').contains(e.target)) {
+                    document.getElementById('btPanel').classList.remove('open');
+                    document.getElementById('btnBtDelay').classList.remove('active');
+                }
+            });
+
             /* ── Tema ── */
             var currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             if (currentTheme === 'dark') document.documentElement.classList.add('dark');
@@ -1841,7 +2006,9 @@
                     if (!run || !ac || !osmd || !osmd.cursor || !cursorSteps.length) return;
                     if (now - lastTime >= 80) {
                         lastTime = now;
-                        var current = ac.currentTime - sat;
+                        /* Tempo visual atrasado para compensar latência Bluetooth */
+                        var tempoVisualAtual = ac.currentTime - sat - (btDelayMs / 1000);
+                        var current = Math.max(0, tempoVisualAtual);
                         var curMode = +document.getElementById('cursorMode').value;
                         if (curMode === -1) return;
                         while (cursorIndex + 1 < cursorSteps.length && current >= cursorSteps[cursorIndex + 1].t - 0.01) {
@@ -2346,7 +2513,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     <span style="font-size:11px;font-weight:700;color:#6b7280;">–<\/span>
     <input type="number" id="rangeToEx" value="${exportRangeTo}" min="${exportMinMeasureNumber}" max="${exportMaxMeasureNumber}" style="${I}width:38px;text-align:center;" title="Compasso final">
   <\/span>
-  <span style="${C}background:#eee;"><span style="${L}">Scroll<\/span><input type="checkbox" id="autoScrollEx" style="width:15px;height:15px;cursor:pointer;" title="Rolagem automática"><\/span>
+  <span style="${C}background:#eee;"><span style="${L}">Scroll<\/span><input type="checkbox" id="autoScrollEx" checked style="width:15px;height:15px;cursor:pointer;" title="Rolagem automática"><\/span>
 <\/div>
 <div id="helpEx" style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:10px;padding:0 10px;font-size:11px;color:#6b7280;">
   <span><svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>/<svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>&nbsp;clique</span>
@@ -2507,9 +2674,60 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   var cursorTimer=null,cursorSteps=[],cursorIndex=0;
   var playbackEndTimer=null,pieceEnd=0;
   var clickTimer=null;
-  var autoScrollEnabled=false;
+  var autoScrollEnabled=true;
   var inputGain=null,dryGain=null,wetGain=null,masterGain=null,convolver=null;
   var cursorStepsCache={bpm:null,mode:null};
+
+  /* ── Bluetooth Delay (exportado) ── */
+  var btDelayMsEx=(function(){
+    try{var v=localStorage.getItem('btDelayMs');return v!==null?Math.max(0,Math.min(1200,parseInt(v,10)||0)):0;}catch(e){return 0;}
+  })();
+  (function initBtEx(){
+    /* Criar painel de calibração BT inline simples (compatível Moodle) */
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:inline-flex;align-items:center;gap:6px;background:#f3e8ff;border:1.5px solid #7c3aed;border-radius:7px;padding:3px 10px;cursor:pointer;position:relative;';
+    wrap.title='Ajuste de Atraso Bluetooth';
+    var lbl=document.createElement('span');
+    lbl.style.cssText='font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;';
+    lbl.textContent='\uD83D\uDD35 BT';
+    var valSpan=document.createElement('span');
+    valSpan.id='btValEx';valSpan.style.cssText='font-size:12px;font-weight:700;color:#7c3aed;min-width:48px;';
+    valSpan.textContent=btDelayMsEx+' ms';
+    wrap.appendChild(lbl);wrap.appendChild(valSpan);
+    /* Painel expandido */
+    var panel=document.createElement('div');
+    panel.style.cssText='display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:9999;background:#fff;border:1.5px solid #7c3aed;border-radius:10px;padding:12px 16px;box-shadow:0 6px 24px rgba(124,58,237,.2);min-width:220px;';
+    var ptitle=document.createElement('div');
+    ptitle.style.cssText='font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;';
+    ptitle.textContent='Atraso Bluetooth (ms)';
+    var sRow=document.createElement('div');
+    sRow.style.cssText='display:flex;align-items:center;gap:8px;';
+    var slider=document.createElement('input');
+    slider.type='range';slider.min=0;slider.max=1200;slider.step=50;slider.value=btDelayMsEx;
+    slider.style.cssText='flex:1;accent-color:#7c3aed;cursor:pointer;height:6px;';
+    var sVal=document.createElement('span');
+    sVal.style.cssText='font-size:12px;font-weight:700;color:#7c3aed;min-width:52px;text-align:right;';
+    sVal.textContent=btDelayMsEx+' ms';
+    slider.oninput=function(){
+      btDelayMsEx=parseInt(slider.value,10)||0;
+      sVal.textContent=btDelayMsEx+' ms';
+      valSpan.textContent=btDelayMsEx+' ms';
+      try{localStorage.setItem('btDelayMs',btDelayMsEx);}catch(e){}
+    };
+    sRow.appendChild(slider);sRow.appendChild(sVal);
+    var hint=document.createElement('div');
+    hint.style.cssText='font-size:10px;color:#6b7280;margin-top:6px;line-height:1.4;';
+    hint.textContent='Atrasa o cursor visual para compensar latência BT. Não afeta o áudio.';
+    panel.appendChild(ptitle);panel.appendChild(sRow);panel.appendChild(hint);
+    wrap.appendChild(panel);
+    var open=false;
+    wrap.addEventListener('click',function(e){e.stopPropagation();open=!open;panel.style.display=open?'block':'none';});
+    document.addEventListener('click',function(){open=false;panel.style.display='none';});
+    /* Inserir no helpEx para ficar visível mesmo com painel de controles oculto */
+    var helpEl=document.getElementById('helpEx');
+    if(helpEl)helpEl.insertBefore(wrap,helpEl.firstChild);
+    else{var ctrls=document.getElementById('ctrlsEx');if(ctrls)ctrls.appendChild(wrap);}
+  })();
   var eventsCache={bpm:null,evs:[],pieceEnd:0};
   var chordInst=null,chordGain=null;
 
@@ -2685,18 +2903,17 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     try{
       var cel=osmd.cursor.cursorElement;
       if(!cel)return;
-      var scoreEl=document.getElementById('score');
-      var scoreRect=scoreEl.getBoundingClientRect();
       var cursorRect=cel.getBoundingClientRect();
-      var cursorYInScore=cursorRect.top-scoreRect.top;
-      /* Estimate system height: cursor element height is roughly one system */
+      var viewH=window.innerHeight||document.documentElement.clientHeight;
+      /* Margem de antecipação: 1 altura de sistema (~1.5 s antes de sair da tela) */
       var sysH=cel.offsetHeight||cursorRect.height||120;
-      var maxOffset=sysH*3;
-      if(cursorYInScore>maxOffset){
-        var scrollTarget=scoreEl.offsetTop+cursorYInScore-sysH*1.5;
+      if(cursorRect.bottom>viewH-sysH){
+        /* Rola para mostrar o próximo sistema com antecedência */
+        var scrollTarget=window.scrollY+(cursorRect.bottom-(viewH-sysH))+100;
         window.scrollTo({top:scrollTarget,behavior:'smooth'});
-      }else if(cursorYInScore<0){
-        var scrollTarget2=window.scrollY+cursorYInScore-20;
+      }else if(cursorRect.top<0){
+        /* Rola para cima se o cursor voltou acima da viewport */
+        var scrollTarget2=window.scrollY+cursorRect.top-20;
         window.scrollTo({top:Math.max(0,scrollTarget2),behavior:'smooth'});
       }
     }catch(_){}
@@ -2711,7 +2928,9 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       if(!run||!ac||!cursorSteps.length)return;
       if(now-lastTime>=80){
         lastTime=now;
-        var current=ac.currentTime-sat;
+        /* Tempo visual atrasado para compensar latência Bluetooth */
+        var tempoVisualAtual=ac.currentTime-sat-(btDelayMsEx/1000);
+        var current=Math.max(0,tempoVisualAtual);
         var curMode=+document.getElementById('curEx').value;
         if(curMode===-1)return;
         var moved=false;
