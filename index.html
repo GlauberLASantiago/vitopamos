@@ -849,6 +849,20 @@
                     </svg>
                     Stop
                 </button>
+                <button class="btn" id="btnToggleEditMode" style="display:inline-flex; align-items:center; gap:6px; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); cursor:pointer; font-weight:600; padding:6px 12px; border-radius:6px;" disabled>
+                    <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path>
+                    </svg>
+                    <span>Editar Cifras</span>
+                </button>
+                <button class="btn" id="btnAddChord" style="display:none; align-items:center; gap:6px; background:#10b981; color:#ffffff; border:1px solid #10b981; cursor:pointer; font-weight:600; padding:6px 12px; border-radius:6px;">
+                    <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Adicionar Acorde</span>
+                </button>
 
                 <div class="bpm-wrap">
                     <label for="bpm">BPM</label>
@@ -940,6 +954,13 @@
                     Baixar HTML
                 </button>
                 <div id="partsPanel" class="parts-panel" style="display:none;"></div>
+                <div id="chordManagerPanel" class="parts-panel" style="display:none; flex-direction:column; gap:10px; margin-top:15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                    <div style="font-size:13px; font-weight:700; color:var(--text-main); display:flex; align-items:center; justify-content:space-between; width:100%;">
+                        <span>Gerenciador de Cifras (Timeline)</span>
+                        <span style="font-size:11px; font-weight:normal; color:var(--text-muted);">Clique para editar/mover</span>
+                    </div>
+                    <div id="chordTimelineList" style="display:flex; flex-wrap:wrap; gap:8px; width:100%; max-height: 250px; overflow-y: auto; padding: 5px 0;"></div>
+                </div>
 
                 <!-- Bluetooth Delay Button & Panel -->
                 <div class="bt-wrap" id="btWrap">
@@ -988,9 +1009,11 @@
             </div>
             <div class="step"><span class="step-num">4</span><b>Baixo das Cifras</b>Ative "Baixo das Cifras" para
                 ouvir a fundamental de cada acorde cifrado tocada em baixo grave.</div>
-            <div class="step"><span class="step-num">5</span><b>Copiar HTML</b>Clique em "Copiar HTML". O código do
+            <div class="step"><span class="step-num">5</span><b>Acorde Completo</b>Ative "Acorde Completo" para
+                ouvir o acorde completo tocado no piano.</div>
+            <div class="step"><span class="step-num">6</span><b>Copiar HTML</b>Clique em "Copiar HTML". O código do
                 player interativo será salvo na sua área de transferência.</div>
-            <div class="step"><span class="step-num">6</span><b>Colar no Moodle</b>No editor do Moodle, clique no botão
+            <div class="step"><span class="step-num">7</span><b>Colar no Moodle</b>No editor do Moodle, clique no botão
                 HTML (ícone &lt;/&gt;). Cole o código e salve.</div>
         </div>
         <div class="inst-obs"
@@ -1112,6 +1135,12 @@
                 backend: 'svg', autoResize: true, followCursor: false
             });
             if (osmd.cursor) osmd.cursor.cursorOptions.color = '#86efac44';
+            
+            var oldOsmdRender = osmd.render;
+            osmd.render = function () {
+                oldOsmdRender.apply(osmd, arguments);
+                if (typeof bindSvgChordClicks === 'function') bindSvgChordClicks();
+            };
 
             var STEP_SEMITONES = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
@@ -1120,6 +1149,78 @@
                 var base = STEP_SEMITONES[step];
                 if (base === undefined) return null;
                 return 60 + base + alter;
+            }
+
+            var STEP_SEMITONES = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+            function rootToMidi(step, alter) {
+                alter = alter || 0;
+                var base = STEP_SEMITONES[step];
+                if (base === undefined) return null;
+                return 60 + base + alter;
+            }
+
+            function getChordIntervals(kindStr) {
+                if (!kindStr) return [0, 4, 7];
+                kindStr = kindStr.trim().toLowerCase();
+                // Remove parenteses, espaços e hifens para normalização total
+                var clean = kindStr.replace(/[\(\)\s\-]/g, '');
+
+                switch (clean) {
+                    case 'minor': case 'min': case 'm': return [0, 3, 7];
+                    case 'augmented': case 'aug': return [0, 4, 8];
+                    // Diminuto Tríade (apenas terça menor e quinta diminuta)
+                    case 'diminished': case 'dim': case 'o': return [0, 3, 6];
+                    // Diminuto com Sétima (terça menor, quinta diminuta e sétima diminuta)
+                    case 'diminishedseventh': case 'dim7': return [0, 3, 6, 9];
+                    case 'dominant': case '7': case 'dominantseventh': return [0, 4, 7, 10];
+                    case 'majorseventh': case 'maj7': case 'major7th': case 'maj': case 'm7+': return [0, 4, 7, 11];
+                    case 'minorseventh': case 'm7': case 'minor7th': return [0, 3, 7, 10];
+                    // Meio diminuto (terça menor, quinta diminuta e sétima menor)
+                    case 'halfdiminished': case 'm7b5': case 'halfdiminishedseventh': case 'ø': return [0, 3, 6, 10];
+                    case 'majorsixth': case '6': return [0, 4, 7, 9];
+                    case 'minorsixth': case 'm6': return [0, 3, 7, 9];
+                    case 'suspendedfourth': case 'sus4': case 'suspended': case 'sus': return [0, 5, 7];
+                    case 'suspendedsecond': case 'sus2': return [0, 2, 7];
+                    case 'dominantninth': case '9': case 'dominant9th': return [0, 4, 7, 10, 14];
+                    case 'majorninth': case 'maj9': case 'major9th': return [0, 4, 7, 11, 14];
+                    case 'minorninth': case 'm9': case 'minor9th': return [0, 3, 7, 10, 14];
+                    // Menor com Sétima Maior (terça menor, quinta justa e sétima maior)
+                    case 'majorminor': case 'minmaj7': case 'm7maj7': case 'm7maj': case 'mmaj7': return [0, 3, 7, 11];
+                    case 'augmentedseventh': case '7#5': case '7+5': case 'aug7': return [0, 4, 8, 10];
+                    case 'power': case '5': return [0, 7];
+                }
+
+                // Fallbacks usando busca por substrings ordenados por especificidade
+                if (clean.includes('b5') || clean.includes('flat5')) {
+                    if (clean.includes('maj7') || clean.includes('major7') || clean.includes('majorseventh')) return [0, 4, 6, 11];
+                    if (clean.includes('m7') || clean.includes('min7') || clean.includes('minorseventh')) return [0, 3, 6, 10];
+                    if (clean.includes('7') || clean.includes('dominant')) return [0, 4, 6, 10];
+                    return [0, 3, 6, 10];
+                }
+                if (clean.includes('#5') || clean.includes('+5') || clean.includes('sharp5') || clean.includes('aug5')) {
+                    if (clean.includes('maj7') || clean.includes('major7') || clean.includes('majorseventh')) return [0, 4, 8, 11];
+                    if (clean.includes('m7') || clean.includes('min7') || clean.includes('minorseventh')) return [0, 3, 8, 10];
+                    if (clean.includes('7') || clean.includes('dominant')) return [0, 4, 8, 10];
+                    return [0, 4, 8];
+                }
+                if (clean.includes('minmaj7') || clean.includes('m7maj7') || clean.includes('minormajor') || clean.includes('majorminor') || clean.includes('m7maj') || clean.includes('mmaj7')) return [0, 3, 7, 11];
+                if (clean.includes('halfdiminished') || clean.includes('m7b5')) return [0, 3, 6, 10];
+                if (clean.includes('dim7') || clean.includes('diminishedseventh')) return [0, 3, 6, 9];
+                if (clean.includes('dim') || clean.includes('diminished')) return [0, 3, 6];
+                if (clean.includes('maj9') || clean.includes('majorninth')) return [0, 4, 7, 11, 14];
+                if (clean.includes('min9') || clean.includes('m9') || clean.includes('minorninth')) return [0, 3, 7, 10, 14];
+                if (clean.includes('9') || clean.includes('dominantninth') || clean.includes('ninth')) return [0, 4, 7, 10, 14];
+                if (clean.includes('maj7') || clean.includes('majorseventh') || clean.includes('m+7')) return [0, 4, 7, 11];
+                if (clean.includes('m7') || clean.includes('min7') || clean.includes('minorseventh')) return [0, 3, 7, 10];
+                if (clean.includes('7') || clean.includes('dominant')) return [0, 4, 7, 10];
+                if (clean.includes('min') || clean.includes('minor') || clean === 'm') return [0, 3, 7];
+                if (clean.includes('aug') || clean.includes('augmented')) return [0, 4, 8];
+                if (clean.includes('sus4') || clean.includes('sus')) return [0, 5, 7];
+                if (clean.includes('sus2')) return [0, 2, 7];
+                if (clean.includes('m6') || clean.includes('minix')) return [0, 3, 7, 9];
+                if (clean.includes('6') || clean.includes('sixth')) return [0, 4, 7, 9];
+                return [0, 4, 7];
             }
 
             function parseChordEvents(xml, bpm) {
@@ -1163,19 +1264,64 @@
                                 var bassAlter = node.querySelector('bass-alter');
                                 var rootStep = node.querySelector('root-step');
                                 var rootAlter = node.querySelector('root-alter');
-                                var step, alter;
-                                if (bassStep) {
-                                    step = bassStep.textContent.trim();
-                                    alter = bassAlter ? parseFloat(bassAlter.textContent) : 0;
-                                } else if (rootStep) {
-                                    step = rootStep.textContent.trim();
-                                    alter = rootAlter ? parseFloat(rootAlter.textContent) : 0;
-                                } else {
-                                    continue;
+                                var rootMidi = null;
+                                if (rootStep) {
+                                    rootMidi = rootToMidi(rootStep.textContent.trim(), rootAlter ? parseFloat(rootAlter.textContent) : 0);
                                 }
-                                var midi = rootToMidi(step, alter);
-                                if (midi === null) continue;
-                                chords.push({ t: tSec, midi: midi });
+                                var bassMidi = null;
+                                if (bassStep) {
+                                    bassMidi = rootToMidi(bassStep.textContent.trim(), bassAlter ? parseFloat(bassAlter.textContent) : 0);
+                                }
+                                if (rootMidi === null && bassMidi !== null) rootMidi = bassMidi;
+                                if (bassMidi === null && rootMidi !== null) bassMidi = rootMidi;
+                                if (rootMidi === null) continue;
+                                var kindStr = '';
+                                if (kindEl) {
+                                    kindStr = kindEl.textContent || '';
+                                    var kindTextAttr = kindEl.getAttribute('text');
+                                    if (kindTextAttr) kindStr += ' ' + kindTextAttr;
+                                }
+                                var degrees = node.querySelectorAll('degree');
+                                for (var d = 0; d < degrees.length; d++) {
+                                    var degValEl = degrees[d].querySelector('degree-value');
+                                    var degAltEl = degrees[d].querySelector('degree-alter');
+                                    var degTypeEl = degrees[d].querySelector('degree-type');
+                                    if (degValEl) {
+                                        var val = degValEl.textContent.trim();
+                                        var alt = degAltEl ? degAltEl.textContent.trim() : '0';
+                                        var type = degTypeEl ? degTypeEl.textContent.trim() : 'alter';
+                                        if (type === 'alter' || type === 'add') {
+                                            if (alt === '-1') kindStr += ' b' + val;
+                                            else if (alt === '1') kindStr += ' #' + val;
+                                            else if (alt === '0') kindStr += ' ' + val;
+                                        } else if (type === 'subtract') {
+                                            kindStr += ' no' + val;
+                                        }
+                                    }
+                                }
+                                var intervals = getChordIntervals(kindStr);
+                                
+                                var harmonyCountInMeasure = 0;
+                                var prevSibling = node.previousSibling;
+                                while (prevSibling) {
+                                    if (prevSibling.nodeName === 'harmony') harmonyCountInMeasure++;
+                                    prevSibling = prevSibling.previousSibling;
+                                }
+                                
+                                chords.push({
+                                    t: tSec,
+                                    midi: bassMidi,
+                                    rootMidi: rootMidi,
+                                    intervals: intervals,
+                                    measureIdx: mi,
+                                    harmonyIdx: harmonyCountInMeasure,
+                                    rootStep: rootStep ? rootStep.textContent.trim() : '',
+                                    rootAlter: rootAlter ? parseFloat(rootAlter.textContent) : 0,
+                                    kindText: kindTextAttr || '',
+                                    kindVal: kindEl ? kindEl.textContent.trim() : 'major',
+                                    bassStep: bassStep ? bassStep.textContent.trim() : '',
+                                    bassAlter: bassAlter ? parseFloat(bassAlter.textContent) : 0
+                                });
                             } else if (tag === 'note') {
                                 var isChordNote = !!node.querySelector('chord');
                                 if (!isChordNote) {
@@ -1204,23 +1350,42 @@
                 return chords;
             }
 
-            var chordConfig = { name: 'Baixo das Cifras', program: 'acoustic_bass', vol: 75, mute: false, solo: false, oct: -24, enabled: true, durVal: 2 };
-            var chordInst = null;
-            var chordGain = null;
+            var chordConfig = { name: 'Cifra: baixo', program: 'acoustic_bass', vol: 75, mute: false, solo: false, oct: -24, enabled: true, durVal: 2 };
+            var pianoChordConfig = { name: 'Cifra: acordes', program: 'electric_piano_1', vol: 50, mute: false, solo: false, oct: 0, enabled: false, durVal: 2 };
+            var chordInst = null, pianoChordInst = null;
+            var chordGain = null, pianoChordGain = null;
 
             async function ensureChordInstrument() {
-                if (chordInst && chordGain) return;
+                if (chordInst && chordGain && pianoChordInst && pianoChordGain) return;
                 if (!ac || ac.state === 'closed') return;
-                chordGain = ac.createGain();
-                chordGain.gain.value = chordConfig.vol / 100;
-                chordGain.connect(inputGain);
-                chordInst = await Soundfont.instrument(ac, chordConfig.program, {
-                    soundfont: 'FluidR3_GM',
-                    destination: chordGain,
-                    nameToUrl: function (n, f) {
-                        return 'https://gleitz.github.io/midi-js-soundfonts/' + f + '/' + n + '-mp3.js';
-                    }
-                });
+                if (!chordGain) {
+                    chordGain = ac.createGain();
+                    chordGain.gain.value = chordConfig.vol / 100;
+                    chordGain.connect(inputGain);
+                }
+                if (!chordInst) {
+                    chordInst = await Soundfont.instrument(ac, chordConfig.program, {
+                        soundfont: 'FluidR3_GM',
+                        destination: chordGain,
+                        nameToUrl: function (n, f) {
+                            return 'https://gleitz.github.io/midi-js-soundfonts/' + f + '/' + n + '-mp3.js';
+                        }
+                    });
+                }
+                if (!pianoChordGain) {
+                    pianoChordGain = ac.createGain();
+                    pianoChordGain.gain.value = pianoChordConfig.vol / 100;
+                    pianoChordGain.connect(inputGain);
+                }
+                if (!pianoChordInst) {
+                    pianoChordInst = await Soundfont.instrument(ac, pianoChordConfig.program, {
+                        soundfont: 'FluidR3_GM',
+                        destination: pianoChordGain,
+                        nameToUrl: function (n, f) {
+                            return 'https://gleitz.github.io/midi-js-soundfonts/' + f + '/' + n + '-mp3.js';
+                        }
+                    });
+                }
             }
 
             async function reloadChordInstrument() {
@@ -1229,16 +1394,27 @@
                 updateFullMix();
             }
 
+            async function reloadPianoChordInstrument() {
+                pianoChordInst = null; pianoChordGain = null;
+                await ensureChordInstrument();
+                updateFullMix();
+            }
+
             function updateFullMix() {
                 updatePartMix();
-                if (!chordGain || !ac) return;
-                var anySolo = partConfigs.some(function (p) { return p.solo; }) || chordConfig.solo;
-                var baseGain;
-                if (anySolo) baseGain = chordConfig.solo ? 1 : 0;
-                else baseGain = chordConfig.mute ? 0 : 1;
-                chordGain.gain.setTargetAtTime(baseGain * (chordConfig.vol / 100), ac.currentTime, 0.05);
-                if (!chordConfig.solo && partConfigs.some(function (p) { return p.solo; })) {
-                    chordGain.gain.setTargetAtTime(0, ac.currentTime, 0.05);
+                if (!ac) return;
+                var anySolo = partConfigs.some(function (p) { return p.solo; }) || chordConfig.solo || pianoChordConfig.solo;
+                if (chordGain) {
+                    var baseGainC = 1;
+                    if (anySolo) baseGainC = chordConfig.solo ? 1 : 0;
+                    else baseGainC = chordConfig.mute ? 0 : 1;
+                    chordGain.gain.setTargetAtTime(baseGainC * (chordConfig.vol / 100), ac.currentTime, 0.05);
+                }
+                if (pianoChordGain) {
+                    var baseGainP = 1;
+                    if (anySolo) baseGainP = pianoChordConfig.solo ? 1 : 0;
+                    else baseGainP = pianoChordConfig.mute ? 0 : 1;
+                    pianoChordGain.gain.setTargetAtTime(baseGainP * (pianoChordConfig.vol / 100), ac.currentTime, 0.05);
                 }
             }
 
@@ -1271,7 +1447,7 @@
 
             /* ─── Estado global ──────────────────────────────────────────────── */
             var partInsts = [], partConfigs = [], partGains = [], isAnySolo = false;
-            var evs = [], ac = null, sc = [], sat = 0, pat = 0, run = false, rawXml = '';
+            var evs = [], ac = null, sc = [], sat = 0, pat = 0, run = false, rawXml = '', xmlDoc = null;
             var cursorTimer = null, cursorSteps = [], cursorIndex = 0;
             var inputGain = null, masterGain = null, dryGain = null, wetGain = null, convolver = null;
             var playbackEndTimer = null, pieceEnd = 0;
@@ -1685,6 +1861,84 @@
                 ['-12', '8vb↓'], ['-14', 'Bb8vb↓'], ['-21', 'Eb8vb↓'], ['-24', '8vb²↓']
             ];
 
+            var MAP_OCT_OPTIONS = {
+                '24':  { octave: 24,  inst: 0 },
+                '12':  { octave: 12,  inst: 0 },
+                '9':   { octave: 0,   inst: 9 },
+                '0':   { octave: 0,   inst: 0 },
+                '-2':  { octave: 0,   inst: -2 },
+                '-5':  { octave: 0,   inst: -5 },
+                '-7':  { octave: 0,   inst: -7 },
+                '-9':  { octave: 0,   inst: -9 },
+                '-12': { octave: -12, inst: 0 },
+                '-14': { octave: -12, inst: -2 },
+                '-21': { octave: -12, inst: -9 },
+                '-24': { octave: -24, inst: 0 }
+            };
+
+            var transposeInstrumentsGlobally = false;
+            var globalInstrumentTransposition = 0;
+
+            (function initGlobalTransp() {
+                var saved = localStorage.getItem('transposeInstrumentsGlobally');
+                if (saved !== null) transposeInstrumentsGlobally = (saved === 'true');
+            })();
+
+            function getEffectiveTransposition(octVal) {
+                var comp = MAP_OCT_OPTIONS[String(octVal)] || { octave: 0, inst: 0 };
+                if (transposeInstrumentsGlobally) {
+                    return comp.octave + globalInstrumentTransposition;
+                } else {
+                    return comp.octave + comp.inst;
+                }
+            }
+
+            function updateGlobalInstrumentTransposition() {
+                globalInstrumentTransposition = 0;
+                for (var i = 0; i < partConfigs.length; i++) {
+                    var comp = MAP_OCT_OPTIONS[String(partConfigs[i].oct)] || { octave: 0, inst: 0 };
+                    if (comp.inst !== 0) {
+                        globalInstrumentTransposition = comp.inst;
+                        return;
+                    }
+                }
+                var compC = MAP_OCT_OPTIONS[String(chordConfig.oct)] || { octave: 0, inst: 0 };
+                if (compC.inst !== 0) {
+                    globalInstrumentTransposition = compC.inst;
+                    return;
+                }
+                var compP = MAP_OCT_OPTIONS[String(pianoChordConfig.oct)] || { octave: 0, inst: 0 };
+                if (compP.inst !== 0) {
+                    globalInstrumentTransposition = compP.inst;
+                    return;
+                }
+            }
+
+            function updateGlobalTranspUI() {
+                var chk = document.getElementById('chkGlobalInstTransp');
+                if (chk) chk.checked = transposeInstrumentsGlobally;
+                var lbl = document.getElementById('lblGlobalInstTranspStatus');
+                if (lbl) {
+                    if (globalInstrumentTransposition === 0) {
+                        lbl.textContent = '(In loco)';
+                    } else {
+                        var name = 'Transposta';
+                        for (var k in MAP_OCT_OPTIONS) {
+                            if (MAP_OCT_OPTIONS[k].inst === globalInstrumentTransposition && MAP_OCT_OPTIONS[k].octave === 0) {
+                                for (var o = 0; o < OCT_OPTIONS.length; o++) {
+                                    if (OCT_OPTIONS[o][0] === k) {
+                                        name = OCT_OPTIONS[o][1];
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        lbl.textContent = '(Ativa: ' + name + ')';
+                    }
+                }
+            }
+
             function makeOctSelect(val, onchange) {
                 var s = document.createElement('select'); s.className = 'part-sel';
                 OCT_OPTIONS.forEach(function (o) {
@@ -1782,6 +2036,34 @@
             function renderPartsPanel() {
                 var p = document.getElementById('partsPanel');
                 p.style.display = 'flex'; p.innerHTML = '';
+
+                // Transposição Geral Checkbox & Status
+                var gtRow = document.createElement('div');
+                gtRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed var(--border);width:100%;';
+                var gtLabel = document.createElement('label');
+                gtLabel.style.cssText = 'font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-main);';
+                var gtCheck = document.createElement('input');
+                gtCheck.type = 'checkbox'; gtCheck.id = 'chkGlobalInstTransp';
+                gtCheck.checked = transposeInstrumentsGlobally;
+                gtCheck.style.cssText = 'width:15px;height:15px;cursor:pointer;';
+                gtCheck.onchange = function () {
+                    transposeInstrumentsGlobally = gtCheck.checked;
+                    localStorage.setItem('transposeInstrumentsGlobally', transposeInstrumentsGlobally);
+                    updateGlobalInstrumentTransposition();
+                    updateGlobalTranspUI();
+                };
+                var gtStatus = document.createElement('span');
+                gtStatus.id = 'lblGlobalInstTranspStatus';
+                gtStatus.style.cssText = 'font-size:11px;font-weight:700;color:#6366f1;';
+                
+                gtLabel.appendChild(gtCheck);
+                gtLabel.appendChild(document.createTextNode('Transposição Geral de Instrumento (Eb, Bb, G, F)'));
+                gtRow.appendChild(gtLabel); gtRow.appendChild(gtStatus);
+                p.appendChild(gtRow);
+                
+                updateGlobalInstrumentTransposition();
+                updateGlobalTranspUI();
+
                 partConfigs.forEach(function (cfg, idx) {
                     var row = document.createElement('div'); row.className = 'part-row';
                     var nameSp = document.createElement('span'); nameSp.className = 'part-name'; nameSp.textContent = cfg.name;
@@ -1796,7 +2078,11 @@
                     bSolo.onclick = function () { cfg.solo = !cfg.solo; bSolo.className = 'btn-solo' + (cfg.solo ? ' active' : ''); updateFullMix(); renderPartsPanel(); };
                     var volRange = document.createElement('input'); volRange.type = 'range'; volRange.min = 0; volRange.max = 100; volRange.value = cfg.vol || 100; volRange.style.width = '70px';
                     volRange.oninput = function () { cfg.vol = +volRange.value; updateFullMix(); };
-                    var octSel = makeOctSelect(cfg.oct || 0, function () { cfg.oct = parseInt(octSel.value, 10); });
+                    var octSel = makeOctSelect(cfg.oct || 0, function () {
+                        cfg.oct = parseInt(octSel.value, 10);
+                        updateGlobalInstrumentTransposition();
+                        updateGlobalTranspUI();
+                    });
                     if (cfg.isDrum) {
                         octSel.disabled = true;
                         octSel.title = "Percussão (Drum Set) não permite transposição.";
@@ -1831,12 +2117,47 @@
                     p.appendChild(row);
                 });
 
+                /* ── Linha especial: Acorde Completo ♩ ── */
+                var pChRow = document.createElement('div'); pChRow.className = 'part-row';
+                var pChName = document.createElement('span'); pChName.className = 'part-name';
+                pChName.style.color = '#6366f1'; pChName.style.fontStyle = 'plain';
+                pChName.textContent = 'Cifra: acordes';
+                var pChCtrls = document.createElement('div'); pChCtrls.className = 'part-ctrls';
+                var bPEnabled = document.createElement('button');
+                function refreshPianoChordEnabledButton() {
+                    bPEnabled.className = 'btn-solo' + (pianoChordConfig.enabled ? ' active' : '');
+                    bPEnabled.style.background = pianoChordConfig.enabled ? '#6366f1' : '';
+                    bPEnabled.style.borderColor = pianoChordConfig.enabled ? '#6366f1' : '';
+                    bPEnabled.textContent = pianoChordConfig.enabled ? 'ON' : 'OFF';
+                }
+                refreshPianoChordEnabledButton();
+                bPEnabled.onclick = function () { pianoChordConfig.enabled = !pianoChordConfig.enabled; refreshPianoChordEnabledButton(); updateFullMix(); };
+                var bPMuteC = document.createElement('button');
+                bPMuteC.className = 'btn-mute' + (pianoChordConfig.mute ? ' active' : '');
+                bPMuteC.innerHTML = ICONS.mute + ' Mute';
+                bPMuteC.onclick = function () { pianoChordConfig.mute = !pianoChordConfig.mute; bPMuteC.className = 'btn-mute' + (pianoChordConfig.mute ? ' active' : ''); updateFullMix(); };
+                var bPSoloC = document.createElement('button');
+                bPSoloC.className = 'btn-solo' + (pianoChordConfig.solo ? ' active' : '');
+                bPSoloC.innerHTML = ICONS.solo + ' Solo';
+                bPSoloC.onclick = function () { pianoChordConfig.solo = !pianoChordConfig.solo; bPSoloC.className = 'btn-solo' + (pianoChordConfig.solo ? ' active' : ''); updateFullMix(); renderPartsPanel(); };
+                var volPC = document.createElement('input'); volPC.type = 'range'; volPC.min = 0; volPC.max = 100; volPC.value = pianoChordConfig.vol; volPC.style.width = '70px';
+                volPC.oninput = function () { pianoChordConfig.vol = +volPC.value; updateFullMix(); };
+                var octSelPC = makeOctSelect(pianoChordConfig.oct, function () {
+                    pianoChordConfig.oct = parseInt(octSelPC.value, 10);
+                    updateGlobalInstrumentTransposition();
+                    updateGlobalTranspUI();
+                });
+                var durSelPC = makeDurSelect(pianoChordConfig.durVal, function () { pianoChordConfig.durVal = Number(durSelPC.value); });
+                var instSelPC = document.createElement('select'); instSelPC.className = 'part-sel'; instSelPC.innerHTML = GM_OPTS_HTML; instSelPC.value = pianoChordConfig.program;
+                instSelPC.onchange = function () { pianoChordConfig.program = instSelPC.value; reloadPianoChordInstrument(); };
+                pChCtrls.appendChild(volPC); pChCtrls.appendChild(bPEnabled); pChCtrls.appendChild(bPMuteC); pChCtrls.appendChild(bPSoloC); pChCtrls.appendChild(octSelPC); pChCtrls.appendChild(durSelPC); pChCtrls.appendChild(instSelPC);
+                pChRow.appendChild(pChName); pChRow.appendChild(pChCtrls); p.appendChild(pChRow);
+
                 /* ── Linha especial: Cifras ♩ ── */
                 var chRow = document.createElement('div'); chRow.className = 'part-row';
-                chRow.style.borderTop = '1px dashed #cbd5e1'; chRow.style.paddingTop = '6px'; chRow.style.marginTop = '2px';
                 var chName = document.createElement('span'); chName.className = 'part-name';
                 chName.style.color = '#6366f1'; chName.style.fontStyle = 'plain';
-                chName.textContent = 'Baixo das Cifras';
+                chName.textContent = 'Cifra: baixo';
                 var chCtrls = document.createElement('div'); chCtrls.className = 'part-ctrls';
                 var bEnabled = document.createElement('button');
                 function refreshChordEnabledButton() {
@@ -1857,7 +2178,11 @@
                 bSoloC.onclick = function () { chordConfig.solo = !chordConfig.solo; bSoloC.className = 'btn-solo' + (chordConfig.solo ? ' active' : ''); updateFullMix(); renderPartsPanel(); };
                 var volC = document.createElement('input'); volC.type = 'range'; volC.min = 0; volC.max = 100; volC.value = chordConfig.vol; volC.style.width = '70px';
                 volC.oninput = function () { chordConfig.vol = +volC.value; updateFullMix(); };
-                var octSelC = makeOctSelect(chordConfig.oct, function () { chordConfig.oct = parseInt(octSelC.value, 10); });
+                var octSelC = makeOctSelect(chordConfig.oct, function () {
+                    chordConfig.oct = parseInt(octSelC.value, 10);
+                    updateGlobalInstrumentTransposition();
+                    updateGlobalTranspUI();
+                });
                 var durSelC = makeDurSelect(chordConfig.durVal, function () { chordConfig.durVal = Number(durSelC.value); });
                 var instSelC = document.createElement('select'); instSelC.className = 'part-sel'; instSelC.innerHTML = GM_OPTS_HTML; instSelC.value = chordConfig.program;
                 instSelC.onchange = function () { chordConfig.program = instSelC.value; reloadChordInstrument(); };
@@ -1871,6 +2196,7 @@
                 setStatus('Carregando timbres...', 'info');
                 partInsts = []; partGains = [];
                 chordInst = null; chordGain = null;
+                pianoChordInst = null; pianoChordGain = null;
                 var hasDrumKit = partConfigs.some(function (cfg) { return cfg.program === '_drum_kit_gm'; });
                 if (hasDrumKit) { await loadDrumSounds(); initDrumEngine(); }
                 var promises = partConfigs.map(async function (cfg, idx) {
@@ -1892,11 +2218,11 @@
             }
 
             function updatePartMix() {
-                isAnySolo = partConfigs.some(function (p) { return p.solo; }) || chordConfig.solo;
+                var anySolo = partConfigs.some(function (p) { return p.solo; }) || chordConfig.solo || pianoChordConfig.solo;
                 partConfigs.forEach(function (cfg, idx) {
                     var baseGain = 1;
-                    if (isAnySolo) baseGain = cfg.solo ? 1 : 0;
-                    else if (cfg.mute) baseGain = 0;
+                    if (anySolo) baseGain = cfg.solo ? 1 : 0;
+                    else baseGain = cfg.mute ? 0 : 1;
                     var finalGain = baseGain * ((cfg.vol || 100) / 100);
                     if (partGains[idx]) partGains[idx].gain.setTargetAtTime(finalGain, ac.currentTime, 0.05);
                 });
@@ -2177,7 +2503,7 @@
                             } else {
                                 var partOct = (partConfigs[ev.part] && partConfigs[ev.part].oct) || 0;
                                 if (partInsts[ev.part] && typeof partInsts[ev.part].play === 'function') {
-                                    var n = partInsts[ev.part].play(ev.midi + partOct + globalTransp, when, { duration: ev.dur });
+                                    var n = partInsts[ev.part].play(ev.midi + getEffectiveTransposition(partOct) + globalTransp, when, { duration: ev.dur });
                                     if (n) sc.push(n);
                                 }
                             }
@@ -2200,18 +2526,44 @@
                     }
                 }
 
-                /* Agendar Chords */
-                if (chordConfig.enabled && !chordConfig.mute) {
-                    var noteDur = (60 / bpm) * (chordConfig.durVal || 1.0);
+                /* Agendar Chords & Acordes Completos */
+                var hasBassChord = chordConfig.enabled && !chordConfig.mute;
+                var hasPianoChord = pianoChordConfig.enabled && !pianoChordConfig.mute;
+                if (hasBassChord || hasPianoChord || true) {
+                    var noteDurC = (60 / bpm) * (chordConfig.durVal || 1.0);
+                    var noteDurP = (60 / bpm) * (pianoChordConfig.durVal || 1.0);
                     while (nextChordIdx < chordEvents.length && chordEvents[nextChordIdx].t < lookAheadLimit) {
                         var cev = chordEvents[nextChordIdx];
+                        var durC = noteDurC;
+                        var durP = noteDurP;
+                        if (nextChordIdx + 1 < chordEvents.length) {
+                            var timeToNext = chordEvents[nextChordIdx + 1].t - cev.t;
+                            if (timeToNext > 0) {
+                                durC = Math.min(durC, timeToNext);
+                                durP = Math.min(durP, timeToNext);
+                            }
+                        }
                         if (cev.t < rangeEndT) {
                             var whenC = sat + cev.t;
                             if (whenC >= now) {
-                                var midiC = Math.max(21, Math.min(108, cev.midi + chordConfig.oct + globalTransp));
-                                if (chordInst) {
-                                    var cn = chordInst.play(midiC, whenC, { duration: noteDur });
-                                    if (cn) sc.push(cn);
+                                if (hasBassChord) {
+                                    var midiC = Math.max(21, Math.min(108, cev.midi + getEffectiveTransposition(chordConfig.oct) + globalTransp));
+                                    if (chordInst) {
+                                        var cn = chordInst.play(midiC, whenC, { duration: durC });
+                                        if (cn) sc.push(cn);
+                                    }
+                                }
+                                if (hasPianoChord) {
+                                    if (pianoChordInst && cev.intervals && cev.rootMidi) {
+                                        for (var k = 0; k < cev.intervals.length; k++) {
+                                            var noteMidi = cev.rootMidi + cev.intervals[k] + getEffectiveTransposition(pianoChordConfig.oct) + globalTransp;
+                                            while (noteMidi > 71) noteMidi -= 12;
+                                            while (noteMidi < 53) noteMidi += 12;
+                                            var midiP = Math.max(21, Math.min(108, noteMidi));
+                                            var pn = pianoChordInst.play(midiP, whenC, { duration: durP });
+                                            if (pn) sc.push(pn);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -2262,8 +2614,10 @@
             }
 
             async function afterXmlLoaded() {
+                xmlDoc = new DOMParser().parseFromString(rawXml, 'text/xml');
                 var detectedBpm = extractTempoFromXml(rawXml);
                 if (detectedBpm) document.getElementById('bpm').value = detectedBpm;
+                chordEvents = parseChordEvents(rawXml, detectedBpm || 100);
                 var meta = extractMetaFromXml(rawXml);
                 document.getElementById('metaTitle').value = meta.title;
                 document.getElementById('metaPanel').classList.add('visible');
@@ -2277,8 +2631,12 @@
                 updateRangeInputs();
                 sat = 0; pat = 0; run = false; evs = []; sc = []; pieceEnd = 0;
                 clearPlaybackEndTimer();
+                
+                if (typeof renderChordManager === 'function') renderChordManager();
+                if (typeof bindSvgChordClicks === 'function') bindSvgChordClicks();
+
                 setStatus('Pronto!', 'ok');
-                ['bp', 'bpa', 'bs', 'bx', 'bdl', 'reverbAmt', 'btnApplyMeta', 'rangeFrom', 'rangeTo'].forEach(function (id) {
+                ['bp', 'bpa', 'bs', 'bx', 'bdl', 'reverbAmt', 'btnApplyMeta', 'rangeFrom', 'rangeTo', 'btnToggleEditMode'].forEach(function (id) {
                     document.getElementById(id).disabled = false;
                 });
             }
@@ -2318,6 +2676,7 @@
                 if (!rawXml) return;
                 var title = document.getElementById('metaTitle').value;
                 rawXml = applyMetaToXml(rawXml, title);
+                xmlDoc = new DOMParser().parseFromString(rawXml, 'text/xml');
                 var wasRunning = run, savedOffset = wasRunning ? Math.max(0, ac.currentTime - sat) : pat;
                 stopPlayback(false);
                 setStatus('Aplicando metadados...', 'info');
@@ -2325,6 +2684,10 @@
                 if (osmd.cursor) osmd.cursor.cursorOptions.color = '#86efac44';
                 applyLayoutMode(); osmd.render();
                 resetCursorToStart(); extractCursorSteps();
+                
+                if (typeof renderChordManager === 'function') renderChordManager();
+                if (typeof bindSvgChordClicks === 'function') bindSvgChordClicks();
+
                 if (wasRunning) { run = true; await scheduleFrom(savedOffset); startCursorFollow(savedOffset); }
                 else pat = savedOffset;
                 setStatus('Metadados atualizados!', 'ok');
@@ -2332,6 +2695,8 @@
 
             document.getElementById('bpa').onclick = function () { pausePlayback(); };
             document.getElementById('bs').onclick = function () { stopPlayback(true); };
+            document.getElementById('btnToggleEditMode').onclick = toggleEditMode;
+            document.getElementById('btnAddChord').onclick = showAddChordDialog;
             document.getElementById('reverbAmt').oninput = function () { updateReverb(); };
 
             document.getElementById('zoomInp').onchange = function () {
@@ -2362,6 +2727,32 @@
 
             document.getElementById('score').addEventListener('click', function (ev) {
                 if (!rawXml) return;
+                if (editModeActive) {
+                    selectedChordEvt = null;
+                    highlightSelectedChord();
+                    renderChordManager();
+                    return;
+                }
+            });
+
+            document.getElementById('score').addEventListener('dblclick', function (ev) {
+                if (!rawXml) return;
+                if (editModeActive) {
+                    var measureIdx = getMeasureIndexAtCoords(ev.clientX, ev.clientY);
+                    var partsList = xmlDoc ? xmlDoc.querySelectorAll('part') : [];
+                    if (partsList.length > 0 && measureIdx >= 0 && measureIdx < partsList[0].querySelectorAll('measure').length) {
+                        var targetEntryIdx = getNoteIndexAtCoords(measureIdx, ev.clientX);
+                        showInlineInput(ev.clientX, ev.clientY, '', function (chordName) {
+                            insertChordAtPosition(measureIdx, targetEntryIdx, chordName);
+                        });
+                    }
+                    ev.stopPropagation();
+                }
+            });
+
+            document.getElementById('score').addEventListener('click', function (ev) {
+                if (!rawXml) return;
+                if (editModeActive) return;
                 if (scoreClickTimer) clearTimeout(scoreClickTimer);
                 var detail = ev.detail;
                 scoreClickTimer = setTimeout(async function () {
@@ -2382,6 +2773,25 @@
             document.addEventListener('keydown', function (e) {
                 var tag = e.target.tagName;
                 if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+                
+                if (editModeActive && selectedChordEvt) {
+                    if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        moveChordLeft(selectedChordEvt.measureIdx, selectedChordEvt.harmonyIdx);
+                        return;
+                    }
+                    if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        moveChordRight(selectedChordEvt.measureIdx, selectedChordEvt.harmonyIdx);
+                        return;
+                    }
+                    if (e.key === 'Delete' || e.key === 'Backspace') {
+                        e.preventDefault();
+                        deleteChord(selectedChordEvt);
+                        return;
+                    }
+                }
+
                 var key = e.key;
                 if (key >= '1' && key <= '5') {
                     var idx = parseInt(key, 10) - 1;
@@ -2393,12 +2803,979 @@
                 }
             });
 
+            /* ─── Gerenciamento de Cifras ─────────────────────────────────────── */
+            var selectedChordEvt = null;
+            var editModeActive = false;
+            var movingChordEvt = null;
+            var inlineInput = null;
+
+            function toggleEditMode() {
+                editModeActive = !editModeActive;
+                movingChordEvt = null;
+                selectedChordEvt = null;
+                removeInlineInput();
+                var btn = document.getElementById('btnToggleEditMode');
+                var addBtn = document.getElementById('btnAddChord');
+                if (!btn) return;
+                
+                if (editModeActive) {
+                    btn.style.background = '#6366f1';
+                    btn.style.color = '#ffffff';
+                    btn.style.borderColor = '#6366f1';
+                    if (addBtn) addBtn.style.display = 'inline-flex';
+                    
+                    stopPlayback(true);
+                    
+                    renderChordManager();
+                    bindSvgChordClicks();
+                } else {
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                    if (addBtn) addBtn.style.display = 'none';
+                    
+                    var p = document.getElementById('chordManagerPanel');
+                    if (p) p.style.display = 'none';
+                    
+                    clearSvgChordClicks();
+                }
+            }
+
+            function clearSvgChordClicks() {
+                var svgTexts = Array.from(document.querySelectorAll('#score svg text'));
+                var chordNames = chordEvents.map(getChordDisplayName);
+                var nextChordIdx = 0;
+                
+                for (var i = 0; i < svgTexts.length; i++) {
+                    var txtEl = svgTexts[i];
+                    var content = (txtEl.textContent || "").trim();
+                    if (!content) continue;
+                    
+                    if (nextChordIdx < chordNames.length) {
+                        var expected = chordNames[nextChordIdx];
+                        var normContent = content.replace(/[\u266d\u266f]/g, function(m) {
+                            return m === '\u266d' ? 'b' : '#';
+                        }).trim();
+                        var normExpected = expected.replace(/[\u266d\u266f]/g, function(m) {
+                            return m === '\u266d' ? 'b' : '#';
+                        }).trim();
+                        
+                        if (normContent === normExpected || (normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10)) {
+                            txtEl.style.cursor = '';
+                            txtEl.style.fill = '';
+                            txtEl.style.fontWeight = '';
+                            txtEl.style.textShadow = '';
+                            txtEl.onmouseover = null;
+                            txtEl.onmouseout = null;
+                            txtEl.onclick = null;
+                            txtEl.ondblclick = null;
+                            nextChordIdx++;
+                        }
+                    }
+                }
+            }
+
+            function getChordDisplayName(evt) {
+                if (!evt || !evt.rootStep) return '';
+                var root = evt.rootStep;
+                var alter = evt.rootAlter;
+                if (alter === 1) root += '#';
+                else if (alter === -1) root += 'b';
+                
+                var kindText = evt.kindText || '';
+                if (!kindText) {
+                    var kindVal = evt.kindVal || 'major';
+                    if (kindVal === 'minor') kindText = 'm';
+                    else if (kindVal === 'dominant') kindText = '7';
+                    else if (kindVal === 'major-seventh') kindText = 'maj7';
+                    else if (kindVal === 'minor-seventh') kindText = 'm7';
+                    else if (kindVal === 'diminished') kindText = 'dim';
+                    else if (kindVal === 'diminished-seventh') kindText = 'dim7';
+                    else if (kindVal === 'half-diminished') kindText = 'm7b5';
+                    else if (kindVal === 'major-minor') kindText = 'm(maj7)';
+                }
+                
+                var name = root + kindText;
+                if (evt.bassStep) {
+                    var bass = evt.bassStep;
+                    var bAlter = evt.bassAlter || 0;
+                    if (bAlter === 1) bass += '#';
+                    else if (bAlter === -1) bass += 'b';
+                    name += '/' + bass;
+                }
+                return name;
+            }
+
+            function getMusicXmlKind(suffix) {
+                var clean = suffix.trim().replace(/[\(\)\s\-]/g, '').toLowerCase();
+                if (!clean) return { value: 'major', text: '' };
+                if (clean === 'm' || clean === 'min' || clean === 'minor') return { value: 'minor', text: 'm' };
+                if (clean === '7' || clean === 'dom7') return { value: 'dominant', text: '7' };
+                if (clean === 'maj7' || clean === 'major7' || clean === 'maj') return { value: 'major-seventh', text: 'maj7' };
+                if (clean === 'm7' || clean === 'min7') return { value: 'minor-seventh', text: 'm7' };
+                if (clean === 'dim') return { value: 'diminished', text: 'dim' };
+                if (clean === 'dim7') return { value: 'diminished-seventh', text: 'dim7' };
+                if (clean === 'm7b5' || clean === 'm7-b5' || clean === 'ø') return { value: 'half-diminished', text: 'm7(b5)' };
+                if (clean === 'm7maj7' || clean === 'minmaj7' || clean === 'mmaj7' || clean === 'm7(maj7)' || clean === 'm(maj7)') return { value: 'major-minor', text: 'm(maj7)' };
+                if (clean === 'aug' || clean === 'augmented') return { value: 'augmented', text: 'aug' };
+                if (clean === 'sus4' || clean === 'sus') return { value: 'suspended-fourth', text: 'sus4' };
+                if (clean === 'sus2') return { value: 'suspended-second', text: 'sus2' };
+                if (clean === '9') return { value: 'dominant-ninth', text: '9' };
+                if (clean === 'maj9') return { value: 'major-ninth', text: 'maj9' };
+                if (clean === 'm9') return { value: 'minor-ninth', text: 'm9' };
+                if (clean === '6') return { value: 'major-sixth', text: '6' };
+                if (clean === 'm6') return { value: 'minor-sixth', text: 'm6' };
+                return { value: 'other', text: suffix };
+            }
+
+            function getXmlDoc() {
+                if (!xmlDoc) {
+                    xmlDoc = new DOMParser().parseFromString(rawXml, 'text/xml');
+                }
+                return xmlDoc;
+            }
+
+            async function reloadScoreFromXml() {
+                try {
+                    rawXml = new XMLSerializer().serializeToString(xmlDoc);
+                    await osmd.load(rawXml);
+                    applyLayoutMode(); osmd.render();
+                    resetCursorToStart(); extractCursorSteps();
+                    
+                    var detectedBpm = +document.getElementById('bpm').value || 100;
+                    chordEvents = parseChordEvents(rawXml, detectedBpm);
+                    
+                    buildMeasureTimeMap();
+                    updateRangeInputs();
+                    sat = 0; pat = 0; run = false; evs = []; sc = []; pieceEnd = 0;
+                    clearPlaybackEndTimer();
+                    
+                    renderChordManager();
+                    bindSvgChordClicks();
+                } catch (err) {
+                    console.error("Erro ao recarregar partitura:", err);
+                    setStatus('Erro ao atualizar: ' + err.message, 'err');
+                }
+            }
+
+            function renderChordManager() {
+                var p = document.getElementById('chordManagerPanel');
+                var list = document.getElementById('chordTimelineList');
+                if (!p || !list) return;
+
+                if (!chordEvents || chordEvents.length === 0 || !editModeActive) {
+                    p.style.display = 'none';
+                    return;
+                }
+                
+                p.style.display = 'flex';
+                list.innerHTML = '';
+
+                var docXml = getXmlDoc();
+                var parts = docXml ? docXml.querySelectorAll('part') : [];
+                var measures = parts.length > 0 ? parts[0].querySelectorAll('measure') : [];
+                
+                var chordMapByMeasure = {};
+                chordEvents.forEach(function (evt) {
+                    var mIdx = evt.measureIdx;
+                    if (!chordMapByMeasure[mIdx]) chordMapByMeasure[mIdx] = [];
+                    chordMapByMeasure[mIdx].push(evt);
+                });
+
+                Object.keys(chordMapByMeasure).sort(function(a, b) { return a - b; }).forEach(function (mIdx) {
+                    mIdx = parseInt(mIdx, 10);
+                    var evts = chordMapByMeasure[mIdx];
+                    var measureEl = measures[mIdx];
+                    var measureNum = measureEl ? (measureEl.getAttribute('number') || (mIdx + 1)) : (mIdx + 1);
+
+                    var mGroup = document.createElement('div');
+                    mGroup.style.cssText = 'display:flex; align-items:center; gap:6px; background:var(--bg-main); padding:4px 8px; border-radius:6px; border:1px solid var(--border);';
+                    
+                    var mLabel = document.createElement('span');
+                    mLabel.style.cssText = 'font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-right:4px;';
+                    mLabel.textContent = 'C.' + measureNum;
+                    mGroup.appendChild(mLabel);
+
+                    evts.forEach(function (evt) {
+                        var name = getChordDisplayName(evt);
+                        var badge = document.createElement('button');
+                        
+                        var isSel = selectedChordEvt && selectedChordEvt.measureIdx === evt.measureIdx && selectedChordEvt.harmonyIdx === evt.harmonyIdx;
+                        if (isSel) {
+                            badge.style.cssText = 'border:1px solid #fecaca; background:#fee2e2; color:#991b1b; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px; cursor:pointer; transition:all 0.15s;';
+                        } else {
+                            badge.style.cssText = 'border:1px solid #c7d2fe; background:#e0e7ff; color:#3730a3; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px; cursor:pointer; transition:all 0.15s;';
+                        }
+                        badge.textContent = name;
+                        
+                        badge.onmouseover = function () {
+                            badge.style.background = isSel ? '#ef4444' : '#4f46e5';
+                            badge.style.color = '#ffffff';
+                            badge.style.borderColor = isSel ? '#ef4444' : '#4f46e5';
+                        };
+                        badge.onmouseout = function () {
+                            badge.style.background = isSel ? '#fee2e2' : '#e0e7ff';
+                            badge.style.color = isSel ? '#991b1b' : '#3730a3';
+                            badge.style.borderColor = isSel ? '#fecaca' : '#c7d2fe';
+                        };
+                        
+                        badge.onclick = function (e) {
+                            e.stopPropagation();
+                            selectedChordEvt = evt;
+                            highlightSelectedChord();
+                            renderChordManager();
+                        };
+                        
+                        badge.ondblclick = function(e) {
+                            e.stopPropagation();
+                            selectedChordEvt = evt;
+                            highlightSelectedChord();
+                            var rect = badge.getBoundingClientRect();
+                            showInlineInput(rect.left + rect.width/2, rect.top, getChordDisplayName(evt), function(newValue) {
+                                saveChordEdit(evt, newValue);
+                            });
+                        };
+                        mGroup.appendChild(badge);
+                    });
+
+                    list.appendChild(mGroup);
+                });
+            }
+
+            function highlightSelectedChord() {
+                var svgTexts = Array.from(document.querySelectorAll('#score svg text'));
+                var chordNames = chordEvents.map(getChordDisplayName);
+                var nextChordIdx = 0;
+                
+                for (var i = 0; i < svgTexts.length; i++) {
+                    var txtEl = svgTexts[i];
+                    var content = (txtEl.textContent || "").trim();
+                    if (!content) continue;
+                    
+                    if (nextChordIdx < chordNames.length) {
+                        var expected = chordNames[nextChordIdx];
+                        var normContent = content.replace(/[\u266d\u266f]/g, function(m) {
+                            return m === '\u266d' ? 'b' : '#';
+                        }).trim();
+                        var normExpected = expected.replace(/[\u266d\u266f]/g, function(m) {
+                            return m === '\u266d' ? 'b' : '#';
+                        }).trim();
+                        
+                        if (normContent === normExpected || (normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10)) {
+                            var evt = chordEvents[nextChordIdx];
+                            var isSelected = selectedChordEvt && 
+                                             selectedChordEvt.measureIdx === evt.measureIdx && 
+                                             selectedChordEvt.harmonyIdx === evt.harmonyIdx;
+                                             
+                            if (isSelected) {
+                                txtEl.style.fill = '#ef4444'; // Red/crimson for selected!
+                                txtEl.style.fontWeight = 'bold';
+                                txtEl.style.textShadow = '0 0 4px rgba(239, 68, 68, 0.6)';
+                            } else {
+                                txtEl.style.fill = '#6366f1'; // Indigo for normal edit
+                                txtEl.style.fontWeight = 'bold';
+                                txtEl.style.textShadow = '';
+                            }
+                            nextChordIdx++;
+                        }
+                    }
+                }
+            }
+
+            function bindSvgChordClicks() {
+                if (!editModeActive) {
+                    clearSvgChordClicks();
+                    return;
+                }
+                
+                var svgTexts = Array.from(document.querySelectorAll('#score svg text'));
+                var chordNames = chordEvents.map(getChordDisplayName);
+                var nextChordIdx = 0;
+                
+                for (var i = 0; i < svgTexts.length; i++) {
+                    var txtEl = svgTexts[i];
+                    var content = (txtEl.textContent || "").trim();
+                    if (!content) continue;
+                    
+                    if (nextChordIdx < chordNames.length) {
+                        var expected = chordNames[nextChordIdx];
+                        var normContent = content.replace(/[\u266d\u266f]/g, function(m) {
+                            return m === '\u266d' ? 'b' : '#';
+                        }).trim();
+                        var normExpected = expected.replace(/[\u266d\u266f]/g, function(m) {
+                            return m === '\u266d' ? 'b' : '#';
+                        }).trim();
+                        
+                        if (normContent === normExpected || (normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10)) {
+                            var evt = chordEvents[nextChordIdx];
+                            
+                            txtEl.style.cursor = 'pointer';
+                            txtEl.style.transition = 'all 0.15s ease';
+                            
+                            (function(el, evtObj) {
+                                el.onmouseover = function() {
+                                    var isSel = selectedChordEvt && selectedChordEvt.measureIdx === evtObj.measureIdx && selectedChordEvt.harmonyIdx === evtObj.harmonyIdx;
+                                    el.style.fill = isSel ? '#b91c1c' : '#ec4899';
+                                };
+                                el.onmouseout = function() {
+                                    var isSel = selectedChordEvt && selectedChordEvt.measureIdx === evtObj.measureIdx && selectedChordEvt.harmonyIdx === evtObj.harmonyIdx;
+                                    el.style.fill = isSel ? '#ef4444' : '#6366f1';
+                                };
+                            })(txtEl, evt);
+                            
+                            (function(evtObj, el) {
+                                el.onclick = function(e) {
+                                    e.stopPropagation();
+                                    selectedChordEvt = evtObj;
+                                    highlightSelectedChord();
+                                    renderChordManager();
+                                };
+                                
+                                el.ondblclick = function(e) {
+                                    e.stopPropagation();
+                                    selectedChordEvt = evtObj;
+                                    highlightSelectedChord();
+                                    showInlineInput(e.clientX, e.clientY, getChordDisplayName(evtObj), function(newValue) {
+                                        saveChordEdit(evtObj, newValue);
+                                    });
+                                };
+                            })(evt, txtEl);
+                            
+                            nextChordIdx++;
+                        }
+                    }
+                }
+                
+                highlightSelectedChord();
+            }
+
+            function showInlineInput(x, y, initialValue, onSave) {
+                removeInlineInput();
+                
+                inlineInput = document.createElement('input');
+                inlineInput.type = 'text';
+                inlineInput.value = initialValue;
+                inlineInput.style.cssText = 'position:fixed; z-index:10000; border:2px solid #6366f1; background:var(--bg-main); color:var(--text-main); font-weight:bold; font-size:14px; padding:4px 8px; border-radius:6px; outline:none; box-shadow:0 4px 12px rgba(0,0,0,0.15); width:110px; text-align:center;';
+                
+                inlineInput.style.left = (x - 55) + 'px';
+                inlineInput.style.top = (y - 18) + 'px';
+                
+                document.body.appendChild(inlineInput);
+                inlineInput.focus();
+                inlineInput.select();
+                
+                inlineInput.onkeydown = function(e) {
+                    if (e.key === 'Enter') {
+                        onSave(inlineInput.value);
+                        removeInlineInput();
+                    } else if (e.key === 'Escape') {
+                        removeInlineInput();
+                    }
+                };
+                
+                inlineInput.onblur = function() {
+                    setTimeout(removeInlineInput, 180);
+                };
+            }
+
+            function removeInlineInput() {
+                if (inlineInput && inlineInput.parentNode) {
+                    inlineInput.parentNode.removeChild(inlineInput);
+                    inlineInput = null;
+                }
+            }
+
+            function showAddChordDialog() {
+                var existing = document.getElementById('customAddChordOverlay');
+                if (existing) existing.parentNode.removeChild(existing);
+                
+                var overlay = document.createElement('div');
+                overlay.id = 'customAddChordOverlay';
+                overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(4px); z-index:20000; display:flex; align-items:center; justify-content:center;';
+                
+                var box = document.createElement('div');
+                box.style.cssText = 'background:var(--card-bg); border:1px solid var(--border); border-radius:12px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); padding:20px; width:300px; display:flex; flex-direction:column; gap:12px;';
+                
+                var title = document.createElement('div');
+                title.style.cssText = 'font-size:16px; font-weight:700; color:var(--text-main); margin-bottom:4px; text-align:center;';
+                title.textContent = 'Adicionar Acorde';
+                box.appendChild(title);
+                
+                var labelMeasure = document.createElement('label');
+                labelMeasure.style.cssText = 'font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase;';
+                labelMeasure.textContent = 'Compasso (Número)';
+                box.appendChild(labelMeasure);
+                
+                var inputMeasure = document.createElement('input');
+                inputMeasure.type = 'number';
+                inputMeasure.min = '1';
+                var docXml = getXmlDoc();
+                var parts = docXml ? docXml.querySelectorAll('part') : [];
+                var totalMeasures = parts.length > 0 ? parts[0].querySelectorAll('measure').length : 1;
+                inputMeasure.max = totalMeasures;
+                inputMeasure.value = '1';
+                inputMeasure.style.cssText = 'border:1px solid var(--border); background:var(--bg-main); color:var(--text-main); border-radius:6px; padding:6px 10px; font-size:13px; font-weight:700; outline:none;';
+                box.appendChild(inputMeasure);
+                
+                var labelChord = document.createElement('label');
+                labelChord.style.cssText = 'font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase;';
+                labelChord.textContent = 'Acorde (ex: G7/B, C#m7)';
+                box.appendChild(labelChord);
+                
+                var inputChord = document.createElement('input');
+                inputChord.type = 'text';
+                inputChord.placeholder = 'Ex: C';
+                inputChord.style.cssText = 'border:1px solid var(--border); background:var(--bg-main); color:var(--text-main); border-radius:6px; padding:6px 10px; font-size:13px; font-weight:700; outline:none;';
+                box.appendChild(inputChord);
+                
+                var btnRow = document.createElement('div');
+                btnRow.style.cssText = 'display:flex; gap:10px; justify-content:flex-end; margin-top:8px;';
+                
+                var btnCancel = document.createElement('button');
+                btnCancel.style.cssText = 'border:1px solid var(--border); background:var(--card-bg); color:var(--text-main); border-radius:6px; padding:6px 16px; font-size:12px; font-weight:600; cursor:pointer;';
+                btnCancel.textContent = 'Cancelar';
+                btnCancel.onclick = function() {
+                    overlay.parentNode.removeChild(overlay);
+                };
+                
+                var btnAdd = document.createElement('button');
+                btnAdd.style.cssText = 'border:none; background:#10b981; color:#ffffff; border-radius:6px; padding:6px 16px; font-size:12px; font-weight:700; cursor:pointer;';
+                btnAdd.textContent = 'Adicionar';
+                
+                function doAdd() {
+                    var mNum = parseInt(inputMeasure.value, 10);
+                    var chordVal = inputChord.value.trim();
+                    if (isNaN(mNum) || mNum < 1 || mNum > totalMeasures) {
+                        setStatus('Número do compasso inválido! Deve ser entre 1 e ' + totalMeasures + '.', 'err');
+                        return;
+                    }
+                    if (!chordVal) {
+                        setStatus('Digite o nome do acorde.', 'err');
+                        return;
+                    }
+                    
+                    overlay.parentNode.removeChild(overlay);
+                    insertChordAtPosition(mNum - 1, 0, chordVal);
+                    setStatus('Acorde ' + chordVal + ' adicionado no compasso ' + mNum + '!', 'ok');
+                }
+                
+                btnAdd.onclick = doAdd;
+                
+                inputChord.onkeydown = function(e) {
+                    if (e.key === 'Enter') {
+                        doAdd();
+                    } else if (e.key === 'Escape') {
+                        overlay.parentNode.removeChild(overlay);
+                    }
+                };
+                inputMeasure.onkeydown = function(e) {
+                    if (e.key === 'Enter') {
+                        inputChord.focus();
+                    } else if (e.key === 'Escape') {
+                        overlay.parentNode.removeChild(overlay);
+                    }
+                };
+                
+                btnRow.appendChild(btnCancel);
+                btnRow.appendChild(btnAdd);
+                box.appendChild(btnRow);
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+                
+                inputMeasure.focus();
+                inputMeasure.select();
+            }
+
+            function showConfirmDialog(message, onConfirm) {
+                var existing = document.getElementById('customConfirmOverlay');
+                if (existing) existing.parentNode.removeChild(existing);
+                
+                var overlay = document.createElement('div');
+                overlay.id = 'customConfirmOverlay';
+                overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(4px); z-index:20000; display:flex; align-items:center; justify-content:center;';
+                
+                var box = document.createElement('div');
+                box.style.cssText = 'background:var(--card-bg); border:1px solid var(--border); border-radius:12px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); padding:20px; width:280px; display:flex; flex-direction:column; gap:16px; text-align:center;';
+                
+                var msgEl = document.createElement('div');
+                msgEl.style.cssText = 'font-size:14px; font-weight:600; color:var(--text-main); line-height:1.4;';
+                msgEl.textContent = message;
+                box.appendChild(msgEl);
+                
+                var btnRow = document.createElement('div');
+                btnRow.style.cssText = 'display:flex; gap:10px; justify-content:center;';
+                
+                var btnCancel = document.createElement('button');
+                btnCancel.style.cssText = 'border:1px solid var(--border); background:var(--card-bg); color:var(--text-main); border-radius:6px; padding:6px 16px; font-size:12px; font-weight:600; cursor:pointer;';
+                btnCancel.textContent = 'Cancelar';
+                btnCancel.onclick = function() {
+                    overlay.parentNode.removeChild(overlay);
+                };
+                
+                var btnOk = document.createElement('button');
+                btnOk.style.cssText = 'border:none; background:#ef4444; color:#ffffff; border-radius:6px; padding:6px 16px; font-size:12px; font-weight:700; cursor:pointer;';
+                btnOk.textContent = 'Excluir';
+                btnOk.onclick = function() {
+                    overlay.parentNode.removeChild(overlay);
+                    onConfirm();
+                };
+                
+                btnRow.appendChild(btnCancel);
+                btnRow.appendChild(btnOk);
+                box.appendChild(btnRow);
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+                
+                btnOk.focus();
+            }
+
+            function saveChordEdit(evt, newName) {
+                if (!newName) return;
+                
+                var parts = newName.split('/');
+                var chordPart = parts[0].trim();
+                var bassPart = parts[1] ? parts[1].trim() : '';
+
+                var rootMatch = chordPart.match(/^([A-G])([b#]?)/i);
+                if (!rootMatch) {
+                    setStatus("Acorde inválido! Deve iniciar com uma nota de A a G (ex: C, F#, Eb).", "err");
+                    return;
+                }
+                
+                var step = rootMatch[1].toUpperCase();
+                var alterVal = 0;
+                if (rootMatch[2] === '#') alterVal = 1;
+                else if (rootMatch[2].toLowerCase() === 'b') alterVal = -1;
+                
+                var suffix = chordPart.substring(rootMatch[0].length);
+                var kindInfo = getMusicXmlKind(suffix);
+
+                var bassStep = '';
+                var bassAlterVal = 0;
+                if (bassPart) {
+                    var bassMatch = bassPart.match(/^([A-G])([b#]?)/i);
+                    if (bassMatch) {
+                        bassStep = bassMatch[1].toUpperCase();
+                        if (bassMatch[2] === '#') bassAlterVal = 1;
+                        else if (bassMatch[2].toLowerCase() === 'b') bassAlterVal = -1;
+                    } else {
+                        setStatus("Nota do baixo inválida (ex: /E, /G#).", "err");
+                        return;
+                    }
+                }
+
+                var docXml = getXmlDoc();
+                var partsArr = docXml ? docXml.querySelectorAll('part') : [];
+                if (partsArr.length === 0) return;
+                var measure = partsArr[0].querySelectorAll('measure')[evt.measureIdx];
+                var harmonies = measure.querySelectorAll('harmony');
+                var harmonyEl = harmonies[evt.harmonyIdx];
+
+                if (harmonyEl) {
+                    var rootEl = harmonyEl.querySelector('root');
+                    if (!rootEl) {
+                        rootEl = docXml.createElement('root');
+                        harmonyEl.appendChild(rootEl);
+                    }
+                    
+                    var stepEl = rootEl.querySelector('root-step');
+                    if (!stepEl) {
+                        stepEl = docXml.createElement('root-step');
+                        rootEl.appendChild(stepEl);
+                    }
+                    stepEl.textContent = step;
+
+                    var alterEl = rootEl.querySelector('root-alter');
+                    if (alterVal !== 0) {
+                        if (!alterEl) {
+                            alterEl = docXml.createElement('root-alter');
+                            rootEl.appendChild(alterEl);
+                        }
+                        alterEl.textContent = alterVal;
+                    } else {
+                        if (alterEl) rootEl.removeChild(alterEl);
+                    }
+
+                    var kindEl = harmonyEl.querySelector('kind');
+                    if (!kindEl) {
+                        kindEl = docXml.createElement('kind');
+                        harmonyEl.appendChild(kindEl);
+                    }
+                    kindEl.textContent = kindInfo.value;
+                    if (kindInfo.text) {
+                        kindEl.setAttribute('text', kindInfo.text);
+                    } else {
+                        kindEl.removeAttribute('text');
+                    }
+
+                    var degrees = harmonyEl.querySelectorAll('degree');
+                    for (var d = 0; d < degrees.length; d++) {
+                        harmonyEl.removeChild(degrees[d]);
+                    }
+
+                    var bassEl = harmonyEl.querySelector('bass');
+                    if (bassStep) {
+                        if (!bassEl) {
+                            bassEl = docXml.createElement('bass');
+                            harmonyEl.appendChild(bassEl);
+                        }
+                        
+                        var bStepEl = bassEl.querySelector('bass-step');
+                        if (!bStepEl) {
+                            bStepEl = docXml.createElement('bass-step');
+                            bassEl.appendChild(bStepEl);
+                        }
+                        bStepEl.textContent = bassStep;
+
+                        var bAlterEl = bassEl.querySelector('bass-alter');
+                        if (bassAlterVal !== 0) {
+                            if (!bAlterEl) {
+                                bAlterEl = docXml.createElement('bass-alter');
+                                bassEl.appendChild(bAlterEl);
+                            }
+                            bAlterEl.textContent = bassAlterVal;
+                        } else {
+                            if (bAlterEl) bassEl.removeChild(bAlterEl);
+                        }
+                    } else {
+                        if (bassEl) harmonyEl.removeChild(bassEl);
+                    }
+
+                    reloadScoreFromXml();
+                }
+            }
+
+            function deleteChord(evt) {
+                showConfirmDialog("Deseja realmente excluir este acorde?", function() {
+                    var docXml = getXmlDoc();
+                    var parts = docXml ? docXml.querySelectorAll('part') : [];
+                    if (parts.length === 0) return;
+                    var measure = parts[0].querySelectorAll('measure')[evt.measureIdx];
+                    var harmonies = measure.querySelectorAll('harmony');
+                    var harmonyEl = harmonies[evt.harmonyIdx];
+                    if (harmonyEl) {
+                        harmonyEl.parentNode.removeChild(harmonyEl);
+                        selectedChordEvt = null;
+                        reloadScoreFromXml();
+                        setStatus('Acorde excluído com sucesso.', 'info');
+                    }
+                });
+            }
+
+            function moveChordLeft(measureIdx, harmonyIdx) {
+                var docXml = getXmlDoc();
+                var parts = docXml ? docXml.querySelectorAll('part') : [];
+                if (parts.length === 0) return;
+                var measure = parts[0].querySelectorAll('measure')[measureIdx];
+                var harmonies = measure.querySelectorAll('harmony');
+                var harmonyNode = harmonies[harmonyIdx];
+                if (!harmonyNode) return;
+
+                var prevNode = harmonyNode.previousSibling;
+                while (prevNode && prevNode.nodeName !== 'note' && prevNode.nodeName !== 'harmony' && prevNode.nodeName !== 'direction') {
+                    prevNode = prevNode.previousSibling;
+                }
+                if (prevNode) {
+                    harmonyNode.parentNode.insertBefore(harmonyNode, prevNode);
+                    
+                    var newHarmonyIdx = 0;
+                    var sibling = harmonyNode.previousSibling;
+                    while (sibling) {
+                        if (sibling.nodeName === 'harmony') newHarmonyIdx++;
+                        sibling = sibling.previousSibling;
+                    }
+                    selectedChordEvt = { measureIdx: measureIdx, harmonyIdx: newHarmonyIdx };
+                    
+                    reloadScoreFromXml();
+                } else {
+                    if (measureIdx > 0) {
+                        var prevMeasure = parts[0].querySelectorAll('measure')[measureIdx - 1];
+                        if (prevMeasure) {
+                            harmonyNode.parentNode.removeChild(harmonyNode);
+                            prevMeasure.appendChild(harmonyNode);
+                            
+                            var newHarmonyIdx = 0;
+                            var sibling = harmonyNode.previousSibling;
+                            while (sibling) {
+                                if (sibling.nodeName === 'harmony') newHarmonyIdx++;
+                                sibling = sibling.previousSibling;
+                            }
+                            selectedChordEvt = { measureIdx: measureIdx - 1, harmonyIdx: newHarmonyIdx };
+                            
+                            reloadScoreFromXml();
+                            setStatus('Cifra movida para o compasso anterior.', 'info');
+                        }
+                    } else {
+                        setStatus('Início da partitura atingido.', 'err');
+                    }
+                }
+            }
+
+            function moveChordRight(measureIdx, harmonyIdx) {
+                var docXml = getXmlDoc();
+                var parts = docXml ? docXml.querySelectorAll('part') : [];
+                if (parts.length === 0) return;
+                var measure = parts[0].querySelectorAll('measure')[measureIdx];
+                var harmonies = measure.querySelectorAll('harmony');
+                var harmonyNode = harmonies[harmonyIdx];
+                if (!harmonyNode) return;
+
+                var nextNode = harmonyNode.nextSibling;
+                while (nextNode && nextNode.nodeName !== 'note' && nextNode.nodeName !== 'harmony' && nextNode.nodeName !== 'direction') {
+                    nextNode = nextNode.nextSibling;
+                }
+                if (nextNode) {
+                    harmonyNode.parentNode.insertBefore(harmonyNode, nextNode.nextSibling);
+                    
+                    var newHarmonyIdx = 0;
+                    var sibling = harmonyNode.previousSibling;
+                    while (sibling) {
+                        if (sibling.nodeName === 'harmony') newHarmonyIdx++;
+                        sibling = sibling.previousSibling;
+                    }
+                    selectedChordEvt = { measureIdx: measureIdx, harmonyIdx: newHarmonyIdx };
+                    
+                    reloadScoreFromXml();
+                } else {
+                    var totalMeasures = parts[0].querySelectorAll('measure').length;
+                    if (measureIdx < totalMeasures - 1) {
+                        var nextMeasure = parts[0].querySelectorAll('measure')[measureIdx + 1];
+                        if (nextMeasure) {
+                            harmonyNode.parentNode.removeChild(harmonyNode);
+                            nextMeasure.insertBefore(harmonyNode, nextMeasure.firstChild);
+                            
+                            var newHarmonyIdx = 0;
+                            var sibling = harmonyNode.previousSibling;
+                            while (sibling) {
+                                if (sibling.nodeName === 'harmony') newHarmonyIdx++;
+                                sibling = sibling.previousSibling;
+                            }
+                            selectedChordEvt = { measureIdx: measureIdx + 1, harmonyIdx: newHarmonyIdx };
+                            
+                            reloadScoreFromXml();
+                            setStatus('Cifra movida para o próximo compasso.', 'info');
+                        }
+                    } else {
+                        setStatus('Fim da partitura atingido.', 'err');
+                    }
+                }
+            }
+
+            function getMeasureIndexAtCoords(clientX, clientY) {
+                var svg = document.querySelector('#score svg');
+                if (!svg || !osmd || !osmd.graphic || !osmd.graphic.MeasureList) return -1;
+                
+                var rect = svg.getBoundingClientRect();
+                var clickX = clientX - rect.left;
+                var clickY = clientY - rect.top;
+                
+                var scale = osmd.graphic.unitInPixels;
+                if (!scale || scale <= 0) return -1;
+
+                var unitX = clickX / scale;
+                var unitY = clickY / scale;
+
+                var bestMeasureIdx = -1;
+                var minDistance = Infinity;
+
+                var measureList = osmd.graphic.MeasureList;
+                for (var m = 0; m < measureList.length; m++) {
+                    var staves = measureList[m];
+                    if (!staves || staves.length === 0) continue;
+                    
+                    var measure = staves[0];
+                    if (!measure || !measure.PositionAndShape) continue;
+                    
+                    var pos = measure.PositionAndShape.AbsolutePosition;
+                    var size = measure.PositionAndShape.Size;
+                    
+                    var left = pos.x;
+                    var top = pos.y;
+                    var right = pos.x + size.width;
+                    var bottom = pos.y + size.height;
+                    
+                    if (unitX >= left && unitX <= right && unitY >= top && unitY <= bottom) {
+                        return m;
+                    }
+                    
+                    var dx = Math.max(0, left - unitX, unitX - right);
+                    var dy = Math.max(0, top - unitY, unitY - bottom);
+                    var dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        bestMeasureIdx = m;
+                    }
+                }
+                
+                return bestMeasureIdx;
+            }
+
+            function getNoteIndexAtCoords(measureIdx, clientX) {
+                var svg = document.querySelector('#score svg');
+                if (!svg || !osmd || !osmd.graphic || !osmd.graphic.MeasureList) return 0;
+                
+                var rect = svg.getBoundingClientRect();
+                var clickX = clientX - rect.left;
+                var scale = osmd.graphic.unitInPixels;
+                if (!scale || scale <= 0) return 0;
+
+                var unitX = clickX / scale;
+                
+                var staves = osmd.graphic.MeasureList[measureIdx];
+                if (!staves || staves.length === 0) return 0;
+                
+                var measure = staves[0];
+                var staffEntries = measure.staffEntries;
+                if (!staffEntries || staffEntries.length === 0) return 0;
+                
+                var bestEntryIdx = 0;
+                var minDiff = Infinity;
+                
+                for (var i = 0; i < staffEntries.length; i++) {
+                    var entry = staffEntries[i];
+                    var entryX = entry.PositionAndShape.AbsolutePosition.x;
+                    var diff = Math.abs(unitX - entryX);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        bestEntryIdx = i;
+                    }
+                }
+                
+                return bestEntryIdx;
+            }
+
+            function getDomInsertBeforeNode(xmlMeasure, targetEntryIdx) {
+                var children = xmlMeasure.childNodes;
+                var currentEntryIdx = 0;
+                
+                for (var i = 0; i < children.length; i++) {
+                    var node = children[i];
+                    if (node.nodeType !== 1) continue;
+                    
+                    if (currentEntryIdx === targetEntryIdx) {
+                        return node;
+                    }
+                    
+                    var tag = node.tagName;
+                    if (tag === 'note') {
+                        var isChord = !!node.querySelector('chord');
+                        if (!isChord) {
+                            currentEntryIdx++;
+                        }
+                    } else if (tag === 'forward' || tag === 'backup') {
+                        currentEntryIdx++;
+                    }
+                }
+                
+                return null;
+            }
+
+            function insertChordAtPosition(measureIdx, targetEntryIdx, chordName) {
+                if (!chordName) return;
+                
+                var rootMatch = chordName.match(/^([A-G])([b#]?)/i);
+                if (!rootMatch) {
+                    setStatus("Acorde inválido! Deve iniciar com uma nota de A a G (ex: G7, C#m7b5).", "err");
+                    return;
+                }
+                
+                var step = rootMatch[1].toUpperCase();
+                var alterVal = 0;
+                if (rootMatch[2] === '#') alterVal = 1;
+                else if (rootMatch[2].toLowerCase() === 'b') alterVal = -1;
+                
+                var suffix = chordName.substring(rootMatch[0].length);
+                var kindInfo = getMusicXmlKind(suffix);
+                
+                var parts = suffix.split('/');
+                var chordPart = parts[0].trim();
+                var bassPart = parts[1] ? parts[1].trim() : '';
+                
+                if (bassPart) {
+                    kindInfo = getMusicXmlKind(chordPart);
+                }
+                
+                var bassStep = '';
+                var bassAlterVal = 0;
+                if (bassPart) {
+                    var bassMatch = bassPart.match(/^([A-G])([b#]?)/i);
+                    if (bassMatch) {
+                        bassStep = bassMatch[1].toUpperCase();
+                        if (bassMatch[2] === '#') bassAlterVal = 1;
+                        else if (bassMatch[2].toLowerCase() === 'b') bassAlterVal = -1;
+                    }
+                }
+
+                var docXml = getXmlDoc();
+                var partsList = docXml ? docXml.querySelectorAll('part') : [];
+                if (partsList.length === 0) return;
+                var xmlMeasure = partsList[0].querySelectorAll('measure')[measureIdx];
+                if (!xmlMeasure) return;
+
+                var newHarm = docXml.createElement('harmony');
+                
+                var rootEl = docXml.createElement('root');
+                var stepEl = docXml.createElement('root-step');
+                stepEl.textContent = step;
+                rootEl.appendChild(stepEl);
+                if (alterVal !== 0) {
+                    var alterEl = docXml.createElement('root-alter');
+                    alterEl.textContent = alterVal;
+                    rootEl.appendChild(alterEl);
+                }
+                newHarm.appendChild(rootEl);
+
+                var kindEl = docXml.createElement('kind');
+                kindEl.textContent = kindInfo.value;
+                if (kindInfo.text) kindEl.setAttribute('text', kindInfo.text);
+                newHarm.appendChild(kindEl);
+
+                if (bassStep) {
+                    var bassEl = docXml.createElement('bass');
+                    var bStepEl = docXml.createElement('bass-step');
+                    bStepEl.textContent = bassStep;
+                    bassEl.appendChild(bStepEl);
+                    if (bassAlterVal !== 0) {
+                        var bAlterEl = docXml.createElement('bass-alter');
+                        bAlterEl.textContent = bassAlterVal;
+                        bassEl.appendChild(bAlterEl);
+                    }
+                    newHarm.appendChild(bassEl);
+                }
+
+                var beforeNode = getDomInsertBeforeNode(xmlMeasure, targetEntryIdx);
+                if (beforeNode) {
+                    xmlMeasure.insertBefore(newHarm, beforeNode);
+                } else {
+                    xmlMeasure.appendChild(newHarm);
+                }
+
+                var newHarmonyIdx = 0;
+                var sibling = newHarm.previousSibling;
+                while (sibling) {
+                    if (sibling.nodeName === 'harmony') newHarmonyIdx++;
+                    sibling = sibling.previousSibling;
+                }
+                selectedChordEvt = { measureIdx: measureIdx, harmonyIdx: newHarmonyIdx };
+
+                reloadScoreFromXml();
+            }
+
             /* ─── Export helpers ──────────────────────────────────────────────── */
-            function encodeBase64Unicode(str) { return btoa(unescape(encodeURIComponent(str))); }
+            function encodeBase64Unicode(str) {
+                var bytes = new TextEncoder().encode(str);
+                var binString = '';
+                for (var i = 0; i < bytes.length; i++) {
+                    binString += String.fromCharCode(bytes[i]);
+                }
+                return btoa(binString);
+            }
             function extractTitleFromXml(xml) {
-                var m = xml.match(/<(work|movement)-title>([\s\S]*?)<\/\1-title>/i) ||
-                    xml.match(/<credit-words[^>]*>([\s\S]*?)<\/credit-words>/i);
-                return m ? m[2].replace(/<[^>]+>/g, '').trim() : '';
+                var m = xml.match(/<(work|movement)-title>([\s\S]*?)<\/\1-title>/i);
+                if (m) return m[2].replace(/<[^>]+>/g, '').trim();
+                m = xml.match(/<credit-words[^>]*>([\s\S]*?)<\/credit-words>/i);
+                if (m) return m[1].replace(/<[^>]+>/g, '').trim();
+                return '';
             }
             function getMpsState() {
                 return { mode: document.getElementById('layoutMode').value, count: parseInt(document.getElementById('mpsCount').value, 10) || 4 };
@@ -2422,7 +3799,7 @@
                     var btn = document.getElementById('bx'), old = btn.innerHTML;
                     btn.innerHTML = '✓ Copiado!';
                     setTimeout(function () { btn.innerHTML = old; }, 2000);
-                } catch (err) { alert("ERRO COPIAR HTML: " + err.stack); }
+                } catch (err) { setStatus("ERRO COPIAR HTML: " + err.stack, "err"); }
             };
 
             document.getElementById('bdl').onclick = async function () {
@@ -2438,7 +3815,7 @@
                     document.body.appendChild(a); a.click(); document.body.removeChild(a);
                     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
                     setStatus('Arquivo salvo: ' + fileName, 'ok');
-                } catch (err) { alert("ERRO BAIXAR HTML: " + err.stack); }
+                } catch (err) { setStatus("ERRO BAIXAR HTML: " + err.stack, "err"); }
             };
 
             /* ═══════════════════════════════════════════════════════════════════
@@ -2456,7 +3833,9 @@
                 var xmlB64 = encodeBase64Unicode(xml);
                 var safePartConfigs = JSON.stringify(partConfigs);
                 var safeChordConfig = JSON.stringify(chordConfig);
+                var safePianoChordConfig = JSON.stringify(pianoChordConfig);
                 var safePercInfo = JSON.stringify(percInfo || { drumFlags: {}, noteMap: {} });
+                var safeTransposeInstrumentsGlobally = transposeInstrumentsGlobally;
                 var metAttr = metOn ? 'checked' : '';
                 var mps = getMpsState();
                 var curMode = document.getElementById('cursorMode').value;
@@ -2535,8 +3914,15 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
 (function(){
   var partConfigs = ${safePartConfigs};
   var chordConfig = ${safeChordConfig};
+  var pianoChordConfig = ${safePianoChordConfig};
+  var transposeInstrumentsGlobally = ${safeTransposeInstrumentsGlobally};
   var percInfo    = ${safePercInfo};
-  var raw = decodeURIComponent(escape(atob("${xmlB64}")));
+  var binString = atob("${xmlB64}");
+  var bytes = new Uint8Array(binString.length);
+  for (var i = 0; i < binString.length; i++) {
+      bytes[i] = binString.charCodeAt(i);
+  }
+  var raw = new TextDecoder().decode(bytes);
   var GM_OPTS_HTML = '${GM_OPTS_HTML}';
   var ICONS = {
     mute: '<svg class="icon-svg" style="width:11px;height:11px;margin-right:3px;" viewBox="0 0 24 24"><path d="M11 4.708V20M4.141 15.414A2 2 0 0 1 3 13.586V10.414A2 2 0 0 1 4.141 8.586L8.859 4.871A1 1 0 0 1 10.5 5.657v12.686a1 1 0 0 1-1.641.786l-4.718-3.715Z"><\/path><line x1="22" y1="9" x2="16" y2="15"><\/line><line x1="16" y1="9" x2="22" y2="15"><\/line><\/svg>',
@@ -2552,11 +3938,144 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   var maxMeasureNumber = ${exportMaxMeasureNumber};
 
   var STEP_SEMITONES = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+  var MAP_OCT_OPTIONS = {
+      '24':  { octave: 24,  inst: 0 },
+      '12':  { octave: 12,  inst: 0 },
+      '9':   { octave: 0,   inst: 9 },
+      '0':   { octave: 0,   inst: 0 },
+      '-2':  { octave: 0,   inst: -2 },
+      '-5':  { octave: 0,   inst: -5 },
+      '-7':  { octave: 0,   inst: -7 },
+      '-9':  { octave: 0,   inst: -9 },
+      '-12': { octave: -12, inst: 0 },
+      '-14': { octave: -12, inst: -2 },
+      '-21': { octave: -12, inst: -9 },
+      '-24': { octave: -24, inst: 0 }
+  };
+  var globalInstrumentTransposition = 0;
+  function getEffectiveTransposition(octVal) {
+      var comp = MAP_OCT_OPTIONS[String(octVal)] || { octave: 0, inst: 0 };
+      if (transposeInstrumentsGlobally) {
+          return comp.octave + globalInstrumentTransposition;
+      } else {
+          return comp.octave + comp.inst;
+      }
+  }
+  function updateGlobalInstrumentTransposition() {
+      globalInstrumentTransposition = 0;
+      for (var i = 0; i < partConfigs.length; i++) {
+          var comp = MAP_OCT_OPTIONS[String(partConfigs[i].oct)] || { octave: 0, inst: 0 };
+          if (comp.inst !== 0) {
+              globalInstrumentTransposition = comp.inst;
+              return;
+          }
+      }
+      var compC = MAP_OCT_OPTIONS[String(chordConfig.oct)] || { octave: 0, inst: 0 };
+      if (compC.inst !== 0) {
+          globalInstrumentTransposition = compC.inst;
+          return;
+      }
+      var compP = MAP_OCT_OPTIONS[String(pianoChordConfig.oct)] || { octave: 0, inst: 0 };
+      if (compP.inst !== 0) {
+          globalInstrumentTransposition = compP.inst;
+          return;
+      }
+  }
+  var OCT_OPTIONS_EX = [
+    ['24', '8va²↑'], ['12', '8va↑'], ['9', 'Eb↑'], ['0', 'In loco'],
+    ['-2', 'Bb↓'], ['-5', 'G↓'], ['-7', 'F↓'], ['-9', 'Eb↓'],
+    ['-12', '8vb↓'], ['-14', 'Bb8vb↓'], ['-21', 'Eb8vb↓'], ['-24', '8vb²↓']
+  ];
+  function updateGlobalTranspUIEx() {
+      var chk = document.getElementById('chkGlobalInstTranspEx');
+      if (chk) chk.checked = transposeInstrumentsGlobally;
+      var lbl = document.getElementById('lblGlobalInstTranspStatusEx');
+      if (lbl) {
+          if (globalInstrumentTransposition === 0) {
+              lbl.textContent = '(In loco)';
+          } else {
+              var name = 'Transposta';
+              for (var k in MAP_OCT_OPTIONS) {
+                  if (MAP_OCT_OPTIONS[k].inst === globalInstrumentTransposition && MAP_OCT_OPTIONS[k].octave === 0) {
+                      for (var o = 0; o < OCT_OPTIONS_EX.length; o++) {
+                          if (OCT_OPTIONS_EX[o][0] === k) {
+                              name = OCT_OPTIONS_EX[o][1];
+                              break;
+                          }
+                      }
+                      break;
+                  }
+              }
+              lbl.textContent = '(Ativa: ' + name + ')';
+          }
+      }
+  }
   function rootToMidi(step,alter){
     alter=alter||0; var base=STEP_SEMITONES[step]; if(base===undefined)return null;
     return 60+base+alter;
   }
+  function getChordIntervals(kindStr) {
+    if (!kindStr) return [0, 4, 7];
+    kindStr = kindStr.trim().toLowerCase();
+    // Remove parenteses, espaços e hifens para normalização total
+    var clean = kindStr.replace(/[\(\)\s\-]/g, '');
 
+    switch (clean) {
+        case 'minor': case 'min': case 'm': return [0, 3, 7];
+        case 'augmented': case 'aug': return [0, 4, 8];
+        // Diminuto Tríade (apenas terça menor e quinta diminuta)
+        case 'diminished': case 'dim': case 'o': return [0, 3, 6];
+        // Diminuto com Sétima (terça menor, quinta diminuta e sétima diminuta)
+        case 'diminishedseventh': case 'dim7': return [0, 3, 6, 9];
+        case 'dominant': case '7': case 'dominantseventh': return [0, 4, 7, 10];
+        case 'majorseventh': case 'maj7': case 'major7th': case 'maj': case 'm7+': return [0, 4, 7, 11];
+        case 'minorseventh': case 'm7': case 'minor7th': return [0, 3, 7, 10];
+        // Meio diminuto (terça menor, quinta diminuta e sétima menor)
+        case 'halfdiminished': case 'm7b5': case 'halfdiminishedseventh': case 'ø': return [0, 3, 6, 10];
+        case 'majorsixth': case '6': return [0, 4, 7, 9];
+        case 'minorsixth': case 'm6': return [0, 3, 7, 9];
+        case 'suspendedfourth': case 'sus4': case 'suspended': case 'sus': return [0, 5, 7];
+        case 'suspendedsecond': case 'sus2': return [0, 2, 7];
+        case 'dominantninth': case '9': case 'dominant9th': return [0, 4, 7, 10, 14];
+        case 'majorninth': case 'maj9': case 'major9th': return [0, 4, 7, 11, 14];
+        case 'minorninth': case 'm9': case 'minor9th': return [0, 3, 7, 10, 14];
+        // Menor com Sétima Maior (terça menor, quinta justa e sétima maior)
+        case 'majorminor': case 'minmaj7': case 'm7maj7': case 'm7maj': case 'mmaj7': return [0, 3, 7, 11];
+        case 'augmentedseventh': case '7#5': case '7+5': case 'aug7': return [0, 4, 8, 10];
+        case 'power': case '5': return [0, 7];
+    }
+
+    // Fallbacks usando busca por substrings ordenados por especificidade
+    if (clean.includes('b5') || clean.includes('flat5')) {
+        if (clean.includes('maj7') || clean.includes('major7') || clean.includes('majorseventh')) return [0, 4, 6, 11];
+        if (clean.includes('m7') || clean.includes('min7') || clean.includes('minorseventh')) return [0, 3, 6, 10];
+        if (clean.includes('7') || clean.includes('dominant')) return [0, 4, 6, 10];
+        return [0, 3, 6, 10];
+    }
+    if (clean.includes('#5') || clean.includes('+5') || clean.includes('sharp5') || clean.includes('aug5')) {
+        if (clean.includes('maj7') || clean.includes('major7') || clean.includes('majorseventh')) return [0, 4, 8, 11];
+        if (clean.includes('m7') || clean.includes('min7') || clean.includes('minorseventh')) return [0, 3, 8, 10];
+        if (clean.includes('7') || clean.includes('dominant')) return [0, 4, 8, 10];
+        return [0, 4, 8];
+    }
+    if (clean.includes('minmaj7') || clean.includes('m7maj7') || clean.includes('minormajor') || clean.includes('majorminor') || clean.includes('m7maj') || clean.includes('mmaj7')) return [0, 3, 7, 11];
+    if (clean.includes('halfdiminished') || clean.includes('m7b5')) return [0, 3, 6, 10];
+    if (clean.includes('dim7') || clean.includes('diminishedseventh')) return [0, 3, 6, 9];
+    if (clean.includes('dim') || clean.includes('diminished')) return [0, 3, 6];
+    if (clean.includes('maj9') || clean.includes('majorninth')) return [0, 4, 7, 11, 14];
+    if (clean.includes('min9') || clean.includes('m9') || clean.includes('minorninth')) return [0, 3, 7, 10, 14];
+    if (clean.includes('9') || clean.includes('dominantninth') || clean.includes('ninth')) return [0, 4, 7, 10, 14];
+    if (clean.includes('maj7') || clean.includes('majorseventh') || clean.includes('m+7')) return [0, 4, 7, 11];
+    if (clean.includes('m7') || clean.includes('min7') || clean.includes('minorseventh')) return [0, 3, 7, 10];
+    if (clean.includes('7') || clean.includes('dominant')) return [0, 4, 7, 10];
+    if (clean.includes('min') || clean.includes('minor') || clean === 'm') return [0, 3, 7];
+    if (clean.includes('aug') || clean.includes('augmented')) return [0, 4, 8];
+    if (clean.includes('sus4') || clean.includes('sus')) return [0, 5, 7];
+    if (clean.includes('sus2')) return [0, 2, 7];
+    if (clean.includes('m6') || clean.includes('minix')) return [0, 3, 7, 9];
+    if (clean.includes('6') || clean.includes('sixth')) return [0, 4, 7, 9];
+    return [0, 4, 7];
+  }
   function parseChordEvents(xml,bpm){
     var chords=[];
     try{
@@ -2578,12 +4097,43 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
             if((kindEl&&kindEl.textContent.trim()==='none')||hText.includes('N.C.')||hText.includes('N. C.'))continue;
             var bassStep=node.querySelector('bass-step'),bassAlter=node.querySelector('bass-alter');
             var rootStep=node.querySelector('root-step'),rootAlter=node.querySelector('root-alter');
-            var step,alter;
-            if(bassStep){step=bassStep.textContent.trim();alter=bassAlter?parseFloat(bassAlter.textContent):0;}
-            else if(rootStep){step=rootStep.textContent.trim();alter=rootAlter?parseFloat(rootAlter.textContent):0;}
-            else continue;
-            var midi=rootToMidi(step,alter); if(midi===null)continue;
-            chords.push({t:tSec,midi:midi});
+            var rootMidi = null;
+            if (rootStep) {
+                rootMidi = rootToMidi(rootStep.textContent.trim(), rootAlter ? parseFloat(rootAlter.textContent) : 0);
+            }
+            var bassMidi = null;
+            if (bassStep) {
+                bassMidi = rootToMidi(bassStep.textContent.trim(), bassAlter ? parseFloat(bassAlter.textContent) : 0);
+            }
+            if (rootMidi === null && bassMidi !== null) rootMidi = bassMidi;
+            if (bassMidi === null && rootMidi !== null) bassMidi = rootMidi;
+            if (rootMidi === null) continue;
+            var kindStr = '';
+            if (kindEl) {
+                kindStr = kindEl.textContent || '';
+                var kindTextAttr = kindEl.getAttribute('text');
+                if (kindTextAttr) kindStr += ' ' + kindTextAttr;
+            }
+            var degrees = node.querySelectorAll('degree');
+            for (var d = 0; d < degrees.length; d++) {
+                var degValEl = degrees[d].querySelector('degree-value');
+                var degAltEl = degrees[d].querySelector('degree-alter');
+                var degTypeEl = degrees[d].querySelector('degree-type');
+                if (degValEl) {
+                    var val = degValEl.textContent.trim();
+                    var alt = degAltEl ? degAltEl.textContent.trim() : '0';
+                    var type = degTypeEl ? degTypeEl.textContent.trim() : 'alter';
+                    if (type === 'alter' || type === 'add') {
+                        if (alt === '-1') kindStr += ' b' + val;
+                        else if (alt === '1') kindStr += ' #' + val;
+                        else if (alt === '0') kindStr += ' ' + val;
+                    } else if (type === 'subtract') {
+                        kindStr += ' no' + val;
+                    }
+                }
+            }
+            var intervals = getChordIntervals(kindStr);
+            chords.push({t:tSec,midi:bassMidi,rootMidi:rootMidi,intervals:intervals});
           }else if(tag==='note'){
             var isChordNote=!!node.querySelector('chord');
             if(!isChordNote){var durEl=node.querySelector('duration');var dur=durEl?(parseFloat(durEl.textContent)||0):0;pos+=dur;if(pos>maxPos)maxPos=pos;}
@@ -2733,6 +4283,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   })();
   var eventsCache={bpm:null,evs:[],pieceEnd:0};
   var chordInst=null,chordGain=null;
+  var pianoChordInst=null,pianoChordGain=null;
 
   /* Variáveis do Scheduler */
   var nextEventIdx=0,nextChordIdx=0,nextMetTime=0,schedulerTimer=null;
@@ -3001,20 +4552,37 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   }
 
   async function ensureChordInstrument(){
-    if(chordInst&&chordGain)return;
-    chordGain=ac.createGain();chordGain.gain.value=chordConfig.vol/100;chordGain.connect(inputGain);
-    chordInst=await Soundfont.instrument(ac,chordConfig.program,{soundfont:'FluidR3_GM',destination:chordGain,nameToUrl:function(n,f){return 'https://gleitz.github.io/midi-js-soundfonts/'+f+'/'+n+'-mp3.js';}});
+    if(chordInst&&chordGain&&pianoChordInst&&pianoChordGain)return;
+    if(!chordGain){
+      chordGain=ac.createGain();chordGain.gain.value=chordConfig.vol/100;chordGain.connect(inputGain);
+    }
+    if(!chordInst){
+      chordInst=await Soundfont.instrument(ac,chordConfig.program,{soundfont:'FluidR3_GM',destination:chordGain,nameToUrl:function(n,f){return 'https://gleitz.github.io/midi-js-soundfonts/'+f+'/'+n+'-mp3.js';}});
+    }
+    if(!pianoChordGain){
+      pianoChordGain=ac.createGain();pianoChordGain.gain.value=pianoChordConfig.vol/100;pianoChordGain.connect(inputGain);
+    }
+    if(!pianoChordInst){
+      pianoChordInst=await Soundfont.instrument(ac,pianoChordConfig.program,{soundfont:'FluidR3_GM',destination:pianoChordGain,nameToUrl:function(n,f){return 'https://gleitz.github.io/midi-js-soundfonts/'+f+'/'+n+'-mp3.js';}});
+    }
   }
   async function reloadChordInstrument(){chordInst=null;chordGain=null;await ensureChordInstrument();updateFullMix();}
+  async function reloadPianoChordInstrument(){pianoChordInst=null;pianoChordGain=null;await ensureChordInstrument();updateFullMix();}
 
   function updateFullMix(){
     updatePartMix();
-    if(!chordGain||!ac)return;
-    var anySolo=partConfigs.some(function(p){return p.solo;})||chordConfig.solo;
-    var baseGain;
-    if(anySolo)baseGain=chordConfig.solo?1:0;else baseGain=chordConfig.mute?0:1;
-    if(!chordConfig.solo&&partConfigs.some(function(p){return p.solo;}))baseGain=0;
-    chordGain.gain.setTargetAtTime(baseGain*(chordConfig.vol/100),ac.currentTime,0.05);
+    if(!ac)return;
+    var anySolo=partConfigs.some(function(p){return p.solo;})||chordConfig.solo||pianoChordConfig.solo;
+    if(chordGain){
+      var baseGainC=1;
+      if(anySolo)baseGainC=chordConfig.solo?1:0;else baseGainC=chordConfig.mute?0:1;
+      chordGain.gain.setTargetAtTime(baseGainC*(chordConfig.vol/100),ac.currentTime,0.05);
+    }
+    if(pianoChordGain){
+      var baseGainP=1;
+      if(anySolo)baseGainP=pianoChordConfig.solo?1:0;else baseGainP=pianoChordConfig.mute?0:1;
+      pianoChordGain.gain.setTargetAtTime(baseGainP*(pianoChordConfig.vol/100),ac.currentTime,0.05);
+    }
   }
 
   async function scheduler(){
@@ -3056,15 +4624,40 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       }
     }
 
-    if(chordConfig.enabled&&!chordConfig.mute){
-      var noteDur=(60/bpm)*(chordConfig.durVal||1);
+    var hasBassChord=chordConfig.enabled&&!chordConfig.mute;
+    var hasPianoChord=pianoChordConfig.enabled&&!pianoChordConfig.mute;
+    if(hasBassChord||hasPianoChord||true){
+      var noteDurC=(60/bpm)*(chordConfig.durVal||1);
+      var noteDurP=(60/bpm)*(pianoChordConfig.durVal||1);
       while(nextChordIdx<chordEvents.length&&chordEvents[nextChordIdx].t<lookAheadLimit){
         var cev=chordEvents[nextChordIdx];
+        var durC=noteDurC;
+        var durP=noteDurP;
+        if(nextChordIdx+1<chordEvents.length){
+          var timeToNext=chordEvents[nextChordIdx+1].t-cev.t;
+          if(timeToNext>0){
+            durC=Math.min(durC,timeToNext);
+            durP=Math.min(durP,timeToNext);
+          }
+        }
         if(cev.t<rangeEndT){
           var whenC=sat+cev.t;
           if(whenC>=now){
-            var midiC=Math.max(21,Math.min(108,cev.midi+chordConfig.oct+globalTransp));
-            if(chordInst){var cn=chordInst.play(midiC,whenC,{duration:noteDur});if(cn)sc.push(cn);}
+            if(hasBassChord){
+              var midiC=Math.max(21,Math.min(108,cev.midi+getEffectiveTransposition(chordConfig.oct)+globalTransp));
+              if(chordInst){var cn=chordInst.play(midiC,whenC,{duration:durC});if(cn)sc.push(cn);}
+            }
+            if(hasPianoChord){
+              if(pianoChordInst&&cev.intervals&&cev.rootMidi){
+                for(var k=0;k<cev.intervals.length;k++){
+                  var noteMidi=cev.rootMidi+cev.intervals[k]+getEffectiveTransposition(pianoChordConfig.oct)+globalTransp;
+                  while(noteMidi>71)noteMidi-=12;
+                  while(noteMidi<53)noteMidi+=12;
+                  var midiP=Math.max(21,Math.min(108,noteMidi));
+                  var pn=pianoChordInst.play(midiP,whenC,{duration:durP});if(pn)sc.push(pn);
+                }
+              }
+            }
           }
         }
         nextChordIdx++;
@@ -3108,11 +4701,11 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   function getTransShift(){return parseInt(document.getElementById('trans').value,10)||0;}
 
   function updatePartMix(){
-    isAnySolo=partConfigs.some(function(p){return p.solo;})||chordConfig.solo;
+    var anySolo=partConfigs.some(function(p){return p.solo;})||chordConfig.solo||pianoChordConfig.solo;
     partConfigs.forEach(function(cfg,idx){
       var baseGain=1;
-      if(isAnySolo)baseGain=cfg.solo?1:0;
-      else if(cfg.mute)baseGain=0;
+      if(anySolo)baseGain=cfg.solo?1:0;
+      else baseGain=cfg.mute?0:1;
       var finalGain=baseGain*((cfg.vol||100)/100);
       if(partGains[idx])partGains[idx].gain.setTargetAtTime(finalGain,ac.currentTime,0.05);
     });
@@ -3227,6 +4820,33 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     };
     var S_BTN='border:1px solid #d1d5db;border-radius:4px;padding:3px 6px;font-size:11px;font-weight:600;cursor:pointer;font-family:system-ui,sans-serif;color:#475569;background:#f8fafc;';
 
+    // Transposição Geral Checkbox & Status
+    var gtRow = document.createElement('div');
+    gtRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed #cbd5e1;width:100%;';
+    var gtLabel = document.createElement('label');
+    gtLabel.style.cssText = 'font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;color:#111827;';
+    var gtCheck = document.createElement('input');
+    gtCheck.type = 'checkbox'; gtCheck.id = 'chkGlobalInstTranspEx';
+    gtCheck.checked = transposeInstrumentsGlobally;
+    gtCheck.style.cssText = 'width:15px;height:15px;cursor:pointer;';
+    gtCheck.onchange = function () {
+        transposeInstrumentsGlobally = gtCheck.checked;
+        try { localStorage.setItem('transposeInstrumentsGlobally', transposeInstrumentsGlobally); } catch(e) {}
+        updateGlobalInstrumentTransposition();
+        updateGlobalTranspUIEx();
+    };
+    var gtStatus = document.createElement('span');
+    gtStatus.id = 'lblGlobalInstTranspStatusEx';
+    gtStatus.style.cssText = 'font-size:11px;font-weight:700;color:#6366f1;';
+    
+    gtLabel.appendChild(gtCheck);
+    gtLabel.appendChild(document.createTextNode('Transposição Geral de Instrumento (Eb, Bb, G, F)'));
+    gtRow.appendChild(gtLabel); gtRow.appendChild(gtStatus);
+    pPanel.appendChild(gtRow);
+    
+    updateGlobalInstrumentTransposition();
+    updateGlobalTranspUIEx();
+
     partConfigs.forEach(function(cfg,idx){
       var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;';
       var nameSp=document.createElement('span');nameSp.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;';nameSp.textContent=cfg.name;
@@ -3237,7 +4857,11 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       bSolo.onclick=function(){cfg.solo=!cfg.solo;bSolo.style.cssText=S_BTN+(cfg.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');updateFullMix();};
       var volRange=document.createElement('input');volRange.type='range';volRange.min=0;volRange.max=100;volRange.value=cfg.vol||100;volRange.style.width='55px';
       volRange.oninput=function(){cfg.vol=+volRange.value;updateFullMix();};
-      var octS=makeOctSelEx(cfg.oct||0,function(){cfg.oct=parseInt(octS.value,10);});
+      var octS=makeOctSelEx(cfg.oct||0,function(){
+        cfg.oct=parseInt(octS.value,10);
+        updateGlobalInstrumentTransposition();
+        updateGlobalTranspUIEx();
+      });
       if(cfg.isDrum){octS.disabled=true;octS.title="Percussão não permite transposição.";octS.style.opacity="0.5";cfg.oct=0;}
       var sel=document.createElement('select');sel.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
       sel.innerHTML=GM_OPTS_HTML;sel.value=cfg.program;
@@ -3246,8 +4870,35 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       pPanel.appendChild(row);
     });
 
-    var chRow=document.createElement('div');chRow.style.cssText='display:flex;align-items:center;gap:8px;border-top:1px dashed #d1d5db;padding-top:6px;margin-top:2px;';
-    var chName=document.createElement('span');chName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#6366f1;';chName.textContent='Baixo das Cifras';
+    var pchRow=document.createElement('div');pchRow.style.cssText='display:flex;align-items:center;gap:8px;';
+    var pchName=document.createElement('span');pchName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#6366f1;';pchName.textContent='Cifra: acordes';
+    var bPEn=document.createElement('button');
+    function refreshPianoChordEnableBtn(){
+      bPEn.textContent=pianoChordConfig.enabled?'ON':'OFF';
+      bPEn.style.cssText=S_BTN+(pianoChordConfig.enabled?'background:#6366f1;color:#fff;border-color:#6366f1;':'');
+    }
+    refreshPianoChordEnableBtn();
+    bPEn.onclick=function(){pianoChordConfig.enabled=!pianoChordConfig.enabled;refreshPianoChordEnableBtn();updateFullMix();};
+    var bPMuteC=document.createElement('button');bPMuteC.innerHTML=ICONS.mute+' Mute';bPMuteC.style.cssText=S_BTN+(pianoChordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
+    bPMuteC.onclick=function(){pianoChordConfig.mute=!pianoChordConfig.mute;bPMuteC.style.cssText=S_BTN+(pianoChordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
+    var bPSoloC=document.createElement('button');bPSoloC.innerHTML=ICONS.solo+' Solo';bPSoloC.style.cssText=S_BTN+(pianoChordConfig.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');
+    bPSoloC.onclick=function(){pianoChordConfig.solo=!pianoChordConfig.solo;bPSoloC.style.cssText=S_BTN+(pianoChordConfig.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');updateFullMix();};
+    var volPC=document.createElement('input');volPC.type='range';volPC.min=0;volPC.max=100;volPC.value=pianoChordConfig.vol;volPC.style.width='55px';
+    volPC.oninput=function(){pianoChordConfig.vol=+volPC.value;updateFullMix();};
+    var octPC=makeOctSelEx(pianoChordConfig.oct,function(){
+      pianoChordConfig.oct=parseInt(octPC.value,10);
+      updateGlobalInstrumentTransposition();
+      updateGlobalTranspUIEx();
+    });
+    var durPC=makeDurSelEx(pianoChordConfig.durVal,function(){pianoChordConfig.durVal=Number(durPC.value);});
+    var selPC=document.createElement('select');selPC.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
+    selPC.innerHTML=GM_OPTS_HTML;selPC.value=pianoChordConfig.program;
+    selPC.onchange=function(){pianoChordConfig.program=selPC.value;pianoChordInst=null;pianoChordGain=null;eventsCache.bpm=null;ensureInst();};
+    pchRow.appendChild(pchName);pchRow.appendChild(volPC);pchRow.appendChild(bPEn);pchRow.appendChild(bPMuteC);pchRow.appendChild(bPSoloC);pchRow.appendChild(octPC);pchRow.appendChild(durPC);pchRow.appendChild(selPC);
+    pPanel.appendChild(pchRow);
+
+    var chRow=document.createElement('div');chRow.style.cssText='display:flex;align-items:center;gap:8px;';
+    var chName=document.createElement('span');chName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#6366f1;';chName.textContent='Cifra: baixo';
     var bEn=document.createElement('button');
     function refreshChordEnableBtn(){
       bEn.textContent=chordConfig.enabled?'ON':'OFF';
@@ -3261,13 +4912,18 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     bSoloC.onclick=function(){chordConfig.solo=!chordConfig.solo;bSoloC.style.cssText=S_BTN+(chordConfig.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');updateFullMix();};
     var volC=document.createElement('input');volC.type='range';volC.min=0;volC.max=100;volC.value=chordConfig.vol;volC.style.width='55px';
     volC.oninput=function(){chordConfig.vol=+volC.value;updateFullMix();};
-    var octC=makeOctSelEx(chordConfig.oct,function(){chordConfig.oct=parseInt(octC.value,10);});
+    var octC=makeOctSelEx(chordConfig.oct,function(){
+      chordConfig.oct=parseInt(octC.value,10);
+      updateGlobalInstrumentTransposition();
+      updateGlobalTranspUIEx();
+    });
     var durC=makeDurSelEx(chordConfig.durVal,function(){chordConfig.durVal=Number(durC.value);});
     var selC=document.createElement('select');selC.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
     selC.innerHTML=GM_OPTS_HTML;selC.value=chordConfig.program;
     selC.onchange=function(){chordConfig.program=selC.value;chordInst=null;chordGain=null;eventsCache.bpm=null;ensureInst();};
     chRow.appendChild(chName);chRow.appendChild(volC);chRow.appendChild(bEn);chRow.appendChild(bMuteC);chRow.appendChild(bSoloC);chRow.appendChild(octC);chRow.appendChild(durC);chRow.appendChild(selC);
     pPanel.appendChild(chRow);
+
     ctrls.appendChild(pPanel);
   }
 
