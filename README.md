@@ -4,7 +4,8 @@
 
 O **ViToPaMoS** é uma ferramenta web desenvolvida para facilitar o ensino e a prática musical através da visualização e execução de partituras no formato **MusicXML**. Criado pelo professor **Glauber Santiago** (DAC/UFSCar), ele permite transformar arquivos de partitura em players interativos que podem ser facilmente incorporados em ambientes virtuais de aprendizagem como o **Moodle**.
 
-<img width="1331" height="923" alt="image" src="https://github.com/user-attachments/assets/f08a3dce-294a-4df2-a8cc-aacadc408137" />
+<img width="1322" height="917" alt="image" src="https://github.com/user-attachments/assets/779473f6-6d5d-4b53-bb0c-f28d94260b45" />
+
 
 ---
 
