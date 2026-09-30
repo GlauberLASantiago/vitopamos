@@ -1292,6 +1292,8 @@
             var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay('score', {
                 backend: 'svg', autoResize: true, followCursor: false
             });
+            /* O iterador do OSMD deve percorrer repetições e casas (1ª/2ª volta). */
+            osmd.EngravingRules.CursorIgnoreRepetitions = false;
             if (osmd.cursor) osmd.cursor.cursorOptions.color = '#86efac44';
 
             var oldOsmdRender = osmd.render;
@@ -1704,7 +1706,8 @@
 
             /* ─── Estado global ──────────────────────────────────────────────── */
             var partInsts = [], partConfigs = [], partGains = [], isAnySolo = false;
-            var evs = [], ac = null, sc = [], sat = 0, pat = 0, run = false, rawXml = '', xmlDoc = null, isLoadingProject = false, playbackStartOffset = 0;
+            var evs = [], ac = null, sc = [], retiredSc = [], sat = 0, pat = 0, run = false, rawXml = '', xmlDoc = null, isLoadingProject = false, playbackStartOffset = 0;
+            var transportStartAudio = 0, transportStartOffset = 0;
             var cursorTimer = null, cursorSteps = [], cursorIndex = 0;
             var inputGain = null, masterGain = null, dryGain = null, wetGain = null, convolver = null;
             var playbackEndTimer = null, pieceEnd = 0;
@@ -1746,7 +1749,11 @@
                                     measureNumber = srcMeasure.MeasureNumber;
                                 }
                             }
-                            measureTimeMap[measureNumber] = real * 4 * beatLen;
+                            /* Em partituras com repetição, guarde a primeira ocorrência
+                               para que os campos de trecho continuem representando a partitura. */
+                            if (measureTimeMap[measureNumber] === undefined) {
+                                measureTimeMap[measureNumber] = real * 4 * beatLen;
+                            }
                             if (lastM === -1) minMeasureNumber = measureNumber;
                             maxMeasureNumber = measureNumber;
                             lastM = mIdx;
@@ -1784,6 +1791,28 @@
                 // End time = start of next measure after 'to', or pieceEnd
                 var next = measureTimeMap[to + 1];
                 return (next !== undefined) ? next : pieceEnd;
+            }
+
+            function isLoopEnabled() {
+                var el = document.getElementById('loopCheck');
+                return !!(el && el.checked);
+            }
+
+            /* Posição musical derivada do mesmo relógio usado pelo Web Audio.
+               No loop, a posição volta por módulo sem reiniciar o transporte. */
+            function getPlaybackPosition(audioTime, visualDelay) {
+                var elapsed = audioTime - (visualDelay || 0) - transportStartAudio;
+                if (elapsed <= 0) return transportStartOffset;
+                var position = transportStartOffset + elapsed;
+                if (isLoopEnabled()) {
+                    var start = getRangeStartTime();
+                    var end = getRangeEndTime();
+                    var duration = end - start;
+                    if (duration > 0.001 && position >= end) {
+                        position = start + ((position - end) % duration);
+                    }
+                }
+                return Math.max(0, position);
             }
 
             document.getElementById('rangeFrom').addEventListener('change', function () {
@@ -1827,7 +1856,7 @@
 
             /* Variáveis do Scheduler */
             var nextEventIdx = 0, nextChordIdx = 0, nextMetTime = 0, schedulerTimer = null;
-            var lookahead = 0.1, scheduleAheadTime = 0.5, chordEvents = [];
+            var lookahead = 0.1, scheduleAheadTime = 0.5, chordEvents = [], playbackChordEvents = [];
 
             function setStatus(msg, cls) {
                 var e = document.getElementById('st');
@@ -2090,7 +2119,7 @@
                     if (window[DRUM_MIDI_MAP[pitch]]) drumPlayer.loader.decodeAfterLoading(ac, DRUM_MIDI_MAP[pitch]);
                 });
             }
-            function playDrumNote(midiNote, when, dest) {
+            function playDrumNote(midiNote, when, dest, maxDuration) {
                 if (!ac || !drumPlayer) return [];
                 var lookupNote = midiNote === 34 ? 37 : midiNote;
                 var instrumentName = DRUM_MIDI_MAP[lookupNote];
@@ -2103,6 +2132,7 @@
                 }
                 var noteGain = ac.createGain(); noteGain.gain.value = 0.2; noteGain.connect(dest);
                 var dur = DRUM_DURATIONS[midiNote] || 3;
+                if (maxDuration !== undefined) dur = Math.max(0.01, Math.min(dur, maxDuration));
                 var noteHandle = drumPlayer.queueWaveTable(ac, noteGain, window[instrumentName], when, midiNote, dur);
                 var disconnectTime = (when - ac.currentTime + dur + 0.5) * 1000;
                 if (disconnectTime > 0) setTimeout(function () { try { noteGain.disconnect(); } catch (_) { } }, disconnectTime);
@@ -2459,7 +2489,9 @@
 
             function stopScheduled() {
                 sc.forEach(function (n) { try { n.stop(); } catch (_) { } });
+                retiredSc.forEach(function (n) { try { n.stop(); } catch (_) { } });
                 sc = [];
+                retiredSc = [];
                 if (schedulerTimer) { clearTimeout(schedulerTimer); schedulerTimer = null; }
             }
             function clearCursorTimer() {
@@ -2510,7 +2542,7 @@
                     var iterator = osmd.cursor.Iterator;
                     while (!iterator.EndReached) {
                         var mIdx = iterator.CurrentMeasureIndex;
-                        var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
+                        var timeObj = iterator.CurrentEnrolledTimestamp || iterator.currentTimeStamp || iterator.CurrentTimeStamp;
                         var real = timeObj ? (typeof timeObj.realValue !== 'undefined' ? timeObj.realValue : (timeObj.RealValue || 0)) : 0;
                         // Get the actual MusicXML measure number
                         var measureNumber = mIdx + 1; // default fallback
@@ -2561,16 +2593,18 @@
                 
                 function step(now) {
                     if (!run || !ac || !osmd || !osmd.cursor || !cursorSteps.length) return;
-                    if (now - lastTime >= 80) {
+                    /* Atualize em cada quadro (~60 fps). O limite anterior de 80 ms
+                       tornava a volta do cursor perceptivelmente atrasada. */
+                    if (now - lastTime >= 16) {
                         lastTime = now;
                         /* Tempo visual atrasado para compensar latência Bluetooth */
-                        var tempoVisualAtual = ac.currentTime - sat - (btDelayMs / 1000);
+                        var tempoVisualAtual = getPlaybackPosition(ac.currentTime, btDelayMs / 1000);
                         var current = Math.max(0, tempoVisualAtual);
                         var curMode = +document.getElementById('cursorMode').value;
                         if (curMode === -1) return;
                         
                         // Se estivermos na fase de contagem (tempo negativo), mantém cursor no início
-                        if (tempoVisualAtual >= (playbackStartOffset || 0) - 0.01) {
+                        if (ac.currentTime - (btDelayMs / 1000) >= transportStartAudio - 0.01) {
                             var targetIdx = 0;
                             while (targetIdx + 1 < cursorSteps.length && current >= cursorSteps[targetIdx + 1].t - 0.01) {
                                 targetIdx++;
@@ -2610,7 +2644,8 @@
             }
             function pausePlayback() {
                 if (!run || !ac) return;
-                run = false; pat = Math.max(0, ac.currentTime - sat);
+                pat = getPlaybackPosition(ac.currentTime, 0);
+                run = false;
                 stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer();
                 setStatus('Pausado.');
             }
@@ -2622,8 +2657,7 @@
                 stopPlayback(false);
                 if (!partInsts.length || !ac) return;
                 var startT = getRangeStartTime();
-                var loopStartDelay = isLoop ? 0.02 : undefined;
-                run = true; await scheduleFrom(startT, loopStartDelay); startCursorFollow(startT); pat = 0;
+                run = true; await scheduleFrom(startT, isLoop ? 0.02 : undefined); startCursorFollow(startT); pat = 0;
                 setStatus('Tocando...', 'ok');
             }
             function armPlaybackEnd(offset, startDelay) {
@@ -2632,13 +2666,7 @@
                 var countInDur = getCountInDuration();
                 var remaining = Math.max(0, (endT - offset) + countInDur);
                 
-                var isLoop = document.getElementById('loopCheck') && document.getElementById('loopCheck').checked;
-                if (isLoop) {
-                    var totalWait = remaining + (startDelay || 0.1) - 0.02;
-                    playbackEndTimer = setTimeout(function () {
-                        if (run) restartFromBeginningAndPlay(true);
-                    }, Math.max(0, totalWait * 1000));
-                } else {
+                if (!isLoopEnabled()) {
                     var totalWait = remaining + (startDelay || 0.1) + (btDelayMs / 1000);
                     playbackEndTimer = setTimeout(function () { finishPlayback(); }, Math.ceil((totalWait + 0.05) * 1000));
                 }
@@ -2666,7 +2694,9 @@
                 if (tie && tie.Notes && tie.Notes.length > 0) {
                     for (var i = 0; i < tie.Notes.length; i++) totalReal += getRealLength(tie.Notes[i]);
                 } else totalReal = getRealLength(note);
-                return totalReal * 4 * beatLen * 0.98;
+                /* Preserve a duração musical exata. O fator 0,98 criava uma folga
+                   audível de até ~80 ms em notas longas na fronteira do loop. */
+                return totalReal * 4 * beatLen;
             }
             function getRealLength(note) {
                 if (!note || !note.Length) return 0;
@@ -2705,7 +2735,7 @@
                 var iterator = osmd.cursor.Iterator;
                 while (!iterator.EndReached) {
                     var voices = iterator.CurrentVoiceEntries || [];
-                    var timeObj = iterator.currentTimeStamp || iterator.CurrentTimeStamp;
+                    var timeObj = iterator.CurrentEnrolledTimestamp || iterator.currentTimeStamp || iterator.CurrentTimeStamp;
                     var real = timeObj ? (typeof timeObj.realValue !== 'undefined' ? timeObj.realValue : (timeObj.RealValue || 0)) : 0;
                     var tSec = real * 4 * beatLen;
                     for (var i = 0; i < voices.length; i++) {
@@ -2754,6 +2784,60 @@
                 nextMetTime = Math.ceil(offset / beatLen) * beatLen;
             }
 
+            function fractionRealValue(value) {
+                if (!value) return 0;
+                return typeof value.realValue !== 'undefined' ? value.realValue : (value.RealValue || 0);
+            }
+
+            /* Replica as cifras em cada passagem real do iterador do OSMD.
+               Assim, repetições e casas usam a mesma linha do tempo das notas. */
+            function expandChordsForPlayback(sourceChords, bpm) {
+                if (!sourceChords.length || !osmd || !osmd.cursor) return sourceChords.slice();
+                var beatScale = 4 * (60 / bpm);
+                var occurrences = [], occurrenceKeys = {};
+                try {
+                    osmd.cursor.reset();
+                    var iterator = osmd.cursor.Iterator;
+                    while (!iterator.EndReached) {
+                        var measureIdx = iterator.CurrentMeasureIndex;
+                        var relative = fractionRealValue(iterator.CurrentRelativeInMeasureTimestamp);
+                        var enrolled = fractionRealValue(iterator.CurrentEnrolledTimestamp);
+                        var source = fractionRealValue(iterator.CurrentSourceTimestamp || iterator.currentTimeStamp || iterator.CurrentTimeStamp);
+                        var enrolledStart = enrolled - relative;
+                        var sourceStart = source - relative;
+                        var key = measureIdx + ':' + enrolledStart.toFixed(8);
+                        if (!occurrenceKeys[key]) {
+                            occurrenceKeys[key] = true;
+                            occurrences.push({ measureIdx: measureIdx, playStart: enrolledStart * beatScale, sourceStart: sourceStart * beatScale });
+                        }
+                        iterator.moveToNext();
+                    }
+                    osmd.cursor.reset();
+                } catch (e) {
+                    console.warn('expandChordsForPlayback error:', e);
+                    return sourceChords.slice();
+                }
+                var expanded = [];
+                occurrences.forEach(function (occurrence) {
+                    sourceChords.forEach(function (chord) {
+                        if (chord.measureIdx !== occurrence.measureIdx) return;
+                        var copy = Object.assign({}, chord);
+                        copy.t = occurrence.playStart + Math.max(0, chord.t - occurrence.sourceStart);
+                        expanded.push(copy);
+                    });
+                });
+                expanded.sort(function (a, b) { return a.t - b.t; });
+                return expanded;
+            }
+
+            function resetScheduleIndexes(offset) {
+                nextEventIdx = 0;
+                while (nextEventIdx < evs.length && evs[nextEventIdx].t < offset - 0.001) nextEventIdx++;
+                nextChordIdx = 0;
+                while (nextChordIdx < playbackChordEvents.length && playbackChordEvents[nextChordIdx].t < offset - 0.001) nextChordIdx++;
+                nextMetTime = Math.ceil(offset / getMetronomeBeatLen()) * getMetronomeBeatLen();
+            }
+
             async function scheduler() {
                 if (!run || !ac) return;
                 var now = ac.currentTime;
@@ -2771,12 +2855,13 @@
                         if (when >= now) {
                             if (ev.isDrum) {
                                 var drumDest = partGains[ev.part] || masterGain;
-                                var drumNodes = playDrumNote(ev.midi, when, drumDest);
+                                var drumNodes = playDrumNote(ev.midi, when, drumDest, rangeEndT - ev.t);
                                 for (var d = 0; d < drumNodes.length; d++) sc.push(drumNodes[d]);
                             } else {
                                 var partOct = (partConfigs[ev.part] && partConfigs[ev.part].oct) || 0;
                                 if (partInsts[ev.part] && typeof partInsts[ev.part].play === 'function') {
-                                    var n = partInsts[ev.part].play(ev.midi + getEffectiveTransposition(partOct) + globalTransp, when, { duration: ev.dur });
+                                    var clippedDuration = Math.max(0.01, Math.min(ev.dur, rangeEndT - ev.t));
+                                    var n = partInsts[ev.part].play(ev.midi + getEffectiveTransposition(partOct) + globalTransp, when, { duration: clippedDuration });
                                     if (n) sc.push(n);
                                 }
                             }
@@ -2795,7 +2880,7 @@
                     if (nextMetTime < currentV) {
                         nextMetTime = Math.ceil(currentV / beatLen) * beatLen;
                     }
-                    while (nextMetTime < lookAheadLimit && nextMetTime < rangeEndT + 0.05) {
+                    while (nextMetTime < lookAheadLimit && nextMetTime < rangeEndT - 0.001) {
                         var whenM = sat + nextMetTime;
                         if (whenM >= now) {
                             var isCPhase = (nextMetTime < playbackStartOffset - 0.01);
@@ -2823,17 +2908,19 @@
                     if (beatsP > 4) beatsP = 4;
                     var noteDurP = (60 / bpm) * beatsP;
 
-                    while (nextChordIdx < chordEvents.length && chordEvents[nextChordIdx].t < lookAheadLimit) {
-                        var cev = chordEvents[nextChordIdx];
+                    while (nextChordIdx < playbackChordEvents.length && playbackChordEvents[nextChordIdx].t < lookAheadLimit) {
+                        var cev = playbackChordEvents[nextChordIdx];
                         var durC = noteDurC;
                         var durP = noteDurP;
-                        if (nextChordIdx + 1 < chordEvents.length) {
-                            var timeToNext = chordEvents[nextChordIdx + 1].t - cev.t;
+                        if (nextChordIdx + 1 < playbackChordEvents.length) {
+                            var timeToNext = playbackChordEvents[nextChordIdx + 1].t - cev.t;
                             if (timeToNext > 0) {
                                 durC = Math.min(durC, timeToNext);
                                 durP = Math.min(durP, timeToNext);
                             }
                         }
+                        durC = Math.max(0.01, Math.min(durC, rangeEndT - cev.t));
+                        durP = Math.max(0.01, Math.min(durP, rangeEndT - cev.t));
                         if (cev.t < rangeEndT) {
                             var whenC = sat + cev.t;
                             if (whenC >= now) {
@@ -2942,6 +3029,27 @@
                     }
                 }
 
+                /* Prepare a volta seguinte antes da fronteira. Nenhum setTimeout reinicia
+                   o transporte e nenhuma nota já agendada é cancelada. */
+                var loopDuration = rangeEndT - getRangeStartTime();
+                if (isLoopEnabled() && loopDuration > 0.001 && lookAheadLimit >= rangeEndT - 0.001) {
+                    /* Solta referências da volta anterior depois da fronteira, mas ainda
+                       permite que Stop as cancele enquanto ela estiver audível. */
+                    var completedHandles = sc;
+                    sc = [];
+                    retiredSc = retiredSc.concat(completedHandles);
+                    (function (handles, boundaryAudioTime) {
+                        setTimeout(function () {
+                            retiredSc = retiredSc.filter(function (handle) { return handles.indexOf(handle) === -1; });
+                        }, Math.max(0, (boundaryAudioTime - ac.currentTime + 0.1) * 1000));
+                    })(completedHandles, sat + rangeEndT);
+                    sat += loopDuration;
+                    playbackStartOffset = getRangeStartTime();
+                    resetScheduleIndexes(playbackStartOffset);
+                    await scheduler();
+                    return;
+                }
+
                 schedulerTimer = setTimeout(scheduler, lookahead * 1000);
             }
 
@@ -2949,14 +3057,15 @@
                 extractEvents();
                 var currentBpm = +document.getElementById('bpm').value || 100;
                 chordEvents = parseChordEvents(rawXml, currentBpm);
+                playbackChordEvents = expandChordsForPlayback(chordEvents, currentBpm);
 
                 // Permitir playback de cifras mesmo sem notas reais (arquivo só-cifras)
-                if (!evs.length && !chordEvents.length) { setStatus('Nenhuma nota ou cifra encontrada.', 'err'); return; }
+                if (!evs.length && !playbackChordEvents.length) { setStatus('Nenhuma nota ou cifra encontrada.', 'err'); return; }
 
                 // Se não há notas, calcula pieceEnd a partir das cifras + duração de 1 compasso
-                if (!evs.length && chordEvents.length > 0) {
+                if (!evs.length && playbackChordEvents.length > 0) {
                     var beatLen = 60 / currentBpm;
-                    var lastChordEnd = chordEvents[chordEvents.length - 1].t + beatLen * 4;
+                    var lastChordEnd = playbackChordEvents[playbackChordEvents.length - 1].t + beatLen * 4;
                     pieceEnd = lastChordEnd;
                 }
 
@@ -2969,12 +3078,10 @@
                 
                 playbackStartOffset = offset;
                 sat = ac.currentTime + startDelay + finalCountInDur - offset;
+                transportStartAudio = sat + offset;
+                transportStartOffset = offset;
 
-                nextEventIdx = 0;
-                while (nextEventIdx < evs.length && evs[nextEventIdx].t < offset - 0.02) nextEventIdx++;
-
-                nextChordIdx = 0;
-                while (nextChordIdx < chordEvents.length && chordEvents[nextChordIdx].t < offset - 0.02) nextChordIdx++;
+                resetScheduleIndexes(offset);
 
                 var isMetEnabled = document.getElementById('metCheck').checked;
                 if (isMetEnabled || finalCountInDur > 0) {
@@ -3159,7 +3266,7 @@
                 var title = document.getElementById('metaTitle').value;
                 rawXml = applyMetaToXml(rawXml, title);
                 xmlDoc = new DOMParser().parseFromString(rawXml, 'text/xml');
-                var wasRunning = run, savedOffset = wasRunning ? Math.max(0, ac.currentTime - sat) : pat;
+                var wasRunning = run, savedOffset = wasRunning ? getPlaybackPosition(ac.currentTime, 0) : pat;
                 stopPlayback(false);
                 setStatus('Aplicando metadados...', 'info');
                 await osmd.load(rawXml);
@@ -3170,13 +3277,21 @@
                 if (typeof renderChordManager === 'function') renderChordManager();
                 if (typeof bindSvgChordClicks === 'function') bindSvgChordClicks();
 
-                if (wasRunning) { run = true; await scheduleFrom(savedOffset); startCursorFollow(savedOffset); }
+                if (wasRunning) { run = true; await scheduleFrom(savedOffset, 0.02); startCursorFollow(savedOffset); }
                 else pat = savedOffset;
                 setStatus('Metadados atualizados!', 'ok');
             };
 
             document.getElementById('bpa').onclick = function () { pausePlayback(); };
             document.getElementById('bs').onclick = function () { stopPlayback(true); };
+            document.getElementById('loopCheck').addEventListener('change', function () {
+                clearPlaybackEndTimer();
+                if (run && !this.checked) {
+                    var current = getPlaybackPosition(ac.currentTime, 0);
+                    var wait = Math.max(0, getRangeEndTime() - current);
+                    playbackEndTimer = setTimeout(function () { finishPlayback(); }, Math.ceil((wait + 0.05) * 1000));
+                }
+            });
             document.getElementById('btnToggleEditMode').onclick = toggleEditMode;
             document.getElementById('btnAddChord').onclick = showAddChordDialog;
             document.getElementById('reverbAmt').oninput = function () { updateReverb(); };
@@ -3190,9 +3305,9 @@
                 if (!rawXml) return;
                 buildMeasureTimeMap(); // rebuild with new BPM
                 if (run && ac) {
-                    var currentOffset = Math.max(0, ac.currentTime - sat);
+                    var currentOffset = getPlaybackPosition(ac.currentTime, 0);
                     stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer();
-                    scheduleFrom(currentOffset).then(function () { startCursorFollow(currentOffset); });
+                    scheduleFrom(currentOffset, 0.02).then(function () { startCursorFollow(currentOffset); });
                 } else moveCursorToTime(pat || 0);
             };
 
@@ -3204,7 +3319,7 @@
                     else { osmd.cursor.cursorOptions.type = mode; osmd.cursor.show(); }
                 }
                 cursorStepsCache.mode = null;
-                moveCursorToTime(run ? Math.max(0, ac.currentTime - sat) : (pat || 0));
+                moveCursorToTime(run ? getPlaybackPosition(ac.currentTime, btDelayMs / 1000) : (pat || 0));
             };
 
             document.getElementById('score').addEventListener('click', function (ev) {
@@ -4701,7 +4816,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
                 }
             }
             var intervals = getChordIntervals(kindStr);
-            chords.push({t:tSec,midi:bassMidi,rootMidi:rootMidi,intervals:intervals});
+            chords.push({t:tSec,midi:bassMidi,rootMidi:rootMidi,intervals:intervals,measureIdx:mi});
           }else if(tag==='note'){
             var isChordNote=!!node.querySelector('chord');
             if(!isChordNote){var durEl=node.querySelector('duration');var dur=durEl?(parseFloat(durEl.textContent)||0):0;pos+=dur;if(pos>maxPos)maxPos=pos;}
@@ -4733,7 +4848,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
           var measureNumber=osmd.Sheet.SourceMeasures[mIdx].MeasureNumber;
           var ts=it.currentTimeStamp||it.CurrentTimeStamp;
           var rv=ts?(typeof ts.realValue!=='undefined'?ts.realValue:(ts.RealValue||0)):0;
-          measureTimeMap[measureNumber]=rv*4*beatLen;
+          if(measureTimeMap[measureNumber]===undefined)measureTimeMap[measureNumber]=rv*4*beatLen;
           if(mIdx===0)minMeasureNumber=measureNumber;
           maxMeasureNumber=measureNumber;
           lastM=mIdx;
@@ -4753,6 +4868,17 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var to=Math.max(rangeFrom,Math.min(rangeTo,maxMeasureNumber));
     var next=measureTimeMap[to+1];
     return(next!==undefined)?next:pieceEnd;
+  }
+  function isLoopEnabled(){var el=document.getElementById('loopEx');return!!(el&&el.checked);}
+  function getPlaybackPosition(audioTime,visualDelay){
+    var elapsed=audioTime-(visualDelay||0)-transportStartAudio;
+    if(elapsed<=0)return transportStartOffset;
+    var position=transportStartOffset+elapsed;
+    if(isLoopEnabled()){
+      var start=getRangeStartTime(),end=getRangeEndTime(),duration=end-start;
+      if(duration>0.001&&position>=end)position=start+((position-end)%duration);
+    }
+    return Math.max(0,position);
   }
 
   function updateRangeInputs(){
@@ -4790,8 +4916,10 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   }
 
   var osmd=new opensheetmusicdisplay.OpenSheetMusicDisplay('score',{backend:'svg',autoResize:true,followCursor:false});
+  osmd.EngravingRules.CursorIgnoreRepetitions=false;
   if(osmd.cursor) osmd.cursor.cursorOptions.color = '#86efac44';
-  var ac=null,partInsts=[],partGains=[],isAnySolo=false,evs=[],sc=[],sat=0,pat=0,run=false;
+  var ac=null,partInsts=[],partGains=[],isAnySolo=false,evs=[],sc=[],retiredSc=[],sat=0,pat=0,run=false;
+  var transportStartAudio=0,transportStartOffset=0;
   var cursorTimer=null,cursorSteps=[],cursorIndex=0;
   var playbackEndTimer=null,pieceEnd=0;
   var clickTimer=null;
@@ -4943,7 +5071,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     if(!drumPlayer)drumPlayer=new WebAudioFontPlayer();
     Object.keys(DRUM_MIDI_MAP).forEach(function(p){if(window[DRUM_MIDI_MAP[p]])drumPlayer.loader.decodeAfterLoading(ac,DRUM_MIDI_MAP[p]);});
   }
-  function playDrumNote(midiNote,when,dest){
+  function playDrumNote(midiNote,when,dest,maxDuration){
     if(!ac||!drumPlayer)return[];
     var actualNote = midiNote;
     var pitchShift = 0;
@@ -4956,6 +5084,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     if(actualNote===80&&lastOpenTriangle){try{lastOpenTriangle.cancel();}catch(_){}lastOpenTriangle=null;}
     var ng=ac.createGain();ng.gain.value=0.2;ng.connect(dest);
     var dur=DRUM_DURATIONS[actualNote]||3;
+    if(maxDuration!==undefined)dur=Math.max(0.01,Math.min(dur,maxDuration));
     var nh=drumPlayer.queueWaveTable(ac,ng,window[iN],when,actualNote+pitchShift,dur);
     if(actualNote===46)lastOpenHiHat=nh;
     if(actualNote===81)lastOpenTriangle=nh;
@@ -4996,7 +5125,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       var it=osmd.cursor.Iterator;
       while(!it.EndReached){
         var mIdx=it.CurrentMeasureIndex;
-        var ts=it.currentTimeStamp||it.CurrentTimeStamp;
+        var ts=it.CurrentEnrolledTimestamp||it.currentTimeStamp||it.CurrentTimeStamp;
         var rv=ts?(typeof ts.realValue!=='undefined'?ts.realValue:(ts.RealValue||0)):0;
         var measureNumber=osmd.Sheet&&osmd.Sheet.SourceMeasures[mIdx]?osmd.Sheet.SourceMeasures[mIdx].MeasureNumber:mIdx+1;
         cursorSteps.push({t:rv*4*(60/bpm),m:mIdx,measureNumber:measureNumber});
@@ -5050,16 +5179,16 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var lastTime=0,lastScrollCheck=0;
     function step(now){
       if(!run||!ac||!cursorSteps.length)return;
-      if(now-lastTime>=80){
+      if(now-lastTime>=16){
         lastTime=now;
         /* Tempo visual atrasado para compensar latência Bluetooth */
-        var tempoVisualAtual=ac.currentTime-sat-(btDelayMsEx/1000);
+        var tempoVisualAtual=getPlaybackPosition(ac.currentTime,btDelayMsEx/1000);
         var current=Math.max(0,tempoVisualAtual);
         var curMode=+document.getElementById('curEx').value;
         if(curMode===-1)return;
         
         // Se estivermos na fase de contagem (tempo negativo), mantém cursor no início
-        if (tempoVisualAtual >= (playbackStartOffset || 0) - 0.01) {
+        if (ac.currentTime-(btDelayMsEx/1000) >= transportStartAudio-0.01) {
           var targetIdx=0;
           while(targetIdx+1<cursorSteps.length&&current>=cursorSteps[targetIdx+1].t-0.01){
             targetIdx++;
@@ -5088,11 +5217,34 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
 
   function isTieCont(note){var tie=note.NoteTie||note.Tie;if(!tie)return false;if(tie.StartNote&&tie.StartNote!==note)return true;if(tie.Notes&&tie.Notes.length>0&&tie.Notes[0]!==note)return true;return false;}
   function getRealLen(note){if(!note||!note.Length)return 0;return(typeof note.Length.realValue!=='undefined')?note.Length.realValue:(note.Length.RealValue||0);}
-  function getTiedDur(note,beatLen){var tie=note.NoteTie||note.Tie,total=0;if(tie&&tie.Notes&&tie.Notes.length>0){for(var i=0;i<tie.Notes.length;i++)total+=getRealLen(tie.Notes[i]);}else{total=getRealLen(note);}return total*4*beatLen*0.98;}
+  function fractionRealValue(value){if(!value)return 0;return typeof value.realValue!=='undefined'?value.realValue:(value.RealValue||0);}
+  function expandChordsForPlayback(sourceChords,bpm){
+    if(!sourceChords.length||!osmd||!osmd.cursor)return sourceChords.slice();
+    var beatScale=4*(60/bpm),occurrences=[],keys={};
+    try{
+      osmd.cursor.reset();var iterator=osmd.cursor.Iterator;
+      while(!iterator.EndReached){
+        var measureIdx=iterator.CurrentMeasureIndex;
+        var relative=fractionRealValue(iterator.CurrentRelativeInMeasureTimestamp);
+        var enrolled=fractionRealValue(iterator.CurrentEnrolledTimestamp);
+        var source=fractionRealValue(iterator.CurrentSourceTimestamp||iterator.currentTimeStamp||iterator.CurrentTimeStamp);
+        var enrolledStart=enrolled-relative,sourceStart=source-relative;
+        var key=measureIdx+':'+enrolledStart.toFixed(8);
+        if(!keys[key]){keys[key]=true;occurrences.push({measureIdx:measureIdx,playStart:enrolledStart*beatScale,sourceStart:sourceStart*beatScale});}
+        iterator.moveToNext();
+      }
+      osmd.cursor.reset();
+    }catch(e){console.warn('expandChordsForPlayback',e);return sourceChords.slice();}
+    var expanded=[];
+    occurrences.forEach(function(occurrence){sourceChords.forEach(function(chord){if(chord.measureIdx!==occurrence.measureIdx)return;var copy=Object.assign({},chord);copy.t=occurrence.playStart+Math.max(0,chord.t-occurrence.sourceStart);expanded.push(copy);});});
+    expanded.sort(function(a,b){return a.t-b.t;});return expanded;
+  }
+  function getTiedDur(note,beatLen){var tie=note.NoteTie||note.Tie,total=0;if(tie&&tie.Notes&&tie.Notes.length>0){for(var i=0;i<tie.Notes.length;i++)total+=getRealLen(tie.Notes[i]);}else{total=getRealLen(note);}return total*4*beatLen;}
   function getMidi(note){if(typeof note.halfTone!=='undefined'&&note.halfTone!==null)return note.halfTone+12;if(note.Pitch&&typeof note.Pitch.getHalfTone==='function')return note.Pitch.getHalfTone()+12;return null;}
   function stopAll(){
     sc.forEach(function(s){try{s.stop();}catch(_){}});
-    sc=[];
+    retiredSc.forEach(function(s){try{s.stop();}catch(_){}});
+    sc=[];retiredSc=[];
     if(schedulerTimer){clearTimeout(schedulerTimer);schedulerTimer=null;}
   }
 
@@ -5133,7 +5285,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       run=false;pat=0;stopAll();clearCursorTimer();clearPlaybackEndTimer();resetCursorToStart();
     }
   }
-  function pausePlayback(){if(!run||!ac)return;run=false;pat=Math.max(0,ac.currentTime-sat);stopAll();clearCursorTimer();clearPlaybackEndTimer();}
+  function pausePlayback(){if(!run||!ac)return;pat=getPlaybackPosition(ac.currentTime,0);run=false;stopAll();clearCursorTimer();clearPlaybackEndTimer();}
   function stopPlayback(){run=false;pat=0;stopAll();clearCursorTimer();clearPlaybackEndTimer();resetCursorToStart();}
   async function restartFromBeginningAndPlay(isLoop){
     stopPlayback();
@@ -5149,13 +5301,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var endT=getRangeEndTime();
     var countInDur = getCountInDuration();
     var rem=Math.max(0,(endT-offset)+countInDur);
-    var isLoop = document.getElementById('loopEx') && document.getElementById('loopEx').checked;
-    if (isLoop) {
-      var totalWait = rem + (startDelay || 0.1) - 0.02;
-      playbackEndTimer = setTimeout(function () {
-        if (run) restartFromBeginningAndPlay(true);
-      }, Math.max(0, totalWait * 1000));
-    } else {
+    if (!isLoopEnabled()) {
       var totalWait = rem + (startDelay || 0.1) + (btDelayMsEx / 1000);
       playbackEndTimer=setTimeout(function(){finishPlayback();},Math.ceil((totalWait+0.05)*1000));
     }
@@ -5219,6 +5365,12 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     }
   }
 
+  function resetScheduleIndexes(offset){
+    nextEventIdx=0;while(nextEventIdx<evs.length&&evs[nextEventIdx].t<offset-0.001)nextEventIdx++;
+    nextChordIdx=0;while(nextChordIdx<chordEvents.length&&chordEvents[nextChordIdx].t<offset-0.001)nextChordIdx++;
+    var beatLen=getMetronomeBeatLen();nextMetTime=Math.ceil(offset/beatLen)*beatLen;
+  }
+
   async function scheduler(){
     if(!run||!ac)return;
     var now=ac.currentTime;
@@ -5234,12 +5386,13 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
         if(when>=now){
           if(e.isDrum){
             var dd=partGains[e.part]||masterGain;
-            var dn=playDrumNote(e.m,when,dd);
+            var dn=playDrumNote(e.m,when,dd,rangeEndT-e.t);
             for(var di=0;di<dn.length;di++)sc.push(dn[di]);
           }else{
             var partOct=(partConfigs[e.part]&&partConfigs[e.part].oct)||0;
             if(partInsts[e.part]&&typeof partInsts[e.part].play==='function'){
-              var voice=partInsts[e.part].play(e.m+partOct+globalTransp,when,{duration:e.d});
+              var clippedDuration=Math.max(0.01,Math.min(e.d,rangeEndT-e.t));
+              var voice=partInsts[e.part].play(e.m+partOct+globalTransp,when,{duration:clippedDuration});
               if(voice)sc.push(voice);
             }
           }
@@ -5255,7 +5408,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     if (isMetEnabled || countInVal > 0) {
       var bl=getMetronomeBeatLen();
       if(nextMetTime<currentV)nextMetTime=Math.ceil(currentV/bl)*bl;
-      while(nextMetTime<lookAheadLimit&&nextMetTime<rangeEndT+0.05){
+      while(nextMetTime<lookAheadLimit&&nextMetTime<rangeEndT-0.001){
         var whenM=sat+nextMetTime;
         if(whenM>=now){
           var isCPhase = (nextMetTime < playbackStartOffset - 0.01);
@@ -5293,6 +5446,8 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
             durP = Math.min(durP, timeToNext);
           }
         }
+        durC=Math.max(0.01,Math.min(durC,rangeEndT-cev.t));
+        durP=Math.max(0.01,Math.min(durP,rangeEndT-cev.t));
         if (cev.t < rangeEndT) {
           var whenC = sat + cev.t;
           if (whenC >= now) {
@@ -5400,6 +5555,16 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
         nextChordIdx++;
       }
     }
+    var loopDuration=rangeEndT-getRangeStartTime();
+    if(isLoopEnabled()&&loopDuration>0.001&&lookAheadLimit>=rangeEndT-0.001){
+      var completedHandles=sc;sc=[];retiredSc=retiredSc.concat(completedHandles);
+      (function(handles,boundaryAudioTime){setTimeout(function(){retiredSc=retiredSc.filter(function(handle){return handles.indexOf(handle)===-1;});},Math.max(0,(boundaryAudioTime-ac.currentTime+0.1)*1000));})(completedHandles,sat+rangeEndT);
+      sat+=loopDuration;
+      playbackStartOffset=getRangeStartTime();
+      resetScheduleIndexes(playbackStartOffset);
+      await scheduler();
+      return;
+    }
     schedulerTimer=setTimeout(scheduler,lookahead*1000);
   }
 
@@ -5412,7 +5577,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     osmd.cursor.reset();var it=osmd.cursor.Iterator;
     while(!it.EndReached){
       var v=it.CurrentVoiceEntries||[];
-      var to=it.currentTimeStamp||it.CurrentTimeStamp;
+      var to=it.CurrentEnrolledTimestamp||it.currentTimeStamp||it.CurrentTimeStamp;
       var rv=to?(typeof to.realValue!=='undefined'?to.realValue:(to.RealValue||0)):0;
       var t=rv*4*bl;
       for(var i=0;i<v.length;i++){
@@ -5480,16 +5645,15 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     updateReverb();stopAll();clearPlaybackEndTimer();
 
     var currentBpm=+document.getElementById('bpm').value||100;
-    chordEvents=parseChordEvents(raw,currentBpm);
+    chordEvents=expandChordsForPlayback(parseChordEvents(raw,currentBpm),currentBpm);
     
     var startDelay = loopStartDelay !== undefined ? loopStartDelay : (finalCountInDur > 0 ? 1.0 : 0.1);
     playbackStartOffset = off;
     sat=ac.currentTime+startDelay+finalCountInDur-off;
+    transportStartAudio=sat+off;
+    transportStartOffset=off;
 
-    nextEventIdx=0;
-    while(nextEventIdx<evs.length&&evs[nextEventIdx].t<off-0.02)nextEventIdx++;
-    nextChordIdx=0;
-    while(nextChordIdx<chordEvents.length&&chordEvents[nextChordIdx].t<off-0.02)nextChordIdx++;
+    resetScheduleIndexes(off);
 
     var isMetEnabled = document.getElementById('met').checked;
     if(isMetEnabled || finalCountInDur > 0){
@@ -5510,7 +5674,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   document.getElementById('bpm').addEventListener('change',function(){
     eventsCache.bpm=null;cursorStepsCache.mode=null;
     buildMeasureTimeMap();
-    if(run&&ac){var off=Math.max(0,ac.currentTime-sat);stopAll();clearCursorTimer();clearPlaybackEndTimer();play(off).then(function(){startCursorFollow(off);});}
+    if(run&&ac){var off=getPlaybackPosition(ac.currentTime,0);stopAll();clearCursorTimer();clearPlaybackEndTimer();play(off,0.02).then(function(){startCursorFollow(off);});}
     else moveCursorToTime(pat||0);
   });
   document.getElementById('layoutEx').addEventListener('change',function(){applyLayout();osmd.render();});
@@ -5520,13 +5684,15 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var mode=+this.value;
     cursorStepsCache.mode=null;
     if(mode===-1){osmd.cursor.hide();clearCursorTimer();}
-    else{osmd.cursor.cursorOptions.type=mode;osmd.cursor.show();moveCursorToTime(run?Math.max(0,ac.currentTime-sat):(pat||0));}
+    else{osmd.cursor.cursorOptions.type=mode;osmd.cursor.show();moveCursorToTime(run?getPlaybackPosition(ac.currentTime,btDelayMsEx/1000):(pat||0));}
   });
   document.getElementById('autoScrollEx').addEventListener('change',function(){autoScrollEnabled=this.checked;});
   document.getElementById('loopEx').addEventListener('change',function(){
-    if(run && ac){
-      var off = Math.max(0, ac.currentTime - sat);
-      armPlaybackEnd(off, 0.1);
+    clearPlaybackEndTimer();
+    if(run&&ac&&!this.checked){
+      var off=getPlaybackPosition(ac.currentTime,0);
+      var wait=Math.max(0,getRangeEndTime()-off);
+      playbackEndTimer=setTimeout(function(){finishPlayback();},Math.ceil((wait+0.05)*1000));
     }
   });
 
