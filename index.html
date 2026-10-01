@@ -5104,20 +5104,57 @@
                 setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
             }
 
+            function mergeAnnotationsIntoMusicSvgForCapture() {
+                if (!annotations.length) return function () { };
+                var score = document.getElementById('score');
+                var layer = document.getElementById('annotationLayer');
+                var musicSvg = Array.from(score.querySelectorAll('svg')).find(function (svg) { return svg.id !== 'annotationLayer'; });
+                if (!layer || !musicSvg) return function () { };
+
+                function readViewBox(svg, fallbackRect) {
+                    var value = svg.viewBox && svg.viewBox.baseVal;
+                    if (value && value.width > 0 && value.height > 0) return { x: value.x, y: value.y, width: value.width, height: value.height };
+                    return { x: 0, y: 0, width: Math.max(1, fallbackRect.width), height: Math.max(1, fallbackRect.height) };
+                }
+
+                var layerRect = layer.getBoundingClientRect(), musicRect = musicSvg.getBoundingClientRect();
+                var layerBox = readViewBox(layer, layerRect), musicBox = readViewBox(musicSvg, musicRect);
+                var group = annotationSvgEl('g', { 'data-annotation-capture': 'true', 'pointer-events': 'none' });
+                group.setAttribute('transform', 'translate(' + musicBox.x + ' ' + musicBox.y + ') scale(' + (musicBox.width / layerBox.width) + ' ' + (musicBox.height / layerBox.height) + ') translate(' + (-layerBox.x) + ' ' + (-layerBox.y) + ')');
+
+                Array.from(layer.childNodes).forEach(function (node) {
+                    if (node.nodeType === 1 && node.hasAttribute('data-ann-selection')) return;
+                    group.appendChild(node.cloneNode(true));
+                });
+                group.querySelectorAll('[id]').forEach(function (element, index) {
+                    var oldId = element.id, newId = oldId + '-capture-' + index;
+                    element.id = newId;
+                    group.querySelectorAll('*').forEach(function (candidate) {
+                        Array.from(candidate.attributes || []).forEach(function (attribute) {
+                            if (attribute.value.indexOf('url(#' + oldId + ')') !== -1) candidate.setAttribute(attribute.name, attribute.value.replaceAll('url(#' + oldId + ')', 'url(#' + newId + ')'));
+                        });
+                    });
+                });
+                musicSvg.appendChild(group);
+                return function () { group.remove(); };
+            }
+
             async function captureVisibleScoreCanvas() {
                 if (!window.html2canvas) throw new Error('O gerador de imagem não foi carregado. Verifique a conexão com a internet.');
                 if (document.fonts && document.fonts.ready) await document.fonts.ready;
-                var score = document.getElementById('score'), previousSelection = selectedAnnotationId;
+                var score = document.getElementById('score'), previousSelection = selectedAnnotationId, cleanupMergedAnnotations = function () { };
                 selectedAnnotationId = null; annotationDraft = null; renderAnnotations();
                 try {
                     await new Promise(function (resolve) { requestAnimationFrame(function () { requestAnimationFrame(resolve); }); });
+                    cleanupMergedAnnotations = mergeAnnotationsIntoMusicSvgForCapture();
                     return await html2canvas(score, {
                         backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false,
                         width: score.scrollWidth, height: score.scrollHeight,
                         windowWidth: Math.max(document.documentElement.clientWidth, score.scrollWidth + 40),
-                        ignoreElements: function (el) { return !!((el.id && el.id.indexOf('cursorImg') === 0) || (el.getAttribute && el.getAttribute('data-ann-selection'))); }
+                        ignoreElements: function (el) { return !!(el.id === 'annotationLayer' || (el.id && el.id.indexOf('cursorImg') === 0) || (el.getAttribute && el.getAttribute('data-ann-selection'))); }
                     });
                 } finally {
+                    cleanupMergedAnnotations();
                     selectedAnnotationId = previousSelection; renderAnnotations();
                 }
             }
