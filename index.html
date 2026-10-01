@@ -4298,16 +4298,22 @@
                     var visibleName = getChordDisplayName(evt);
                     var canonicalName = getChordDisplayName(Object.assign({}, evt, { kindText: '', fromFinaleText: false }));
                     var visible = svgTexts.filter(function (el) { return (el.textContent || '').trim() === visibleName && el.style.display !== 'none'; });
-                    visible.forEach(function (el, index) {
-                        if (!index) return;
-                        var firstRect = visible[0].getBoundingClientRect(), rect = el.getBoundingClientRect();
-                        if (Math.abs(firstRect.left - rect.left) < 2 && Math.abs(firstRect.top - rect.top) < 2) el.style.display = 'none';
-                    });
                     if (canonicalName !== visibleName && visible.length) {
                         var visibleRect = visible[0].getBoundingClientRect();
-                        svgTexts.filter(function (el) { return (el.textContent || '').trim() === canonicalName; }).forEach(function (el) {
+                        var canonical = svgTexts.filter(function (el) { return (el.textContent || '').trim() === canonicalName && el.style.display !== 'none'; }).filter(function (el) {
                             var rect = el.getBoundingClientRect();
-                            if (Math.abs(visibleRect.left - rect.left) < 100 && Math.abs(visibleRect.top - rect.top) < 80) el.style.display = 'none';
+                            return Math.abs(visibleRect.left - rect.left) < 100 && Math.abs(visibleRect.top - rect.top) < 80;
+                        });
+                        if (canonical.length) {
+                            visible.forEach(function (el) { el.style.display = 'none'; });
+                            canonical[0].textContent = visibleName;
+                            canonical.slice(1).forEach(function (el) { el.style.display = 'none'; });
+                        }
+                    } else {
+                        visible.forEach(function (el, index) {
+                            if (!index) return;
+                            var firstRect = visible[0].getBoundingClientRect(), rect = el.getBoundingClientRect();
+                            if (Math.abs(firstRect.left - rect.left) < 2 && Math.abs(firstRect.top - rect.top) < 2) el.style.display = 'none';
                         });
                     }
                 });
@@ -6014,8 +6020,8 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       var kindVal=kindEl.textContent.trim(),suffixMap={'major-seventh':'maj7','minor-seventh':'m7','major-minor':'m(maj7)','dominant':'7','minor':'m','diminished':'dim','diminished-seventh':'dim7','half-diminished':'m7b5'};
       var canonicalName=root+(suffixMap[kindVal]||'maj7');
       var visible=texts.filter(function(el){return(el.textContent||'').trim()===visibleName&&el.style.display!=='none';});
-      visible.forEach(function(el,index){if(!index)return;var a=visible[0].getBoundingClientRect(),b=el.getBoundingClientRect();if(Math.abs(a.left-b.left)<2&&Math.abs(a.top-b.top)<2)el.style.display='none';});
-      if(canonicalName!==visibleName&&visible.length){var vr=visible[0].getBoundingClientRect();texts.filter(function(el){return(el.textContent||'').trim()===canonicalName;}).forEach(function(el){var r=el.getBoundingClientRect();if(Math.abs(vr.left-r.left)<100&&Math.abs(vr.top-r.top)<80)el.style.display='none';});}
+      if(canonicalName!==visibleName&&visible.length){var vr=visible[0].getBoundingClientRect(),canonical=texts.filter(function(el){return(el.textContent||'').trim()===canonicalName&&el.style.display!=='none';}).filter(function(el){var r=el.getBoundingClientRect();return Math.abs(vr.left-r.left)<100&&Math.abs(vr.top-r.top)<80;});if(canonical.length){visible.forEach(function(el){el.style.display='none';});canonical[0].textContent=visibleName;canonical.slice(1).forEach(function(el){el.style.display='none';});}}
+      else visible.forEach(function(el,index){if(!index)return;var a=visible[0].getBoundingClientRect(),b=el.getBoundingClientRect();if(Math.abs(a.left-b.left)<2&&Math.abs(a.top-b.top)<2)el.style.display='none';});
     });
   }
   var oldExportRender=osmd.render;osmd.render=function(){oldExportRender.apply(osmd,arguments);applyExportLayoutLock();renderExportAnnotations();cleanFinaleTextChordGlyphsEx();};
