@@ -1979,7 +1979,13 @@
                 if (!oldLayer) geom.score.appendChild(layer);
                 layer.style.left = geom.left + 'px'; layer.style.top = geom.top + 'px';
                 layer.style.width = geom.width + 'px'; layer.style.height = geom.height + 'px';
+                /* html2canvas serializa cada SVG separadamente. Sem dimensões nativas,
+                   a camada podia voltar ao tamanho SVG padrão (300 × 150) durante a
+                   rasterização e produzir um pequeno deslocamento nas anotações. */
+                layer.setAttribute('width', geom.width);
+                layer.setAttribute('height', geom.height);
                 layer.setAttribute('viewBox', '0 0 ' + geom.width + ' ' + geom.height);
+                layer.setAttribute('preserveAspectRatio', 'none');
                 layer.classList.toggle('active', annotationMode); layer.classList.toggle('eraser', annotationMode && annotationTool === 'eraser');
                 layer.innerHTML = '<defs><marker id="annArrowHead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,4 L0,8 z" fill="context-stroke"></path></marker></defs>';
                 annotations.forEach(function (item, index) { if (!item.id) item.id = 'ann' + index + Date.now().toString(36); drawAnnotation(layer, item, geom.width, geom.height, false); });
