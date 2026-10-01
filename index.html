@@ -1702,6 +1702,7 @@
                                     rootAlter: rootAlter ? parseFloat(rootAlter.textContent) : 0,
                                     kindText: kindTextAttr || '',
                                     kindVal: kindEl ? kindEl.textContent.trim() : 'major',
+                                    fromFinaleText: node.getAttribute('data-vitopamos-finale-text') === '1',
                                     bassStep: bassStep ? bassStep.textContent.trim() : '',
                                     bassAlter: bassAlter ? parseFloat(bassAlter.textContent) : 0
                                 });
@@ -3807,11 +3808,74 @@
                 } catch (e) { throw new Error("Erro ao descompactar MXL: " + e.message); }
             }
 
+            function normalizeFinaleTextChords(xml) {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(xml, 'text/xml');
+                if (doc.querySelector('parsererror')) return { xml: xml, converted: 0 };
+                var converted = 0;
+                Array.from(doc.querySelectorAll('direction')).forEach(function (direction) {
+                    var serialized = new XMLSerializer().serializeToString(direction);
+                    if (!/Unrecognized chord suffix/i.test(serialized)) return;
+                    var previousElement = direction.previousElementSibling;
+                    if (previousElement && previousElement.tagName === 'harmony' && previousElement.getAttribute('data-vitopamos-finale-text') === '1') return;
+                    var words = direction.querySelector('direction-type > words');
+                    var chordName = words ? words.textContent.trim() : '';
+                    var match = chordName.match(/^([A-G])([#b♯♭]?)([^\/]*?)(?:\/([A-G])([#b♯♭]?))?$/i);
+                    if (!match) return;
+
+                    var step = match[1].toUpperCase();
+                    var accidental = match[2] || '';
+                    var suffix = (match[3] || '').trim();
+                    var bassStep = match[4] ? match[4].toUpperCase() : '';
+                    var bassAccidental = match[5] || '';
+                    var kindInfo = getMusicXmlKind(suffix);
+                    var harmony = doc.createElement('harmony');
+                    harmony.setAttribute('print-object', 'no');
+                    harmony.setAttribute('color', '#FFFFFF');
+                    harmony.setAttribute('data-vitopamos-finale-text', '1');
+                    var defaultY = words.getAttribute('default-y');
+                    if (defaultY !== null) harmony.setAttribute('default-y', defaultY);
+
+                    var root = doc.createElement('root');
+                    var rootStep = doc.createElement('root-step');
+                    rootStep.textContent = step; root.appendChild(rootStep);
+                    if (accidental) {
+                        var rootAlter = doc.createElement('root-alter');
+                        rootAlter.textContent = accidental === '#' || accidental === '♯' ? '1' : '-1';
+                        root.appendChild(rootAlter);
+                    }
+                    harmony.appendChild(root);
+
+                    var kind = doc.createElement('kind');
+                    kind.textContent = kindInfo.value;
+                    if (kindInfo.text) kind.setAttribute('text', kindInfo.text);
+                    harmony.appendChild(kind);
+
+                    if (bassStep) {
+                        var bass = doc.createElement('bass');
+                        var bassStepEl = doc.createElement('bass-step');
+                        bassStepEl.textContent = bassStep; bass.appendChild(bassStepEl);
+                        if (bassAccidental) {
+                            var bassAlter = doc.createElement('bass-alter');
+                            bassAlter.textContent = bassAccidental === '#' || bassAccidental === '♯' ? '1' : '-1';
+                            bass.appendChild(bassAlter);
+                        }
+                        harmony.appendChild(bass);
+                    }
+
+                    direction.parentNode.insertBefore(harmony, direction);
+                    converted++;
+                });
+                return { xml: converted ? new XMLSerializer().serializeToString(doc) : xml, converted: converted };
+            }
+
             async function afterXmlLoaded() {
+                var finaleChords = normalizeFinaleTextChords(rawXml);
+                rawXml = finaleChords.xml;
                 xmlDoc = new DOMParser().parseFromString(rawXml, 'text/xml');
                 var detectedBpm = extractTempoFromXml(rawXml);
                 if (detectedBpm && !isLoadingProject) document.getElementById('bpm').value = detectedBpm;
-                if (!isLoadingProject) {
+                if (!isLoadingProject || finaleChords.converted) {
                     chordEvents = parseChordEvents(rawXml, detectedBpm || 100);
                 }
                 var meta = extractMetaFromXml(rawXml);
@@ -4179,7 +4243,8 @@
                             return m === '\u266d' ? 'b' : '#';
                         }).trim();
 
-                        if (normContent === normExpected || (normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10)) {
+                        var chordMatches = normContent === normExpected || (!chordEvents[nextChordIdx].fromFinaleText && normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10);
+                        if (chordMatches) {
                             txtEl.style.cursor = '';
                             txtEl.style.fill = '';
                             txtEl.style.fontWeight = '';
@@ -4224,6 +4289,28 @@
                     name += '/' + bass;
                 }
                 return name;
+            }
+
+            function cleanFinaleTextChordGlyphs() {
+                if (!chordEvents || !chordEvents.length) return;
+                var svgTexts = Array.from(document.querySelectorAll('#score svg text'));
+                chordEvents.filter(function (evt) { return evt.fromFinaleText; }).forEach(function (evt) {
+                    var visibleName = getChordDisplayName(evt);
+                    var canonicalName = getChordDisplayName(Object.assign({}, evt, { kindText: '', fromFinaleText: false }));
+                    var visible = svgTexts.filter(function (el) { return (el.textContent || '').trim() === visibleName && el.style.display !== 'none'; });
+                    visible.forEach(function (el, index) {
+                        if (!index) return;
+                        var firstRect = visible[0].getBoundingClientRect(), rect = el.getBoundingClientRect();
+                        if (Math.abs(firstRect.left - rect.left) < 2 && Math.abs(firstRect.top - rect.top) < 2) el.style.display = 'none';
+                    });
+                    if (canonicalName !== visibleName && visible.length) {
+                        var visibleRect = visible[0].getBoundingClientRect();
+                        svgTexts.filter(function (el) { return (el.textContent || '').trim() === canonicalName; }).forEach(function (el) {
+                            var rect = el.getBoundingClientRect();
+                            if (Math.abs(visibleRect.left - rect.left) < 100 && Math.abs(visibleRect.top - rect.top) < 80) el.style.display = 'none';
+                        });
+                    }
+                });
             }
 
             function getMusicXmlKind(suffix) {
@@ -4438,7 +4525,8 @@
                             return m === '\u266d' ? 'b' : '#';
                         }).trim();
 
-                        if (normContent === normExpected || (normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10)) {
+                        var chordMatches = normContent === normExpected || (!chordEvents[nextChordIdx].fromFinaleText && normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10);
+                        if (chordMatches) {
                             var evt = chordEvents[nextChordIdx];
                             var isSelected = selectedChordEvt &&
                                 selectedChordEvt.measureIdx === evt.measureIdx &&
@@ -4460,6 +4548,7 @@
             }
 
             function bindSvgChordClicks() {
+                cleanFinaleTextChordGlyphs();
                 if (!editModeActive) {
                     clearSvgChordClicks();
                     return;
@@ -4483,7 +4572,8 @@
                             return m === '\u266d' ? 'b' : '#';
                         }).trim();
 
-                        if (normContent === normExpected || (normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10)) {
+                        var chordMatches = normContent === normExpected || (!chordEvents[nextChordIdx].fromFinaleText && normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10);
+                        if (chordMatches) {
                             var evt = chordEvents[nextChordIdx];
 
                             txtEl.style.cursor = 'pointer';
@@ -4819,8 +4909,21 @@
                         if (bassEl) harmonyEl.removeChild(bassEl);
                     }
 
+                    var linkedDirection = getLinkedFinaleChordDirection(harmonyEl);
+                    if (linkedDirection) {
+                        var linkedWords = linkedDirection.querySelector('direction-type > words');
+                        if (linkedWords) linkedWords.textContent = newName;
+                    }
+
                     reloadScoreFromXml();
                 }
+            }
+
+            function getLinkedFinaleChordDirection(harmonyEl) {
+                if (!harmonyEl || harmonyEl.getAttribute('data-vitopamos-finale-text') !== '1') return null;
+                var sibling = harmonyEl.nextSibling;
+                while (sibling && sibling.nodeType !== 1) sibling = sibling.nextSibling;
+                return sibling && sibling.tagName === 'direction' ? sibling : null;
             }
 
             function deleteChord(evt) {
@@ -4832,6 +4935,8 @@
                     var harmonies = measure.querySelectorAll('harmony');
                     var harmonyEl = harmonies[evt.harmonyIdx];
                     if (harmonyEl) {
+                        var linkedDirection = getLinkedFinaleChordDirection(harmonyEl);
+                        if (linkedDirection) linkedDirection.parentNode.removeChild(linkedDirection);
                         harmonyEl.parentNode.removeChild(harmonyEl);
                         selectedChordEvt = null;
                         reloadScoreFromXml();
@@ -4910,15 +5015,18 @@
 
                 var harmonyNode = sourceMeasure.querySelectorAll('harmony')[evt.harmonyIdx];
                 if (!harmonyNode) return;
+                var linkedDirection = getLinkedFinaleChordDirection(harmonyNode);
 
                 // Ao reposicionar, a nova posição visual/musical substitui qualquer offset importado.
                 var offsetEl = harmonyNode.querySelector('offset');
                 if (offsetEl) harmonyNode.removeChild(offsetEl);
+                if (linkedDirection) linkedDirection.parentNode.removeChild(linkedDirection);
                 harmonyNode.parentNode.removeChild(harmonyNode);
 
                 var beforeNode = getDomInsertBeforeNode(targetMeasure, targetEntryIdx);
                 if (beforeNode) {
                     targetMeasure.insertBefore(harmonyNode, beforeNode);
+                    if (linkedDirection) targetMeasure.insertBefore(linkedDirection, beforeNode);
                 } else {
                     var trailingBarline = null;
                     for (var childIdx = 0; childIdx < targetMeasure.childNodes.length; childIdx++) {
@@ -4928,8 +5036,13 @@
                             break;
                         }
                     }
-                    if (trailingBarline) targetMeasure.insertBefore(harmonyNode, trailingBarline);
-                    else targetMeasure.appendChild(harmonyNode);
+                    if (trailingBarline) {
+                        targetMeasure.insertBefore(harmonyNode, trailingBarline);
+                        if (linkedDirection) targetMeasure.insertBefore(linkedDirection, trailingBarline);
+                    } else {
+                        targetMeasure.appendChild(harmonyNode);
+                        if (linkedDirection) targetMeasure.appendChild(linkedDirection);
+                    }
                 }
 
                 var newHarmonyIdx = 0;
@@ -5890,7 +6003,22 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       layer.appendChild(g);
     });
   }
-  var oldExportRender=osmd.render;osmd.render=function(){oldExportRender.apply(osmd,arguments);applyExportLayoutLock();renderExportAnnotations();};
+  function cleanFinaleTextChordGlyphsEx(){
+    var doc=new DOMParser().parseFromString(raw,'text/xml'),texts=Array.from(document.querySelectorAll('#score svg text'));
+    Array.from(doc.querySelectorAll('harmony[data-vitopamos-finale-text="1"]')).forEach(function(harmony){
+      var direction=harmony.nextElementSibling,words=direction&&direction.tagName==='direction'?direction.querySelector('direction-type > words'):null;
+      var stepEl=harmony.querySelector('root-step'),alterEl=harmony.querySelector('root-alter'),kindEl=harmony.querySelector('kind');
+      if(!words||!stepEl||!kindEl)return;
+      var visibleName=words.textContent.trim(),root=stepEl.textContent.trim(),alter=alterEl?parseFloat(alterEl.textContent):0;
+      if(alter===1)root+='#';else if(alter===-1)root+='b';
+      var kindVal=kindEl.textContent.trim(),suffixMap={'major-seventh':'maj7','minor-seventh':'m7','major-minor':'m(maj7)','dominant':'7','minor':'m','diminished':'dim','diminished-seventh':'dim7','half-diminished':'m7b5'};
+      var canonicalName=root+(suffixMap[kindVal]||'maj7');
+      var visible=texts.filter(function(el){return(el.textContent||'').trim()===visibleName&&el.style.display!=='none';});
+      visible.forEach(function(el,index){if(!index)return;var a=visible[0].getBoundingClientRect(),b=el.getBoundingClientRect();if(Math.abs(a.left-b.left)<2&&Math.abs(a.top-b.top)<2)el.style.display='none';});
+      if(canonicalName!==visibleName&&visible.length){var vr=visible[0].getBoundingClientRect();texts.filter(function(el){return(el.textContent||'').trim()===canonicalName;}).forEach(function(el){var r=el.getBoundingClientRect();if(Math.abs(vr.left-r.left)<100&&Math.abs(vr.top-r.top)<80)el.style.display='none';});}
+    });
+  }
+  var oldExportRender=osmd.render;osmd.render=function(){oldExportRender.apply(osmd,arguments);applyExportLayoutLock();renderExportAnnotations();cleanFinaleTextChordGlyphsEx();};
   window.addEventListener('resize',renderExportAnnotations);
   var ac=null,partInsts=[],partGains=[],isAnySolo=false,evs=[],sc=[],retiredSc=[],sat=0,pat=0,run=false;
   var transportStartAudio=0,transportStartOffset=0;
