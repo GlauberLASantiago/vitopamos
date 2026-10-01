@@ -1177,7 +1177,7 @@
             <div class="step"><span class="step-num">1</span><b>Preparar a partitura</b>No MuseScore ou em outro editor, exporte a obra em MusicXML (.musicxml, .xml ou .mxl). O formato preserva notas, vozes, cifras, repetições e indicações musicais.</div>
             <div class="step"><span class="step-num">2</span><b>Carregar ou retomar um projeto</b>Arraste o MusicXML para “Carregar partitura”. Para continuar um trabalho anterior com configurações e anotações, abra o arquivo de projeto .vtp.</div>
             <div class="step"><span class="step-num">3</span><b>Configurar a execução</b>Ajuste BPM, metrônomo, contagem, reverberação, cursor e BT Delay. O cursor acompanha a execução e o atraso Bluetooth pode ser compensado.</div>
-            <div class="step"><span class="step-num">4</span><b>Estudar trechos e repetições</b>Defina os compassos inicial e final e ative Loop para repetir uma passagem sem pausa perceptível. Sinais e casas de repetição do MusicXML são considerados na reprodução.</div>
+            <div class="step"><span class="step-num">4</span><b>Estudar trechos e repetições</b>Defina os compassos inicial e final e ative Loop para repetir uma passagem sem pausa perceptível. Para iniciar rapidamente de outro ponto, segure Ctrl e clique no compasso desejado. Sinais e casas de repetição do MusicXML são considerados na reprodução.</div>
             <div class="step"><span class="step-num">5</span><b>Organizar o acompanhamento</b>No mixer, ajuste volume, Mute, Solo, oitavas e timbres. Em “Levada das cifras”, escolha Manual, Automático, Ataque, Canção, Bossa, Arpejo, Colcheias ou Valsa, com baixo e bateria gerados pelo navegador.</div>
             <div class="step"><span class="step-num">6</span><b>Editar cifras</b>Ative “Editar Cifras”. Clique numa cifra e depois no novo ponto da pauta para movê-la; use duplo clique para alterar seu texto. A cifragem brasileira é reconhecida: A7M, por exemplo, equivale a Amaj7.</div>
             <div class="step"><span class="step-num">7</span><b>Fazer intervenções visuais</b>Em “Anotar”, use lápis, círculo, retângulo, seta, balão ou texto livre. A ferramenta “Máscara” cria um retângulo branco para ocultar trechos da partitura. Dê duplo clique para selecionar ou editar; arraste para mover e use as alças azuis para redimensionar. As cores rápidas e o seletor “Outra” facilitam a organização visual.</div>
@@ -2162,7 +2162,7 @@
             }
 
             document.getElementById('score').addEventListener('pointerdown', function (ev) {
-                if (!annotationMode || ev.target.closest('#annotationLayer') === null) return;
+                if (ev.ctrlKey || !annotationMode || ev.target.closest('#annotationLayer') === null) return;
                 ev.preventDefault(); ev.stopPropagation();
                 var layer = document.getElementById('annotationLayer');
                 var handleEl = ev.target.closest('[data-ann-handle]');
@@ -2232,7 +2232,7 @@
                 if (item && (item.type === 'callout' || item.type === 'text')) showAnnotationTextDialog(item, function (label) { if (item.text !== label) { rememberAnnotationState(); item.text = label; renderAnnotations(); } });
             }, true);
 
-            document.getElementById('score').addEventListener('click', function (ev) { if (annotationMode) { ev.preventDefault(); ev.stopImmediatePropagation(); } }, true);
+            document.getElementById('score').addEventListener('click', function (ev) { if (annotationMode && !ev.ctrlKey) { ev.preventDefault(); ev.stopImmediatePropagation(); } }, true);
 
             /* Build measureTimeMap from cursor steps (measure-mode) */
             function buildMeasureTimeMap() {
@@ -4117,6 +4117,14 @@
             };
 
             document.getElementById('score').addEventListener('click', function (ev) {
+                if (!ev.ctrlKey || !rawXml) return;
+                ev.preventDefault();
+                ev.stopImmediatePropagation();
+                if (scoreClickTimer) { clearTimeout(scoreClickTimer); scoreClickTimer = null; }
+                playFromMeasureAtCoords(ev.clientX, ev.clientY);
+            }, true);
+
+            document.getElementById('score').addEventListener('click', function (ev) {
                 if (!rawXml) return;
                 if (editModeActive) {
                     if (selectedChordEvt) {
@@ -5080,52 +5088,68 @@
             }
 
             function getMeasureIndexAtCoords(clientX, clientY) {
-                var svg = document.querySelector('#score svg');
-                if (!svg || !osmd || !osmd.graphic || !osmd.graphic.MeasureList) return -1;
-
-                var rect = svg.getBoundingClientRect();
-                var clickX = clientX - rect.left;
-                var clickY = clientY - rect.top;
-
-                var scale = osmd.graphic.unitInPixels;
-                if (!scale || scale <= 0) return -1;
-
-                var unitX = clickX / scale;
-                var unitY = clickY / scale;
-
-                var bestMeasureIdx = -1;
-                var minDistance = Infinity;
-
-                var measureList = osmd.graphic.MeasureList;
-                for (var m = 0; m < measureList.length; m++) {
-                    var staves = measureList[m];
-                    if (!staves || staves.length === 0) continue;
-
-                    var measure = staves[0];
-                    if (!measure || !measure.PositionAndShape) continue;
-
-                    var pos = measure.PositionAndShape.AbsolutePosition;
-                    var size = measure.PositionAndShape.Size;
-
-                    var left = pos.x;
-                    var top = pos.y;
-                    var right = pos.x + size.width;
-                    var bottom = pos.y + size.height;
-
-                    if (unitX >= left && unitX <= right && unitY >= top && unitY <= bottom) {
-                        return m;
+                var renderedMeasures = document.querySelectorAll('#score svg:not(#annotationLayer) g.vf-measure');
+                var renderedBest = -1, renderedDistance = Infinity;
+                for (var r = 0; r < renderedMeasures.length; r++) {
+                    var renderedIdx = parseInt(renderedMeasures[r].getAttribute('id'), 10);
+                    if (!isFinite(renderedIdx) || renderedIdx < 0) continue;
+                    var renderedRect = renderedMeasures[r].getBoundingClientRect();
+                    if (clientX >= renderedRect.left && clientX <= renderedRect.right && clientY >= renderedRect.top && clientY <= renderedRect.bottom) {
+                        return renderedIdx;
                     }
-
-                    var dx = Math.max(0, left - unitX, unitX - right);
-                    var dy = Math.max(0, top - unitY, unitY - bottom);
-                    var dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < minDistance) {
-                        minDistance = dist;
-                        bestMeasureIdx = m;
+                    var renderedDx = Math.max(0, renderedRect.left - clientX, clientX - renderedRect.right);
+                    var renderedDy = Math.max(0, renderedRect.top - clientY, clientY - renderedRect.bottom);
+                    var renderedDist = Math.sqrt(renderedDx * renderedDx + renderedDy * renderedDy);
+                    if (renderedDist < renderedDistance) {
+                        renderedDistance = renderedDist;
+                        renderedBest = renderedIdx;
                     }
                 }
+                return renderedBest;
+            }
 
-                return bestMeasureIdx;
+            function getMeasureNumberAtIndex(measureIdx) {
+                var sourceMeasures = osmd && osmd.Sheet && osmd.Sheet.SourceMeasures;
+                var sourceMeasure = sourceMeasures && sourceMeasures[measureIdx];
+                var value = sourceMeasure && sourceMeasure.MeasureNumber !== undefined
+                    ? Number(sourceMeasure.MeasureNumber)
+                    : measureIdx + 1;
+                return isFinite(value) ? value : measureIdx + 1;
+            }
+
+            async function playFromMeasureAtCoords(clientX, clientY) {
+                var measureIdx = getMeasureIndexAtCoords(clientX, clientY);
+                if (measureIdx < 0) {
+                    setStatus('Segure Ctrl e clique dentro de um compasso.', 'info');
+                    return;
+                }
+                var measureNumber = getMeasureNumberAtIndex(measureIdx);
+                var startT = measureTimeMap[measureNumber];
+                if (startT === undefined) {
+                    extractCursorSteps();
+                    var step = cursorSteps.find(function (item) { return item.m === measureIdx; });
+                    startT = step ? step.t : undefined;
+                }
+                if (startT === undefined) {
+                    setStatus('Não foi possível localizar esse compasso.', 'err');
+                    return;
+                }
+                rangeFrom = measureNumber;
+                document.getElementById('rangeFrom').value = measureNumber;
+                if (rangeTo < measureNumber) {
+                    rangeTo = maxMeasureNumber;
+                    document.getElementById('rangeTo').value = rangeTo;
+                }
+                if (!partInsts.length || !ac) {
+                    setStatus('Os timbres ainda estão sendo carregados.', 'info');
+                    return;
+                }
+                stopPlayback(false);
+                run = true;
+                await scheduleFrom(startT);
+                startCursorFollow(startT);
+                pat = 0;
+                setStatus('Tocando a partir do compasso ' + measureNumber + '.', 'ok');
             }
 
             function getNoteIndexAtCoords(measureIdx, clientX) {
@@ -6868,6 +6892,42 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       playbackEndTimer=setTimeout(function(){finishPlayback();},Math.ceil((wait+0.05)*1000));
     }
   });
+
+  function getMeasureIndexAtCoordsEx(clientX,clientY){
+    var measures=document.querySelectorAll('#score svg g.vf-measure'),best=-1,minDistance=Infinity;
+    for(var m=0;m<measures.length;m++){
+      var idx=parseInt(measures[m].getAttribute('id'),10);if(!isFinite(idx)||idx<0)continue;
+      var rect=measures[m].getBoundingClientRect();
+      if(clientX>=rect.left&&clientX<=rect.right&&clientY>=rect.top&&clientY<=rect.bottom)return idx;
+      var dx=Math.max(0,rect.left-clientX,clientX-rect.right),dy=Math.max(0,rect.top-clientY,clientY-rect.bottom),distance=Math.sqrt(dx*dx+dy*dy);
+      if(distance<minDistance){minDistance=distance;best=idx;}
+    }
+    return best;
+  }
+
+  async function playFromMeasureAtCoordsEx(clientX,clientY){
+    var measureIdx=getMeasureIndexAtCoordsEx(clientX,clientY);
+    if(measureIdx<0)return;
+    var sourceMeasure=osmd.Sheet&&osmd.Sheet.SourceMeasures&&osmd.Sheet.SourceMeasures[measureIdx];
+    var measureNumber=sourceMeasure&&sourceMeasure.MeasureNumber!==undefined?Number(sourceMeasure.MeasureNumber):measureIdx+1;
+    if(!isFinite(measureNumber))measureNumber=measureIdx+1;
+    var startT=measureTimeMap[measureNumber];
+    if(startT===undefined){
+      extractCursorSteps();
+      for(var i=0;i<cursorSteps.length;i++)if(cursorSteps[i].m===measureIdx){startT=cursorSteps[i].t;break;}
+    }
+    if(startT===undefined)return;
+    rangeFrom=measureNumber;document.getElementById('rangeFromEx').value=measureNumber;
+    if(rangeTo<measureNumber){rangeTo=maxMeasureNumber;document.getElementById('rangeToEx').value=rangeTo;}
+    stopPlayback();run=true;await play(startT);startCursorFollow(startT);pat=0;
+  }
+
+  document.getElementById('score').addEventListener('click',function(ev){
+    if(!ev.ctrlKey)return;
+    ev.preventDefault();ev.stopImmediatePropagation();
+    if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
+    playFromMeasureAtCoordsEx(ev.clientX,ev.clientY);
+  },true);
 
   document.getElementById('score').addEventListener('click',function(ev){
     if(clickTimer)clearTimeout(clickTimer);
