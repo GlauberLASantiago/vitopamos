@@ -1114,6 +1114,7 @@
                             <button type="button" class="btn ann-tool active" data-ann-tool="pen">Lápis</button>
                             <button type="button" class="btn ann-tool" data-ann-tool="ellipse">Círculo</button>
                             <button type="button" class="btn ann-tool" data-ann-tool="rectangle">Retângulo</button>
+                            <button type="button" class="btn ann-tool" data-ann-tool="mask" title="Criar um retângulo branco para ocultar um trecho">Máscara</button>
                             <button type="button" class="btn ann-tool" data-ann-tool="arrow">Seta</button>
                             <button type="button" class="btn ann-tool" data-ann-tool="callout">Balão</button>
                             <button type="button" class="btn ann-tool" data-ann-tool="text">Texto livre</button>
@@ -1179,7 +1180,7 @@
             <div class="step"><span class="step-num">4</span><b>Estudar trechos e repetições</b>Defina os compassos inicial e final e ative Loop para repetir uma passagem sem pausa perceptível. Sinais e casas de repetição do MusicXML são considerados na reprodução.</div>
             <div class="step"><span class="step-num">5</span><b>Organizar o acompanhamento</b>No mixer, ajuste volume, Mute, Solo, oitavas e timbres. Em “Levada das cifras”, escolha Manual, Automático, Ataque, Canção, Bossa, Arpejo, Colcheias ou Valsa, com baixo e bateria gerados pelo navegador.</div>
             <div class="step"><span class="step-num">6</span><b>Editar cifras</b>Ative “Editar Cifras”. Clique numa cifra e depois no novo ponto da pauta para movê-la; use duplo clique para alterar seu texto. A cifragem brasileira é reconhecida: A7M, por exemplo, equivale a Amaj7.</div>
-            <div class="step"><span class="step-num">7</span><b>Fazer intervenções visuais</b>Em “Anotar”, use lápis, círculo, retângulo, seta, balão ou texto livre. Dê duplo clique para selecionar ou editar; arraste para mover e use as alças azuis para redimensionar. As cores rápidas e o seletor “Outra” facilitam a organização visual.</div>
+            <div class="step"><span class="step-num">7</span><b>Fazer intervenções visuais</b>Em “Anotar”, use lápis, círculo, retângulo, seta, balão ou texto livre. A ferramenta “Máscara” cria um retângulo branco para ocultar trechos da partitura. Dê duplo clique para selecionar ou editar; arraste para mover e use as alças azuis para redimensionar. As cores rápidas e o seletor “Outra” facilitam a organização visual.</div>
             <div class="step"><span class="step-num">8</span><b>Preservar o trabalho</b>Salve um projeto .vtp para continuar editando. Quando houver anotações, zoom e diagramação ficam protegidos para manter a correspondência entre marcas e partitura.</div>
             <div class="step"><span class="step-num">9</span><b>Exportar e conferir</b>Use “Copiar HTML” para o Moodle, “Baixar HTML” para o player autônomo, ou salve PDF e PNG com a diagramação, o zoom e as anotações visíveis. “MP3” grava em tempo real o trecho, andamento, timbres, mixer e levada atuais. Antes de publicar, confira o resultado.</div>
         </div>
@@ -1975,6 +1976,9 @@
                 } else if (item.type === 'rectangle') {
                     var rectX1 = item.x1 * width, rectY1 = item.y1 * height, rectX2 = item.x2 * width, rectY2 = item.y2 * height;
                     group.appendChild(annotationSvgEl('rect', Object.assign({ x: Math.min(rectX1, rectX2), y: Math.min(rectY1, rectY2), width: Math.abs(rectX2 - rectX1), height: Math.abs(rectY2 - rectY1), rx: 3 }, common)));
+                } else if (item.type === 'mask') {
+                    var maskX1 = item.x1 * width, maskY1 = item.y1 * height, maskX2 = item.x2 * width, maskY2 = item.y2 * height;
+                    group.appendChild(annotationSvgEl('rect', { x: Math.min(maskX1, maskX2), y: Math.min(maskY1, maskY2), width: Math.abs(maskX2 - maskX1), height: Math.abs(maskY2 - maskY1), rx: 2, fill: '#ffffff', stroke: '#ffffff', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke' }));
                 } else if (item.type === 'arrow') {
                     group.appendChild(annotationSvgEl('line', Object.assign({ x1: item.x1 * width, y1: item.y1 * height, x2: item.x2 * width, y2: item.y2 * height, 'marker-end': 'url(#annArrowHead)' }, common)));
                 } else if (item.type === 'callout') {
@@ -5861,6 +5865,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       if(item.type==='pen'&&item.points&&item.points.length>1)g.appendChild(annSvg('polyline',Object.assign({points:item.points.map(function(p){return(p.x*w)+','+(p.y*h);}).join(' ')},common)));
       else if(item.type==='ellipse'){var x1=item.x1*w,y1=item.y1*h,x2=item.x2*w,y2=item.y2*h;g.appendChild(annSvg('ellipse',Object.assign({cx:(x1+x2)/2,cy:(y1+y2)/2,rx:Math.abs(x2-x1)/2,ry:Math.abs(y2-y1)/2},common)));}
       else if(item.type==='rectangle'){var rx1=item.x1*w,ry1=item.y1*h,rx2=item.x2*w,ry2=item.y2*h;g.appendChild(annSvg('rect',Object.assign({x:Math.min(rx1,rx2),y:Math.min(ry1,ry2),width:Math.abs(rx2-rx1),height:Math.abs(ry2-ry1),rx:3},common)));}
+      else if(item.type==='mask'){var mx1=item.x1*w,my1=item.y1*h,mx2=item.x2*w,my2=item.y2*h;g.appendChild(annSvg('rect',{x:Math.min(mx1,mx2),y:Math.min(my1,my2),width:Math.abs(mx2-mx1),height:Math.abs(my2-my1),rx:2,fill:'#ffffff',stroke:'#ffffff','stroke-width':2,'vector-effect':'non-scaling-stroke'}));}
       else if(item.type==='arrow')g.appendChild(annSvg('line',Object.assign({x1:item.x1*w,y1:item.y1*h,x2:item.x2*w,y2:item.y2*h,'marker-end':'url(#annArrowHead)'},common)));
       else if(item.type==='callout'){
         var scale=Math.max(.55,Math.min(3,Number(item.scale)||1)),lines=wrapExAnnotationText(item.text,30);
