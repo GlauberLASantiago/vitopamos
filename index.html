@@ -260,6 +260,44 @@
             background: #16a34a;
         }
 
+        .btn-play.is-playing {
+            background: #15803d;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .2), 0 4px 12px rgba(21, 128, 61, .25);
+        }
+
+        .btn-play.is-playing .play-state-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: playPulse 1s ease-in-out infinite;
+        }
+
+        .btn-play.is-loading {
+            background: #fff7ed !important;
+            color: #c2410c !important;
+            border: 1px solid #fdba74 !important;
+            opacity: 1 !important;
+        }
+
+        .sound-loading-spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(194, 65, 12, .25);
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: soundSpin .75s linear infinite;
+        }
+
+        @keyframes playPulse {
+            0%, 100% { opacity: .45; transform: scale(.8); }
+            50% { opacity: 1; transform: scale(1.15); }
+        }
+
+        @keyframes soundSpin {
+            to { transform: rotate(360deg); }
+        }
+
         .btn-pause {
             background: #f59e0b;
             color: #fff;
@@ -1774,7 +1812,7 @@
             }
 
             function getSoundLoadingMessage(quality) {
-                return quality === 'hq' ? 'Carregando sons em alta qualidade…' : 'Carregando sons econômicos…';
+                return quality === 'hq' ? 'Carregando banco de sons em alta qualidade…' : 'Carregando banco de sons econômicos…';
             }
 
             function getSoundLoadedMessage(quality) {
@@ -1852,11 +1890,13 @@
                 if (run) stopPlayback(false); else stopScheduled();
                 chordInst = null;
                 document.getElementById('bp').disabled = true;
+                updatePlayButtonVisual('loading');
                 setStatus(getSoundLoadingMessage(soundQuality), 'info');
                 var state = await ensureChordInstrument(generation, { fallback: false, failed: false });
                 if (generation !== soundLoadGeneration) return;
                 updateFullMix();
                 document.getElementById('bp').disabled = false;
+                updatePlayButtonVisual();
                 setStatus(state && state.fallback ? 'Não foi possível carregar um dos sons em alta qualidade. Usando a versão econômica para este instrumento.' : getSoundLoadedMessage(soundQuality), state && state.fallback ? 'info' : 'ok');
             }
 
@@ -1865,11 +1905,13 @@
                 if (run) stopPlayback(false); else stopScheduled();
                 pianoChordInst = null;
                 document.getElementById('bp').disabled = true;
+                updatePlayButtonVisual('loading');
                 setStatus(getSoundLoadingMessage(soundQuality), 'info');
                 var state = await ensureChordInstrument(generation, { fallback: false, failed: false });
                 if (generation !== soundLoadGeneration) return;
                 updateFullMix();
                 document.getElementById('bp').disabled = false;
+                updatePlayButtonVisual();
                 setStatus(state && state.fallback ? 'Não foi possível carregar um dos sons em alta qualidade. Usando a versão econômica para este instrumento.' : getSoundLoadedMessage(soundQuality), state && state.fallback ? 'info' : 'ok');
             }
 
@@ -1926,6 +1968,27 @@
             var inputGain = null, masterGain = null, dryGain = null, wetGain = null, convolver = null, outputCompressor = null;
             var mp3Exporting = false;
             var playbackEndTimer = null, pieceEnd = 0;
+            var playButtonIdleHtml = document.getElementById('bp').innerHTML;
+
+            function updatePlayButtonVisual(mode) {
+                var button = document.getElementById('bp');
+                if (!button) return;
+                var visualMode = mode || (run ? 'playing' : 'idle');
+                button.classList.toggle('is-playing', visualMode === 'playing');
+                button.classList.toggle('is-loading', visualMode === 'loading');
+                button.setAttribute('aria-busy', visualMode === 'loading' ? 'true' : 'false');
+                button.setAttribute('aria-label', visualMode === 'loading' ? 'Carregando sons' : (visualMode === 'playing' ? 'Tocando' : 'Play'));
+                if (visualMode === 'loading') {
+                    button.innerHTML = '<span class="sound-loading-spinner" aria-hidden="true"></span>Carregando sons…';
+                    button.title = 'Aguarde enquanto o banco de sons é carregado.';
+                } else if (visualMode === 'playing') {
+                    button.innerHTML = '<span class="play-state-dot" aria-hidden="true"></span>Tocando';
+                    button.title = 'A música está tocando. Use Pause ou Stop para interromper.';
+                } else {
+                    button.innerHTML = playButtonIdleHtml;
+                    button.title = 'Iniciar reprodução';
+                }
+            }
             var scoreClickTimer = null;
             var percInfo = null;
             var annotations = [], annotationHistory = [], annotationMode = false, annotationTool = 'pen', annotationDraft = null;
@@ -3115,6 +3178,7 @@
                 var generation = ++soundLoadGeneration;
                 if (run) stopPlayback(false); else stopScheduled();
                 document.getElementById('bp').disabled = true;
+                updatePlayButtonVisual('loading');
                 setStatus(getSoundLoadingMessage(soundQuality), 'info');
                 var cfg = partConfigs[idx];
                 if (!cfg) return;
@@ -3140,7 +3204,7 @@
                     console.error('Falha ao carregar o timbre da parte.', error);
                     setStatus('Não foi possível carregar o timbre selecionado.', 'err');
                 } finally {
-                    if (generation === soundLoadGeneration) document.getElementById('bp').disabled = false;
+                    if (generation === soundLoadGeneration) { document.getElementById('bp').disabled = false; updatePlayButtonVisual(); }
                 }
             }
 
@@ -3152,6 +3216,7 @@
                 stopScheduled(); clearPlaybackEndTimer();
                 setStatus(getSoundLoadingMessage(soundQuality), 'info');
                 document.getElementById('bp').disabled = true;
+                updatePlayButtonVisual('loading');
                 partInsts = new Array(partConfigs.length);
                 if (!preserveGains) partGains = [];
                 chordInst = null;
@@ -3180,6 +3245,7 @@
                 if (generation !== soundLoadGeneration) return;
                 updateFullMix(); updateReverb();
                 document.getElementById('bp').disabled = false;
+                updatePlayButtonVisual();
                 document.getElementById('bx').disabled = false;
                 document.getElementById('bdl').disabled = false;
                 if (loadState.fallback) setStatus('Não foi possível carregar um dos sons em alta qualidade. Usando a versão econômica para este instrumento.', 'info');
@@ -3373,6 +3439,7 @@
                     restartFromBeginningAndPlay();
                 } else {
                     run = false; pat = 0; stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); resetCursorToStart();
+                    updatePlayButtonVisual();
                     setStatus('Fim da música. Voltou ao início.', 'ok');
                 }
             }
@@ -3381,17 +3448,19 @@
                 pat = getPlaybackPosition(ac.currentTime, 0);
                 run = false;
                 stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer();
+                updatePlayButtonVisual();
                 setStatus('Pausado.');
             }
             function stopPlayback(showStatus) {
                 run = false; pat = 0; stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); resetCursorToStart();
+                updatePlayButtonVisual();
                 if (showStatus !== false) setStatus('Parado.');
             }
             async function restartFromBeginningAndPlay(isLoop) {
                 stopPlayback(false);
                 if (!partInsts.length || !ac) return;
                 var startT = getRangeStartTime();
-                run = true; await scheduleFrom(startT, isLoop ? 0.02 : undefined); startCursorFollow(startT); pat = 0;
+                run = true; updatePlayButtonVisual(); await scheduleFrom(startT, isLoop ? 0.02 : undefined); startCursorFollow(startT); pat = 0;
                 setStatus('Tocando...', 'ok');
             }
             function armPlaybackEnd(offset, startDelay) {
@@ -4097,6 +4166,7 @@
                 buildMeasureTimeMap();
                 updateRangeInputs();
                 sat = 0; pat = 0; run = false; evs = []; sc = []; pieceEnd = 0;
+                updatePlayButtonVisual();
                 clearPlaybackEndTimer();
 
                 if (typeof renderChordManager === 'function') renderChordManager();
@@ -4240,6 +4310,7 @@
             document.getElementById('bp').onclick = async function () {
                 if (run || !partInsts.length || !ac) return;
                 run = true;
+                updatePlayButtonVisual();
                 var startT = getRangeStartTime();
                 await scheduleFrom(startT); startCursorFollow(startT); pat = 0;
                 setStatus('Tocando...', 'ok');
@@ -4261,7 +4332,7 @@
                 if (typeof renderChordManager === 'function') renderChordManager();
                 if (typeof bindSvgChordClicks === 'function') bindSvgChordClicks();
 
-                if (wasRunning) { run = true; await scheduleFrom(savedOffset, 0.02); startCursorFollow(savedOffset); }
+                if (wasRunning) { run = true; updatePlayButtonVisual(); await scheduleFrom(savedOffset, 0.02); startCursorFollow(savedOffset); }
                 else pat = savedOffset;
                 setStatus('Metadados atualizados!', 'ok');
             };
@@ -4358,6 +4429,7 @@
                     if (run) { pausePlayback(); }
                     else if (partInsts.length && ac) {
                         run = true;
+                        updatePlayButtonVisual();
                         var startT = pat || getRangeStartTime();
                         await scheduleFrom(startT); startCursorFollow(startT); pat = 0;
                         setStatus('Tocando...', 'ok');
@@ -4631,6 +4703,7 @@
                     buildMeasureTimeMap();
                     updateRangeInputs();
                     sat = 0; pat = 0; run = false; evs = []; sc = []; pieceEnd = 0;
+                    updatePlayButtonVisual();
                     clearPlaybackEndTimer();
 
                     renderChordManager();
@@ -5347,6 +5420,7 @@
                 }
                 stopPlayback(false);
                 run = true;
+                updatePlayButtonVisual();
                 await scheduleFrom(startT);
                 startCursorFollow(startT);
                 pat = 0;
@@ -5664,7 +5738,7 @@
                     var startDelay = countIn > 0 ? 1.0 : 0.1, recordSeconds = Math.max(1, startDelay + countIn + (end - start) + 1.2);
                     var startedAt = Date.now();
                     timer = setInterval(function () { var elapsed = (Date.now() - startedAt) / 1000; setStatus('Gravando MP3 em tempo real: ' + Math.min(100, Math.round(elapsed / recordSeconds * 100)) + '%', 'info'); }, 500);
-                    run = true; await scheduleFrom(start); startCursorFollow(start);
+                    run = true; updatePlayButtonVisual(); await scheduleFrom(start); startCursorFollow(start);
                     await new Promise(function (resolve) { setTimeout(resolve, recordSeconds * 1000); });
                     stopPlayback(false); clearInterval(timer); timer = null;
                     processor.onaudioprocess = null; try { outputCompressor.disconnect(processor); } catch (_) { } try { processor.disconnect(); silentGain.disconnect(); } catch (_) { }
@@ -6344,7 +6418,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   };
   var soundLoadGeneration=0,melodicInstrumentCache={};
 
-  function getSoundLoadingMessageEx(quality){return quality==='hq'?'Carregando sons em alta qualidade…':'Carregando sons econômicos…';}
+  function getSoundLoadingMessageEx(quality){return quality==='hq'?'Carregando banco de sons em alta qualidade…':'Carregando banco de sons econômicos…';}
   function getSoundLoadedMessageEx(quality){return quality==='hq'?'Sons em alta qualidade carregados.':'Sons econômicos carregados.';}
   function showSoundStatusEx(message){var status=document.getElementById('st');status.textContent=message;status.style.display='block';}
   function showLoadedSoundStatusEx(state){
