@@ -3440,15 +3440,16 @@
                 }
 
                 if (style === 'ataque') {
-                    add(pattern.bass, 0, Math.min(0.8, maxBeats));
-                    add(pattern.chords, 0, Math.min(0.8, maxBeats), { type: 'block' });
+                    add(pattern.bass, 0, Math.min(1.8, maxBeats), { pitch: 'bass', gain: 1.05 });
+                    add(pattern.chords, 0, Math.min(1.6, maxBeats), { type: 'block', gain: 0.92 });
                     add(pattern.drums, 0, 0.2, { midi: 36 });
                     add(pattern.drums, 0, 0.15, { midi: 42 });
                 } else if (style === 'cancao') {
                     repeat(2, function (base) {
-                        add(pattern.bass, base, 0.45);
-                        add(pattern.chords, base + 0.5, 0.85, { type: 'block' });
-                        add(pattern.chords, base + 1.5, 0.4, { type: 'block' });
+                        var secondHalf = Math.floor(base / 2) % 2 === 1;
+                        add(pattern.bass, base, 1.35, { pitch: secondHalf ? 'fifth' : 'bass', gain: secondHalf ? 0.88 : 1.02 });
+                        add(pattern.chords, base + 0.5, 0.95, { type: 'block', gain: 0.88 });
+                        add(pattern.chords, base + 1.5, 0.45, { type: 'block', gain: 0.72 });
                         add(pattern.drums, base, 0.2, { midi: 36 });
                         add(pattern.drums, base + 1, 0.15, { midi: 37 });
                         for (var h = 0; h < 2; h += 0.5) add(pattern.drums, base + h, 0.08, { midi: 42 });
@@ -3456,11 +3457,20 @@
                 } else if (style === 'bossa') {
                     repeat(4, function (base) {
                         var secondVariation = ((cev.playMeasureOrdinal || cev.measureIdx || 0) % 2) === 1;
-                        add(pattern.bass, base, 1.0);
-                        add(pattern.bass, base + 2, 1.0);
+                        if (secondVariation) {
+                            add(pattern.bass, base, 0.75, { pitch: 'bass', gain: 0.92 });
+                            add(pattern.bass, base + 1.5, 0.45, { pitch: 'fifth', gain: 0.76 });
+                            add(pattern.bass, base + 2, 1.45, { pitch: 'bass', gain: 1.06 });
+                        } else {
+                            add(pattern.bass, base, 1.45, { pitch: 'bass', gain: 1.06 });
+                            add(pattern.bass, base + 2, 1.35, { pitch: 'fifth', gain: 0.9 });
+                        }
+                        add(pattern.bass, base + 3.5, 0.45, { pitch: 'next', gain: 0.7 });
                         var chordOffsets = secondVariation ? [0.5, 1.5, 2.5, 3.5] : [0, 1, 2.5, 3.5];
                         chordOffsets.forEach(function (offset, idx) {
-                            add(pattern.chords, base + offset, idx === chordOffsets.length - 1 ? 0.45 : 0.8, { type: 'block' });
+                            add(pattern.chords, base + offset, idx === chordOffsets.length - 1 ? 0.45 : (idx === 0 ? 1.15 : 0.85), {
+                                type: 'block', gain: idx === 0 ? 0.96 : (idx === chordOffsets.length - 1 ? 0.68 : 0.82)
+                            });
                         });
                         add(pattern.drums, base, 0.2, { midi: 36 });
                         add(pattern.drums, base + 2, 0.2, { midi: 36 });
@@ -3470,18 +3480,22 @@
                     });
                 } else if (style === 'arpejo') {
                     repeat(4, function (base) {
-                        add(pattern.bass, base, 0.8);
-                        add(pattern.bass, base + 2, 0.8);
-                        for (var a = 0; a < 4; a += 0.5) add(pattern.chords, base + a, 0.48, { type: 'arp', noteIndex: Math.round(a * 2) });
+                        add(pattern.bass, base, 1.55, { pitch: 'bass', gain: 1.0 });
+                        add(pattern.bass, base + 2, 1.35, { pitch: 'fifth', gain: 0.86 });
+                        for (var a = 0; a < 4; a += 0.5) add(pattern.chords, base + a, 0.48, {
+                            type: 'arp', noteIndex: Math.round(a * 2), gain: (a % 2 === 0) ? 0.86 : 0.7
+                        });
                         add(pattern.drums, base, 0.2, { midi: 36 });
                         add(pattern.drums, base + 2, 0.15, { midi: 37 });
                         for (var h = 0; h < 4; h += 0.5) add(pattern.drums, base + h, 0.08, { midi: 42 });
                     });
                 } else if (style === 'colcheias') {
                     repeat(4, function (base) {
-                        add(pattern.bass, base, 0.8);
-                        add(pattern.bass, base + 2, 0.8);
-                        for (var c = 0; c < 4; c += 0.5) add(pattern.chords, base + c, 0.42, { type: 'block' });
+                        add(pattern.bass, base, 1.4, { pitch: 'bass', gain: 1.0 });
+                        add(pattern.bass, base + 2, 1.3, { pitch: 'fifth', gain: 0.86 });
+                        for (var c = 0; c < 4; c += 0.5) add(pattern.chords, base + c, 0.44, {
+                            type: 'block', gain: (c % 1 === 0) ? 0.82 : 0.68
+                        });
                         add(pattern.drums, base, 0.2, { midi: 36 });
                         add(pattern.drums, base + 2, 0.15, { midi: 37 });
                         for (var h = 0; h < 4; h += 0.5) add(pattern.drums, base + h, 0.08, { midi: 42 });
@@ -3491,9 +3505,10 @@
                     var cycle = (measureBeats === 3 || measureBeats === 4.5 || measureBeats === 6) ? measureBeats : 3;
                     var pulse = cycle / 3;
                     repeat(cycle, function (base) {
-                        add(pattern.bass, base, Math.min(0.85, pulse * 0.85));
-                        add(pattern.chords, base + pulse, pulse * 0.75, { type: 'block' });
-                        add(pattern.chords, base + pulse * 2, pulse * 0.75, { type: 'block' });
+                        var alternate = Math.floor(base / cycle) % 2 === 1;
+                        add(pattern.bass, base, Math.min(pulse * 1.45, cycle - 0.05), { pitch: alternate ? 'fifth' : 'bass', gain: alternate ? 0.88 : 1.04 });
+                        add(pattern.chords, base + pulse, pulse * 0.9, { type: 'block', gain: 0.84 });
+                        add(pattern.chords, base + pulse * 2, pulse * 0.82, { type: 'block', gain: 0.72 });
                         add(pattern.drums, base, 0.2, { midi: 36 });
                         add(pattern.drums, base + pulse, 0.12, { midi: 37 });
                         add(pattern.drums, base + pulse * 2, 0.12, { midi: 37 });
@@ -3504,13 +3519,24 @@
                 return pattern;
             }
 
-            function scheduleStyledChordEvent(cev, whenC, availableDuration, bpm, globalTransp, hasBassChord, hasPianoChord) {
+            function scheduleStyledChordEvent(cev, nextCev, whenC, availableDuration, bpm, globalTransp, hasBassChord, hasPianoChord) {
                 var style = resolveChordStyle(cev);
                 if (style === 'manual') return false;
                 var beatLen = 60 / bpm;
                 var maxBeats = Math.max(0.01, availableDuration / beatLen);
                 var pattern = buildAccompanimentPattern(style, cev, maxBeats);
-                var bassMidi = Math.max(21, Math.min(108, cev.midi + getEffectiveTransposition(chordConfig.oct) + globalTransp));
+                var bassShift = getEffectiveTransposition(chordConfig.oct) + globalTransp;
+                var bassMidi = Math.max(21, Math.min(108, cev.midi + bassShift));
+                function fitBassRegister(midi) {
+                    while (midi > 52) midi -= 12;
+                    while (midi < 28) midi += 12;
+                    return Math.max(21, Math.min(108, midi));
+                }
+                function getBassPitch(event) {
+                    if (event.pitch === 'fifth' && cev.rootMidi !== undefined) return fitBassRegister(cev.rootMidi + 7 + bassShift);
+                    if (event.pitch === 'next' && nextCev && nextCev.midi !== undefined) return fitBassRegister(nextCev.midi + bassShift);
+                    return fitBassRegister(bassMidi);
+                }
                 var chordNotes = [];
                 if (cev.intervals && cev.rootMidi !== undefined) {
                     cev.intervals.forEach(function (interval) {
@@ -3524,13 +3550,17 @@
                 }
 
                 if (hasBassChord && chordInst) pattern.bass.forEach(function (event) {
-                    var handle = chordInst.play(bassMidi, whenC + event.offset * beatLen, { duration: event.dur * beatLen });
+                    var handle = chordInst.play(getBassPitch(event), whenC + event.offset * beatLen, {
+                        duration: event.dur * beatLen, gain: event.gain || 1
+                    });
                     if (handle) sc.push(handle);
                 });
                 if (hasPianoChord && pianoChordInst && chordNotes.length) pattern.chords.forEach(function (event) {
                     var notes = event.type === 'arp' ? [chordNotes[event.noteIndex % chordNotes.length]] : chordNotes;
                     notes.forEach(function (midi) {
-                        var handle = pianoChordInst.play(midi, whenC + event.offset * beatLen, { duration: event.dur * beatLen });
+                        var handle = pianoChordInst.play(midi, whenC + event.offset * beatLen, {
+                            duration: event.dur * beatLen, gain: event.gain || 1
+                        });
                         if (handle) sc.push(handle);
                     });
                 });
@@ -3630,7 +3660,8 @@
                         if (cev.t < rangeEndT) {
                             var whenC = sat + cev.t;
                             if (whenC >= now) {
-                                var styled = scheduleStyledChordEvent(cev, whenC, Math.max(0.01, availableChordDuration), bpm, globalTransp, hasBassChord, hasPianoChord);
+                                var nextCev = nextChordIdx + 1 < playbackChordEvents.length ? playbackChordEvents[nextChordIdx + 1] : null;
+                                var styled = scheduleStyledChordEvent(cev, nextCev, whenC, Math.max(0.01, availableChordDuration), bpm, globalTransp, hasBassChord, hasPianoChord);
                                 if (!styled && hasBassChord && chordInst) {
                                     var midiC = Math.max(21, Math.min(108, cev.midi + getEffectiveTransposition(chordConfig.oct) + globalTransp));
                                     if (chordConfig.durVal <= 4 || !chordConfig.durVal) {
@@ -6538,28 +6569,30 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     }
     function repeat(period,callback){for(var base=0;base<maxBeats-.0001;base+=period)callback(base);}
     if(style==='ataque'){
-      add(pattern.bass,0,Math.min(.8,maxBeats));add(pattern.chords,0,Math.min(.8,maxBeats),{type:'block'});add(pattern.drums,0,.2,{midi:36});add(pattern.drums,0,.15,{midi:42});
+      add(pattern.bass,0,Math.min(1.8,maxBeats),{pitch:'bass',gain:1.05});add(pattern.chords,0,Math.min(1.6,maxBeats),{type:'block',gain:.92});add(pattern.drums,0,.2,{midi:36});add(pattern.drums,0,.15,{midi:42});
     }else if(style==='cancao'){
-      repeat(2,function(base){add(pattern.bass,base,.45);add(pattern.chords,base+.5,.85,{type:'block'});add(pattern.chords,base+1.5,.4,{type:'block'});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+1,.15,{midi:37});for(var h=0;h<2;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
+      repeat(2,function(base){var secondHalf=Math.floor(base/2)%2===1;add(pattern.bass,base,1.35,{pitch:secondHalf?'fifth':'bass',gain:secondHalf?.88:1.02});add(pattern.chords,base+.5,.95,{type:'block',gain:.88});add(pattern.chords,base+1.5,.45,{type:'block',gain:.72});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+1,.15,{midi:37});for(var h=0;h<2;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
     }else if(style==='bossa'){
-      repeat(4,function(base){var second=((cev.playMeasureOrdinal||cev.measureIdx||0)%2)===1;add(pattern.bass,base,1);add(pattern.bass,base+2,1);var offsets=second?[.5,1.5,2.5,3.5]:[0,1,2.5,3.5];offsets.forEach(function(offset,idx){add(pattern.chords,base+offset,idx===offsets.length-1?.45:.8,{type:'block'});});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+2,.2,{midi:36});add(pattern.drums,base+1,.12,{midi:37});add(pattern.drums,base+3,.12,{midi:37});for(var h=0;h<4;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
+      repeat(4,function(base){var second=((cev.playMeasureOrdinal||cev.measureIdx||0)%2)===1;if(second){add(pattern.bass,base,.75,{pitch:'bass',gain:.92});add(pattern.bass,base+1.5,.45,{pitch:'fifth',gain:.76});add(pattern.bass,base+2,1.45,{pitch:'bass',gain:1.06});}else{add(pattern.bass,base,1.45,{pitch:'bass',gain:1.06});add(pattern.bass,base+2,1.35,{pitch:'fifth',gain:.9});}add(pattern.bass,base+3.5,.45,{pitch:'next',gain:.7});var offsets=second?[.5,1.5,2.5,3.5]:[0,1,2.5,3.5];offsets.forEach(function(offset,idx){add(pattern.chords,base+offset,idx===offsets.length-1?.45:(idx===0?1.15:.85),{type:'block',gain:idx===0?.96:(idx===offsets.length-1?.68:.82)});});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+2,.2,{midi:36});add(pattern.drums,base+1,.12,{midi:37});add(pattern.drums,base+3,.12,{midi:37});for(var h=0;h<4;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
     }else if(style==='arpejo'){
-      repeat(4,function(base){add(pattern.bass,base,.8);add(pattern.bass,base+2,.8);for(var a=0;a<4;a+=.5)add(pattern.chords,base+a,.48,{type:'arp',noteIndex:Math.round(a*2)});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+2,.15,{midi:37});for(var h=0;h<4;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
+      repeat(4,function(base){add(pattern.bass,base,1.55,{pitch:'bass',gain:1});add(pattern.bass,base+2,1.35,{pitch:'fifth',gain:.86});for(var a=0;a<4;a+=.5)add(pattern.chords,base+a,.48,{type:'arp',noteIndex:Math.round(a*2),gain:a%2===0?.86:.7});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+2,.15,{midi:37});for(var h=0;h<4;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
     }else if(style==='colcheias'){
-      repeat(4,function(base){add(pattern.bass,base,.8);add(pattern.bass,base+2,.8);for(var c=0;c<4;c+=.5)add(pattern.chords,base+c,.42,{type:'block'});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+2,.15,{midi:37});for(var h=0;h<4;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
+      repeat(4,function(base){add(pattern.bass,base,1.4,{pitch:'bass',gain:1});add(pattern.bass,base+2,1.3,{pitch:'fifth',gain:.86});for(var c=0;c<4;c+=.5)add(pattern.chords,base+c,.44,{type:'block',gain:c%1===0?.82:.68});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+2,.15,{midi:37});for(var h=0;h<4;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
     }else if(style==='valsa'){
       var measureBeats=Number(cev.measureQuarterBeats)||3;var cycle=(measureBeats===3||measureBeats===4.5||measureBeats===6)?measureBeats:3;var pulse=cycle/3;
-      repeat(cycle,function(base){add(pattern.bass,base,Math.min(.85,pulse*.85));add(pattern.chords,base+pulse,pulse*.75,{type:'block'});add(pattern.chords,base+pulse*2,pulse*.75,{type:'block'});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+pulse,.12,{midi:37});add(pattern.drums,base+pulse*2,.12,{midi:37});add(pattern.drums,base+pulse,.08,{midi:42});add(pattern.drums,base+pulse*2,.08,{midi:42});});
+      repeat(cycle,function(base){var alternate=Math.floor(base/cycle)%2===1;add(pattern.bass,base,Math.min(pulse*1.45,cycle-.05),{pitch:alternate?'fifth':'bass',gain:alternate?.88:1.04});add(pattern.chords,base+pulse,pulse*.9,{type:'block',gain:.84});add(pattern.chords,base+pulse*2,pulse*.82,{type:'block',gain:.72});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+pulse,.12,{midi:37});add(pattern.drums,base+pulse*2,.12,{midi:37});add(pattern.drums,base+pulse,.08,{midi:42});add(pattern.drums,base+pulse*2,.08,{midi:42});});
     }
     return pattern;
   }
-  function scheduleStyledChordEvent(cev,whenC,availableDuration,bpm,globalTransp,hasBassChord,hasPianoChord){
+  function scheduleStyledChordEvent(cev,nextCev,whenC,availableDuration,bpm,globalTransp,hasBassChord,hasPianoChord){
     var style=resolveChordStyle(cev);if(style==='manual')return false;
     var beatLen=60/bpm,maxBeats=Math.max(.01,availableDuration/beatLen),pattern=buildAccompanimentPattern(style,cev,maxBeats);
-    var bassMidi=Math.max(21,Math.min(108,cev.midi+getEffectiveTransposition(chordConfig.oct)+globalTransp));var chordNotes=[];
+    var bassShift=getEffectiveTransposition(chordConfig.oct)+globalTransp,bassMidi=Math.max(21,Math.min(108,cev.midi+bassShift));var chordNotes=[];
+    function fitBassRegister(midi){while(midi>52)midi-=12;while(midi<28)midi+=12;return Math.max(21,Math.min(108,midi));}
+    function getBassPitch(event){if(event.pitch==='fifth'&&cev.rootMidi!==undefined)return fitBassRegister(cev.rootMidi+7+bassShift);if(event.pitch==='next'&&nextCev&&nextCev.midi!==undefined)return fitBassRegister(nextCev.midi+bassShift);return fitBassRegister(bassMidi);}
     if(cev.intervals&&cev.rootMidi!==undefined){cev.intervals.forEach(function(interval){var midi=cev.rootMidi+interval+getEffectiveTransposition(pianoChordConfig.oct)+globalTransp;while(midi>71)midi-=12;while(midi<53)midi+=12;midi=Math.max(21,Math.min(108,midi));if(chordNotes.indexOf(midi)===-1)chordNotes.push(midi);});chordNotes.sort(function(a,b){return a-b;});}
-    if(hasBassChord&&chordInst)pattern.bass.forEach(function(event){var handle=chordInst.play(bassMidi,whenC+event.offset*beatLen,{duration:event.dur*beatLen});if(handle)sc.push(handle);});
-    if(hasPianoChord&&pianoChordInst&&chordNotes.length)pattern.chords.forEach(function(event){var notes=event.type==='arp'?[chordNotes[event.noteIndex%chordNotes.length]]:chordNotes;notes.forEach(function(midi){var handle=pianoChordInst.play(midi,whenC+event.offset*beatLen,{duration:event.dur*beatLen});if(handle)sc.push(handle);});});
+    if(hasBassChord&&chordInst)pattern.bass.forEach(function(event){var handle=chordInst.play(getBassPitch(event),whenC+event.offset*beatLen,{duration:event.dur*beatLen,gain:event.gain||1});if(handle)sc.push(handle);});
+    if(hasPianoChord&&pianoChordInst&&chordNotes.length)pattern.chords.forEach(function(event){var notes=event.type==='arp'?[chordNotes[event.noteIndex%chordNotes.length]]:chordNotes;notes.forEach(function(midi){var handle=pianoChordInst.play(midi,whenC+event.offset*beatLen,{duration:event.dur*beatLen,gain:event.gain||1});if(handle)sc.push(handle);});});
     if(chordStyleConfig.drums&&drumPlayer)pattern.drums.forEach(function(event){var handles=playDrumNote(event.midi,whenC+event.offset*beatLen,styleDrumGain||inputGain,event.dur*beatLen);for(var i=0;i<handles.length;i++)sc.push(handles[i]);});
     return true;
   }
@@ -6647,7 +6680,8 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
         if (cev.t < rangeEndT) {
           var whenC = sat + cev.t;
           if (whenC >= now) {
-            var styled = scheduleStyledChordEvent(cev, whenC, Math.max(0.01, availableChordDuration), bpm, globalTransp, hasBassChord, hasPianoChord);
+            var nextCev = nextChordIdx + 1 < chordEvents.length ? chordEvents[nextChordIdx + 1] : null;
+            var styled = scheduleStyledChordEvent(cev, nextCev, whenC, Math.max(0.01, availableChordDuration), bpm, globalTransp, hasBassChord, hasPianoChord);
             if (!styled && hasBassChord && chordInst) {
               var midiC = Math.max(21, Math.min(108, cev.midi + getEffectiveTransposition(chordConfig.oct) + globalTransp));
               if (chordConfig.durVal <= 4 || !chordConfig.durVal) {
