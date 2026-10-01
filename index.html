@@ -723,6 +723,34 @@
             font-family: inherit;
         }
 
+        .quality-level-btn {
+            min-width: 86px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            padding: 4px 7px;
+            background: #f8fafc;
+            color: #475569;
+            font: 600 11px var(--font-body);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .quality-level-btn:hover { background: #f1f5f9; }
+        .quality-level-btn.quality-medium { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+        .quality-level-btn.quality-superior { background: #f5f3ff; border-color: #c4b5fd; color: #6d28d9; }
+        .quality-bars { display: inline-flex; align-items: flex-end; gap: 1px; height: 11px; }
+        .quality-bars i { display: block; width: 3px; border-radius: 1px; background: currentColor; opacity: .22; }
+        .quality-bars i:nth-child(1) { height: 4px; }
+        .quality-bars i:nth-child(2) { height: 7px; }
+        .quality-bars i:nth-child(3) { height: 10px; }
+        .quality-standard .quality-bars i:nth-child(1),
+        .quality-medium .quality-bars i:nth-child(-n+2),
+        .quality-superior .quality-bars i { opacity: 1; }
+
         .icon-svg {
             display: inline-block;
             vertical-align: middle;
@@ -1029,14 +1057,6 @@
                     <input type="number" id="reverbAmt" value="15" min="0" max="100">
                 </div>
 
-                <div class="inst-wrap sound-quality-wrap">
-                    <label for="soundQualitySelect">Qualidade do som</label>
-                    <select id="soundQualitySelect" title="Carregamento mais rápido e menor uso de dados.">
-                        <option value="standard" selected title="Carregamento mais rápido e menor uso de dados.">Econômica</option>
-                        <option value="hq" title="Sons mais detalhados. Pode consumir mais dados e levar mais tempo para carregar.">Alta qualidade</option>
-                    </select>
-                </div>
-
                 <div class="zoom-wrap">
                     <label for="zoomInp">Zoom %</label>
                     <input type="number" id="zoomInp" value="100" min="40" max="300" step="5">
@@ -1199,7 +1219,7 @@
         <div class="inst-steps">
             <div class="step"><span class="step-num">1</span><b>Preparar a partitura</b>No MuseScore ou em outro editor, exporte a obra em MusicXML (.musicxml, .xml ou .mxl). O formato preserva notas, vozes, cifras, repetições e indicações musicais.</div>
             <div class="step"><span class="step-num">2</span><b>Carregar ou retomar um projeto</b>Arraste o MusicXML para “Carregar partitura”. Para continuar um trabalho anterior com configurações e anotações, abra o arquivo de projeto .vtp.</div>
-            <div class="step"><span class="step-num">3</span><b>Configurar a execução</b>Use Tocar/Pausar para iniciar, interromper momentaneamente e continuar do mesmo ponto; Reiniciar volta ao início do trecho. Ajuste BPM, qualidade do som, metrônomo, contagem, reverberação, cursor e BT Delay. “Econômica” carrega mais rápido; “Alta qualidade” usa timbres mais detalhados sob demanda.</div>
+            <div class="step"><span class="step-num">3</span><b>Configurar a execução</b>Use Tocar/Pausar para iniciar, interromper momentaneamente e continuar do mesmo ponto; Reiniciar volta ao início do trecho. No mixer, o botão de qualidade de cada pista alterna entre Econômica (FluidR3_GM), Intermediária (FatBoy) e Superior (MusyngKite). Use níveis maiores somente nas pistas que precisam de mais detalhe.</div>
             <div class="step"><span class="step-num">4</span><b>Estudar trechos e repetições</b>Defina os compassos inicial e final e ative Loop para repetir uma passagem sem pausa perceptível. Para iniciar rapidamente de outro ponto, segure Ctrl e clique no compasso desejado. Sinais e casas de repetição do MusicXML são considerados na reprodução.</div>
             <div class="step"><span class="step-num">5</span><b>Organizar o acompanhamento</b>No mixer, ajuste volume, Mute, Solo, oitavas e timbres. Em “Levada das cifras”, escolha Manual, Automático, Ataque, Canção, Bossa, Arpejo, Colcheias ou Valsa, com baixo e bateria gerados pelo navegador.</div>
             <div class="step"><span class="step-num">6</span><b>Editar cifras</b>Ative “Editar Cifras”. Clique numa cifra e depois no novo ponto da pauta para movê-la; use duplo clique para alterar seu texto. A cifragem brasileira é reconhecida: A7M, por exemplo, equivale a Amaj7.</div>
@@ -1256,7 +1276,7 @@
         <a href="https://aprenda-musica-comigo.web.app" target="_blank">aprenda-musica-comigo.web.app</a> &bull;
         <a href="https://servidores.ufscar.br/glauber/" target="_blank">servidores.ufscar.br/glauber/</a> &bull;
         <a href="https://glauberia.web.app/" target="_blank">https://glauberia.web.app/</a><br>
-        Timbres melódicos: <a href="https://github.com/gleitz/midi-js-soundfonts" target="_blank" rel="noopener noreferrer">FluidR3_GM e FatBoy — MIDI.js Soundfonts</a> (CC BY 3.0 / CC BY-SA 3.0).
+        Timbres melódicos: <a href="https://github.com/gleitz/midi-js-soundfonts" target="_blank" rel="noopener noreferrer">FluidR3_GM, FatBoy e MusyngKite — MIDI.js Soundfonts</a> (CC BY 3.0 / CC BY-SA 3.0).
     </footer>
 
     <script>
@@ -1761,8 +1781,8 @@
                 return chords;
             }
 
-            var chordConfig = { name: 'Cifra: baixo', program: 'acoustic_bass', vol: 75, mute: false, solo: false, oct: -24, enabled: true, durVal: 2 };
-            var pianoChordConfig = { name: 'Cifra: acordes', program: 'electric_piano_1', vol: 50, mute: false, solo: false, oct: 0, enabled: true, durVal: 2 };
+            var chordConfig = { name: 'Cifra: baixo', program: 'acoustic_bass', vol: 75, mute: false, solo: false, oct: -24, enabled: true, durVal: 2, soundQuality: 'standard' };
+            var pianoChordConfig = { name: 'Cifra: acordes', program: 'electric_piano_1', vol: 50, mute: false, solo: false, oct: 0, enabled: true, durVal: 2, soundQuality: 'standard' };
             var chordStyleConfig = { style: 'manual', drums: true, drumVol: 55 };
             var chordInst = null, pianoChordInst = null;
             var chordGain = null, pianoChordGain = null;
@@ -1771,38 +1791,42 @@
             var SOUND_QUALITY_CONFIG = {
                 standard: {
                     label: 'Econômica',
+                    shortLabel: 'Eco',
                     soundfont: 'FluidR3_GM',
                     baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/'
                 },
-                hq: {
-                    label: 'Alta qualidade',
+                medium: {
+                    label: 'Intermediária',
+                    shortLabel: 'Média',
                     soundfont: 'FatBoy',
                     baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/FatBoy/'
+                },
+                superior: {
+                    label: 'Superior',
+                    shortLabel: 'Superior',
+                    soundfont: 'MusyngKite',
+                    baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/'
                 }
             };
-            var soundQuality = 'standard';
             var soundLoadGeneration = 0;
+            var partSoundLoadGenerations = [], chordSoundLoadGeneration = 0, pianoChordSoundLoadGeneration = 0;
             var melodicInstrumentCache = {};
 
             function getSoundQualityConfig(quality) {
                 return SOUND_QUALITY_CONFIG[quality] || SOUND_QUALITY_CONFIG.standard;
             }
 
+            function normalizeSoundQuality(quality) {
+                if (quality === 'hq') return 'medium';
+                return SOUND_QUALITY_CONFIG[quality] ? quality : 'standard';
+            }
+
             function getSoundLoadingMessage(quality) {
-                return quality === 'hq' ? 'Carregando banco de sons em alta qualidade…' : 'Carregando banco de sons econômicos…';
+                return 'Carregando som em qualidade ' + getSoundQualityConfig(normalizeSoundQuality(quality)).label.toLowerCase() + '…';
             }
 
             function getSoundLoadedMessage(quality) {
-                return quality === 'hq' ? 'Sons em alta qualidade carregados.' : 'Sons econômicos carregados.';
-            }
-
-            function updateSoundQualityControl() {
-                var select = document.getElementById('soundQualitySelect');
-                if (!select) return;
-                select.value = soundQuality;
-                select.title = soundQuality === 'hq'
-                    ? 'Sons mais detalhados. Pode consumir mais dados e levar mais tempo para carregar.'
-                    : 'Carregamento mais rápido e menor uso de dados.';
+                return 'Som em qualidade ' + getSoundQualityConfig(normalizeSoundQuality(quality)).label.toLowerCase() + ' carregado.';
             }
 
             function loadInstrumentFromQuality(program, destination, quality) {
@@ -1824,14 +1848,18 @@
             }
 
             async function loadMelodicInstrument(program, destination, quality) {
-                var requestedQuality = SOUND_QUALITY_CONFIG[quality] ? quality : 'standard';
-                try {
-                    return { instrument: await loadInstrumentFromQuality(program, destination, requestedQuality), fallback: false };
-                } catch (error) {
-                    if (requestedQuality !== 'hq') throw error;
-                    console.warn('Falha ao carregar ' + program + ' no FatBoy; usando FluidR3_GM.', error);
-                    return { instrument: await loadInstrumentFromQuality(program, destination, 'standard'), fallback: true };
+                var requestedQuality = normalizeSoundQuality(quality);
+                var chain = requestedQuality === 'superior' ? ['superior', 'medium', 'standard'] : (requestedQuality === 'medium' ? ['medium', 'standard'] : ['standard']);
+                var lastError = null;
+                for (var i = 0; i < chain.length; i++) {
+                    try {
+                        return { instrument: await loadInstrumentFromQuality(program, destination, chain[i]), fallback: i > 0, requestedQuality: requestedQuality, actualQuality: chain[i] };
+                    } catch (error) {
+                        lastError = error;
+                        console.warn('Falha ao carregar ' + program + ' em ' + getSoundQualityConfig(chain[i]).soundfont + '.', error);
+                    }
                 }
+                throw lastError || new Error('Não foi possível carregar o instrumento.');
             }
 
             async function ensureChordInstrument(generation, loadState) {
@@ -1850,11 +1878,11 @@
                     pianoChordGain.connect(inputGain);
                 }
                 var jobs = [];
-                if (!chordInst) jobs.push(loadMelodicInstrument(chordConfig.program, chordGain, soundQuality).then(function (result) {
+                if (!chordInst) jobs.push(loadMelodicInstrument(chordConfig.program, chordGain, chordConfig.soundQuality).then(function (result) {
                     if (generation !== soundLoadGeneration) return;
                     chordInst = result.instrument; loadState.fallback = loadState.fallback || result.fallback;
                 }).catch(function (error) { loadState.failed = true; console.error('Falha ao carregar o baixo das cifras.', error); }));
-                if (!pianoChordInst) jobs.push(loadMelodicInstrument(pianoChordConfig.program, pianoChordGain, soundQuality).then(function (result) {
+                if (!pianoChordInst) jobs.push(loadMelodicInstrument(pianoChordConfig.program, pianoChordGain, pianoChordConfig.soundQuality).then(function (result) {
                     if (generation !== soundLoadGeneration) return;
                     pianoChordInst = result.instrument; loadState.fallback = loadState.fallback || result.fallback;
                 }).catch(function (error) { loadState.failed = true; console.error('Falha ao carregar os acordes das cifras.', error); }));
@@ -1863,33 +1891,47 @@
             }
 
             async function reloadChordInstrument() {
-                var generation = ++soundLoadGeneration;
+                var generation = soundLoadGeneration, localGeneration = ++chordSoundLoadGeneration;
                 if (run) stopPlayback(false); else stopScheduled();
+                if (!ac || ac.state === 'closed') { ac = new (window.AudioContext || window.webkitAudioContext)(); setupFx(); }
+                if (!chordGain) { chordGain = ac.createGain(); chordGain.gain.value = chordConfig.vol / 100; chordGain.connect(inputGain); }
                 chordInst = null;
                 document.getElementById('bp').disabled = true;
                 updatePlayButtonVisual('loading');
-                setStatus(getSoundLoadingMessage(soundQuality), 'info');
-                var state = await ensureChordInstrument(generation, { fallback: false, failed: false });
-                if (generation !== soundLoadGeneration) return;
+                setStatus(getSoundLoadingMessage(chordConfig.soundQuality), 'info');
+                var state = { fallback: false, failed: false };
+                try {
+                    var result = await loadMelodicInstrument(chordConfig.program, chordGain, chordConfig.soundQuality);
+                    if (generation !== soundLoadGeneration || localGeneration !== chordSoundLoadGeneration) return;
+                    chordInst = result.instrument; state.fallback = result.fallback;
+                } catch (error) { state.failed = true; console.error('Falha ao carregar o baixo das cifras.', error); }
+                if (generation !== soundLoadGeneration || localGeneration !== chordSoundLoadGeneration) return;
                 updateFullMix();
                 document.getElementById('bp').disabled = false;
                 updatePlayButtonVisual();
-                setStatus(state && state.fallback ? 'Não foi possível carregar um dos sons em alta qualidade. Usando a versão econômica para este instrumento.' : getSoundLoadedMessage(soundQuality), state && state.fallback ? 'info' : 'ok');
+                setStatus(state.failed ? 'Não foi possível carregar o baixo das cifras.' : (state.fallback ? 'A qualidade escolhida não estava disponível. Foi usado o melhor banco alternativo.' : getSoundLoadedMessage(chordConfig.soundQuality)), state.failed ? 'err' : (state.fallback ? 'info' : 'ok'));
             }
 
             async function reloadPianoChordInstrument() {
-                var generation = ++soundLoadGeneration;
+                var generation = soundLoadGeneration, localGeneration = ++pianoChordSoundLoadGeneration;
                 if (run) stopPlayback(false); else stopScheduled();
+                if (!ac || ac.state === 'closed') { ac = new (window.AudioContext || window.webkitAudioContext)(); setupFx(); }
+                if (!pianoChordGain) { pianoChordGain = ac.createGain(); pianoChordGain.gain.value = pianoChordConfig.vol / 100; pianoChordGain.connect(inputGain); }
                 pianoChordInst = null;
                 document.getElementById('bp').disabled = true;
                 updatePlayButtonVisual('loading');
-                setStatus(getSoundLoadingMessage(soundQuality), 'info');
-                var state = await ensureChordInstrument(generation, { fallback: false, failed: false });
-                if (generation !== soundLoadGeneration) return;
+                setStatus(getSoundLoadingMessage(pianoChordConfig.soundQuality), 'info');
+                var state = { fallback: false, failed: false };
+                try {
+                    var result = await loadMelodicInstrument(pianoChordConfig.program, pianoChordGain, pianoChordConfig.soundQuality);
+                    if (generation !== soundLoadGeneration || localGeneration !== pianoChordSoundLoadGeneration) return;
+                    pianoChordInst = result.instrument; state.fallback = result.fallback;
+                } catch (error) { state.failed = true; console.error('Falha ao carregar os acordes das cifras.', error); }
+                if (generation !== soundLoadGeneration || localGeneration !== pianoChordSoundLoadGeneration) return;
                 updateFullMix();
                 document.getElementById('bp').disabled = false;
                 updatePlayButtonVisual();
-                setStatus(state && state.fallback ? 'Não foi possível carregar um dos sons em alta qualidade. Usando a versão econômica para este instrumento.' : getSoundLoadedMessage(soundQuality), state && state.fallback ? 'info' : 'ok');
+                setStatus(state.failed ? 'Não foi possível carregar os acordes das cifras.' : (state.fallback ? 'A qualidade escolhida não estava disponível. Foi usado o melhor banco alternativo.' : getSoundLoadedMessage(pianoChordConfig.soundQuality)), state.failed ? 'err' : (state.fallback ? 'info' : 'ok'));
             }
 
             function updateFullMix() {
@@ -2830,9 +2872,10 @@
                     }
                     var existing = (isLoadingProject || prevConfigs.length > 0) && prevConfigs[idx];
                     if (existing && existing.name === name) {
+                        existing.soundQuality = normalizeSoundQuality(existing.soundQuality);
                         partConfigs.push(existing);
                     } else {
-                        partConfigs.push({ name: name, program: defProg, mute: false, solo: false, vol: 100, oct: 0, isDrum: isDrum });
+                        partConfigs.push({ name: name, program: defProg, mute: false, solo: false, vol: 100, oct: 0, isDrum: isDrum, soundQuality: 'standard' });
                     }
                 });
                 isLoadingProject = false;
@@ -2886,6 +2929,27 @@
                 });
                 s.onchange = onchange;
                 return s;
+            }
+
+            function makeSoundQualityButton(config, onchange) {
+                config.soundQuality = normalizeSoundQuality(config.soundQuality);
+                var button = document.createElement('button');
+                button.type = 'button';
+                function refresh() {
+                    var quality = normalizeSoundQuality(config.soundQuality), info = getSoundQualityConfig(quality);
+                    button.className = 'quality-level-btn quality-' + quality;
+                    button.innerHTML = '<span class="quality-bars" aria-hidden="true"><i></i><i></i><i></i></span><span>' + info.shortLabel + '</span>';
+                    button.setAttribute('aria-label', 'Qualidade do som: ' + info.label + '. Clique para mudar.');
+                    button.title = info.label + ' — ' + (quality === 'standard' ? 'menor uso de dados' : (quality === 'medium' ? 'FatBoy, mais detalhado' : 'MusyngKite, mais detalhado e pesado')) + '. Clique para o próximo nível.';
+                }
+                button.onclick = function () {
+                    var levels = ['standard', 'medium', 'superior'];
+                    config.soundQuality = levels[(levels.indexOf(normalizeSoundQuality(config.soundQuality)) + 1) % levels.length];
+                    refresh();
+                    onchange(config.soundQuality);
+                };
+                refresh();
+                return button;
             }
 
             function makeDurSelectPC(val, onchange) {
@@ -3047,6 +3111,7 @@
                         reloadPartInstrument(idx); renderPartsPanel();
                     };
                     ctrls.appendChild(volRange); ctrls.appendChild(bMute); ctrls.appendChild(bSolo); ctrls.appendChild(octSel); ctrls.appendChild(instSel);
+                    if (!cfg.isDrum) ctrls.appendChild(makeSoundQualityButton(cfg, function () { reloadPartInstrument(idx); }));
 
                     if (cfg.isDrum) {
                         var bPerc = document.createElement('button');
@@ -3126,7 +3191,7 @@
                 var durSelPC = makeDurSelectPC(pianoChordConfig.durVal, function () { pianoChordConfig.durVal = Number(durSelPC.value); });
                 var instSelPC = document.createElement('select'); instSelPC.className = 'part-sel'; instSelPC.innerHTML = GM_OPTS_HTML; instSelPC.value = pianoChordConfig.program;
                 instSelPC.onchange = function () { pianoChordConfig.program = instSelPC.value; reloadPianoChordInstrument(); };
-                pChCtrls.appendChild(volPC); pChCtrls.appendChild(bPMuteC); pChCtrls.appendChild(bPSoloC); pChCtrls.appendChild(octSelPC); pChCtrls.appendChild(instSelPC); pChCtrls.appendChild(durSelPC);
+                pChCtrls.appendChild(volPC); pChCtrls.appendChild(bPMuteC); pChCtrls.appendChild(bPSoloC); pChCtrls.appendChild(octSelPC); pChCtrls.appendChild(instSelPC); pChCtrls.appendChild(durSelPC); pChCtrls.appendChild(makeSoundQualityButton(pianoChordConfig, function () { reloadPianoChordInstrument(); }));
                 pChRow.appendChild(pChName); pChRow.appendChild(pChCtrls); p.appendChild(pChRow);
 
                 /* ── Linha especial: Cifras ♩ ── */
@@ -3153,19 +3218,22 @@
                 var durSelC = makeDurSelectC(chordConfig.durVal, function () { chordConfig.durVal = Number(durSelC.value); });
                 var instSelC = document.createElement('select'); instSelC.className = 'part-sel'; instSelC.innerHTML = GM_OPTS_HTML; instSelC.value = chordConfig.program;
                 instSelC.onchange = function () { chordConfig.program = instSelC.value; reloadChordInstrument(); };
-                chCtrls.appendChild(volC); chCtrls.appendChild(bMuteC); chCtrls.appendChild(bSoloC); chCtrls.appendChild(octSelC); chCtrls.appendChild(instSelC); chCtrls.appendChild(durSelC);
+                chCtrls.appendChild(volC); chCtrls.appendChild(bMuteC); chCtrls.appendChild(bSoloC); chCtrls.appendChild(octSelC); chCtrls.appendChild(instSelC); chCtrls.appendChild(durSelC); chCtrls.appendChild(makeSoundQualityButton(chordConfig, function () { reloadChordInstrument(); }));
                 chRow.appendChild(chName); chRow.appendChild(chCtrls); p.appendChild(chRow);
                 p.appendChild(styleRow);
             }
 
             async function reloadPartInstrument(idx) {
-                var generation = ++soundLoadGeneration;
+                var generation = soundLoadGeneration;
+                var localGeneration = (partSoundLoadGenerations[idx] || 0) + 1;
+                partSoundLoadGenerations[idx] = localGeneration;
                 if (run) stopPlayback(false); else stopScheduled();
                 document.getElementById('bp').disabled = true;
                 updatePlayButtonVisual('loading');
-                setStatus(getSoundLoadingMessage(soundQuality), 'info');
                 var cfg = partConfigs[idx];
                 if (!cfg) return;
+                cfg.soundQuality = normalizeSoundQuality(cfg.soundQuality);
+                setStatus(cfg.program === '_drum_kit_gm' ? 'Carregando sons de percussão…' : getSoundLoadingMessage(cfg.soundQuality), 'info');
                 var fallbackUsed = false;
                 if (!partGains[idx]) {
                     partGains[idx] = ac.createGain();
@@ -3176,19 +3244,19 @@
                         await loadDrumSounds(); initDrumEngine();
                         if (generation === soundLoadGeneration) partInsts[idx] = { isDrumKit: true };
                     } else {
-                        var result = await loadMelodicInstrument(cfg.program, partGains[idx], soundQuality);
-                        if (generation !== soundLoadGeneration) return;
+                        var result = await loadMelodicInstrument(cfg.program, partGains[idx], cfg.soundQuality);
+                        if (generation !== soundLoadGeneration || localGeneration !== partSoundLoadGenerations[idx]) return;
                         partInsts[idx] = result.instrument;
                         fallbackUsed = result.fallback;
                     }
-                    if (generation !== soundLoadGeneration) return;
+                    if (generation !== soundLoadGeneration || localGeneration !== partSoundLoadGenerations[idx]) return;
                     updateFullMix();
-                    setStatus(fallbackUsed ? 'Não foi possível carregar um dos sons em alta qualidade. Usando a versão econômica para este instrumento.' : getSoundLoadedMessage(soundQuality), fallbackUsed ? 'info' : 'ok');
+                    setStatus(fallbackUsed ? 'A qualidade escolhida não estava disponível. Foi usado o melhor banco alternativo.' : (cfg.program === '_drum_kit_gm' ? 'Sons de percussão carregados.' : getSoundLoadedMessage(cfg.soundQuality)), fallbackUsed ? 'info' : 'ok');
                 } catch (error) {
                     console.error('Falha ao carregar o timbre da parte.', error);
                     setStatus('Não foi possível carregar o timbre selecionado.', 'err');
                 } finally {
-                    if (generation === soundLoadGeneration) { document.getElementById('bp').disabled = false; updatePlayButtonVisual(); }
+                    if (generation === soundLoadGeneration && localGeneration === partSoundLoadGenerations[idx]) { document.getElementById('bp').disabled = false; updatePlayButtonVisual(); }
                 }
             }
 
@@ -3198,7 +3266,7 @@
                 var preserveGains = !!options.preserveGains;
                 if (!ac || ac.state === 'closed') { ac = new (window.AudioContext || window.webkitAudioContext)(); setupFx(); }
                 stopScheduled(); clearPlaybackEndTimer();
-                setStatus(getSoundLoadingMessage(soundQuality), 'info');
+                setStatus('Carregando sons das pistas…', 'info');
                 document.getElementById('bp').disabled = true;
                 updatePlayButtonVisual('loading');
                 partInsts = new Array(partConfigs.length);
@@ -3214,7 +3282,8 @@
                     if (!gain) { gain = ac.createGain(); gain.connect(inputGain); partGains[idx] = gain; }
                     if (cfg.program === '_drum_kit_gm') { partInsts[idx] = { isDrumKit: true }; return; }
                     try {
-                        var result = await loadMelodicInstrument(cfg.program, gain, soundQuality);
+                        cfg.soundQuality = normalizeSoundQuality(cfg.soundQuality);
+                        var result = await loadMelodicInstrument(cfg.program, gain, cfg.soundQuality);
                         if (generation !== soundLoadGeneration) return;
                         partInsts[idx] = result.instrument;
                         loadState.fallback = loadState.fallback || result.fallback;
@@ -3232,33 +3301,10 @@
                 updatePlayButtonVisual();
                 document.getElementById('bx').disabled = false;
                 document.getElementById('bdl').disabled = false;
-                if (loadState.fallback) setStatus('Não foi possível carregar um dos sons em alta qualidade. Usando a versão econômica para este instrumento.', 'info');
+                if (loadState.fallback) setStatus('Uma qualidade escolhida não estava disponível. Foi usado o melhor banco alternativo nessa pista.', 'info');
                 else if (loadState.failed) setStatus('Alguns timbres não puderam ser carregados. Os demais continuam disponíveis.', 'err');
-                else setStatus(getSoundLoadedMessage(soundQuality), 'ok');
+                else setStatus('Sons das pistas carregados.', 'ok');
             }
-
-            async function changeSoundQuality(nextQuality) {
-                nextQuality = SOUND_QUALITY_CONFIG[nextQuality] ? nextQuality : 'standard';
-                if (nextQuality === soundQuality) { updateSoundQualityControl(); return; }
-                soundQuality = nextQuality;
-                updateSoundQualityControl();
-                var generation = ++soundLoadGeneration;
-                if (run) stopPlayback(false);
-                else { stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); }
-                partInsts = [];
-                chordInst = null;
-                pianoChordInst = null;
-                if (!rawXml || !partConfigs.length) {
-                    setStatus(soundQuality === 'hq' ? 'Alta qualidade selecionada. Os sons serão carregados quando houver uma partitura.' : 'Qualidade econômica selecionada.', 'info');
-                    return;
-                }
-                await loadAllInstruments({ generation: generation, preserveGains: true });
-            }
-
-            document.getElementById('soundQualitySelect').addEventListener('change', function () {
-                changeSoundQuality(this.value);
-            });
-            updateSoundQualityControl();
 
             function updatePartMix() {
                 var anySolo = partConfigs.some(function (p) { return p.solo; }) || chordConfig.solo || pianoChordConfig.solo;
@@ -4198,8 +4244,10 @@
                         if (project.chordConfig) chordConfig = project.chordConfig;
                         if (project.pianoChordConfig) pianoChordConfig = project.pianoChordConfig;
                         if (project.chordStyleConfig) chordStyleConfig = project.chordStyleConfig;
-                        soundQuality = project.soundQuality === 'hq' ? 'hq' : 'standard';
-                        updateSoundQualityControl();
+                        var legacyQuality = project.soundQuality === 'hq' ? 'medium' : 'standard';
+                        partConfigs.forEach(function (cfg) { cfg.soundQuality = normalizeSoundQuality(cfg.soundQuality || legacyQuality); });
+                        chordConfig.soundQuality = normalizeSoundQuality(chordConfig.soundQuality || legacyQuality);
+                        pianoChordConfig.soundQuality = normalizeSoundQuality(pianoChordConfig.soundQuality || legacyQuality);
                         annotations = Array.isArray(project.annotations) ? project.annotations : [];
                         resetAnnotationHistory();
                         annotationLayoutLock = project.annotationLayoutLock || null;
@@ -4256,7 +4304,6 @@
                     chordConfig: chordConfig || null,
                     pianoChordConfig: pianoChordConfig || null,
                     chordStyleConfig: chordStyleConfig || null,
-                    soundQuality: soundQuality,
                     annotations: annotations || [],
                     annotationLayoutLock: annotationLayoutLock || null,
                     bpm: parseInt(document.getElementById('bpm').value, 10) || 100,
@@ -5802,7 +5849,6 @@
                 var safeChordConfig = JSON.stringify(chordConfig);
                 var safePianoChordConfig = JSON.stringify(pianoChordConfig);
                 var safeChordStyleConfig = JSON.stringify(chordStyleConfig);
-                var safeSoundQuality = soundQuality === 'hq' ? 'hq' : 'standard';
                 var safeAnnotations = JSON.stringify(annotations || []);
                 var exportAnnotationLayoutLock = annotations.length ? annotationLayoutLock : null;
                 var safeAnnotationLayoutLock = JSON.stringify(exportAnnotationLayoutLock);
@@ -5863,6 +5909,9 @@ ${exportLayoutLocked ? '#score svg:not(#annotationLayer){width:auto!important;he
 .mix-toggle svg{transition:transform 0.2s;color:#6b7280;}
 .mix-toggle.active{background:#e2e8f0;}
 .mix-toggle.active svg{transform:rotate(90deg);color:#111827;}
+.quality-level-btn{min-width:78px;display:inline-flex;align-items:center;justify-content:center;gap:4px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;background:#f8fafc;color:#475569;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.quality-level-btn.quality-medium{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;}.quality-level-btn.quality-superior{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9;}
+.quality-bars{display:inline-flex;align-items:flex-end;gap:1px;height:10px}.quality-bars i{display:block;width:3px;border-radius:1px;background:currentColor;opacity:.22}.quality-bars i:nth-child(1){height:4px}.quality-bars i:nth-child(2){height:7px}.quality-bars i:nth-child(3){height:10px}.quality-standard .quality-bars i:nth-child(1),.quality-medium .quality-bars i:nth-child(-n+2),.quality-superior .quality-bars i{opacity:1}
 ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none; box-shadow: none; margin-top: 0; padding-top: 5px; } #helpEx { margin-top: 10px; }' : ''}
 <\/style>
 <\/head>
@@ -5878,10 +5927,6 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   <span style="${C}background:#eee;"><span style="${L}">Metrôn.<\/span><input type="checkbox" id="met" ${metAttr} style="width:15px;height:15px;cursor:pointer;"><\/span>
 
   <span style="${C}background:#eee;"><span style="${L}">Reverb<\/span><input type="number" id="rev" value="${revAmt}" style="${I}width:40px;text-align:center;"><\/span>
-  <span style="${C}background:#eee;"><label for="soundQualityEx" style="${L}">Qualidade do som<\/label><select id="soundQualityEx" style="${S}" title="${safeSoundQuality === 'hq' ? 'Sons mais detalhados. Pode consumir mais dados e levar mais tempo para carregar.' : 'Carregamento mais rápido e menor uso de dados.'}">
-    <option value="standard" ${safeSoundQuality === 'standard' ? 'selected' : ''} title="Carregamento mais rápido e menor uso de dados.">Econômica<\/option>
-    <option value="hq" ${safeSoundQuality === 'hq' ? 'selected' : ''} title="Sons mais detalhados. Pode consumir mais dados e levar mais tempo para carregar.">Alta qualidade<\/option>
-  <\/select><\/span>
   <span style="${C}background:#eee;"><span style="${L}">Transp.<\/span><select id="trans" style="${S}">${transOptions}<\/select><\/span>
   <span style="${C}background:#eee;"><span style="${L}">Zoom<\/span><input type="number" id="zoomEx" value="${zoomValue}" style="${I}width:40px;text-align:center;"${exportLayoutLocked ? ' disabled title="Bloqueado para manter as anotações alinhadas"' : ''}><\/span>
   <span style="${C}background:#eee;"><span style="${L}">Layout<\/span><select id="layoutEx" style="${S}"${exportLayoutLocked ? ' disabled title="Bloqueado para manter as anotações alinhadas"' : ''}>${layoutOptions}<\/select><input type="number" id="mpsCountEx" value="${mps.count}" min="1" max="32" style="${I}width:36px;text-align:center;"${exportLayoutLocked || mps.mode !== 'fixed' ? ' disabled' : ''}><\/span>
@@ -5906,7 +5951,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   <span>&bull;</span>
   <a href="https://glauberlasantiago.github.io/vitopamos/" target="_blank" style="text-decoration:none;color:#94a3b8;font-size:10px;">Powered by ViToPaMos</a>
   <span>&bull;</span>
-  <a href="https://github.com/gleitz/midi-js-soundfonts" target="_blank" rel="noopener noreferrer" title="FluidR3_GM: CC BY 3.0; FatBoy: CC BY-SA 3.0" style="text-decoration:none;color:#94a3b8;font-size:10px;">Timbres MIDI.js Soundfonts</a>
+  <a href="https://github.com/gleitz/midi-js-soundfonts" target="_blank" rel="noopener noreferrer" title="FluidR3_GM: CC BY 3.0; FatBoy e MusyngKite: CC BY-SA 3.0" style="text-decoration:none;color:#94a3b8;font-size:10px;">Timbres MIDI.js Soundfonts</a>
 </div>
 <p id="st" style="display:none;text-align:center;font-size:13px;color:#6b7280;"><\/p>
 <div id="scoreViewport" style="width:100%;overflow-x:auto;"><div id="score" style="cursor:pointer;position:relative;box-sizing:content-box;${exportLayoutLocked ? 'width:' + exportScoreWidth + 'px;max-width:none;' : ''}"><\/div><\/div>
@@ -5917,7 +5962,6 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   var chordConfig = ${safeChordConfig};
   var pianoChordConfig = ${safePianoChordConfig};
   var chordStyleConfig = ${safeChordStyleConfig};
-  var soundQuality = '${safeSoundQuality}';
   var annotations = ${safeAnnotations};
   var annotationLayoutLock = ${safeAnnotationLayoutLock};
   var transposeInstrumentsGlobally = false;
@@ -6404,25 +6448,25 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   var chordInst=null,chordGain=null;
   var pianoChordInst=null,pianoChordGain=null;
   var SOUND_QUALITY_CONFIG={
-    standard:{label:'Econômica',soundfont:'FluidR3_GM',baseUrl:'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/'},
-    hq:{label:'Alta qualidade',soundfont:'FatBoy',baseUrl:'https://gleitz.github.io/midi-js-soundfonts/FatBoy/'}
+    standard:{label:'Econômica',shortLabel:'Eco',soundfont:'FluidR3_GM',baseUrl:'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/'},
+    medium:{label:'Intermediária',shortLabel:'Média',soundfont:'FatBoy',baseUrl:'https://gleitz.github.io/midi-js-soundfonts/FatBoy/'},
+    superior:{label:'Superior',shortLabel:'Superior',soundfont:'MusyngKite',baseUrl:'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/'}
   };
-  var soundLoadGeneration=0,melodicInstrumentCache={};
+  var soundLoadGeneration=0,partSoundLoadGenerations=[],chordSoundLoadGeneration=0,pianoChordSoundLoadGeneration=0,melodicInstrumentCache={};
 
-  function getSoundLoadingMessageEx(quality){return quality==='hq'?'Carregando banco de sons em alta qualidade…':'Carregando banco de sons econômicos…';}
-  function getSoundLoadedMessageEx(quality){return quality==='hq'?'Sons em alta qualidade carregados.':'Sons econômicos carregados.';}
+  function normalizeSoundQualityEx(quality){if(quality==='hq')return'medium';return SOUND_QUALITY_CONFIG[quality]?quality:'standard';}
+  partConfigs.forEach(function(cfg){cfg.soundQuality=normalizeSoundQualityEx(cfg.soundQuality);});
+  chordConfig.soundQuality=normalizeSoundQualityEx(chordConfig.soundQuality);
+  pianoChordConfig.soundQuality=normalizeSoundQualityEx(pianoChordConfig.soundQuality);
+  function getSoundLoadingMessageEx(quality){return'Carregando som em qualidade '+SOUND_QUALITY_CONFIG[normalizeSoundQualityEx(quality)].label.toLowerCase()+'…';}
+  function getSoundLoadedMessageEx(quality){return'Som em qualidade '+SOUND_QUALITY_CONFIG[normalizeSoundQualityEx(quality)].label.toLowerCase()+' carregado.';}
   function showSoundStatusEx(message){var status=document.getElementById('st');status.textContent=message;status.style.display='block';}
   function showLoadedSoundStatusEx(state){
-    if(state&&state.fallback)showSoundStatusEx('Não foi possível carregar um dos sons em alta qualidade. Usando a versão econômica para este instrumento.');
+    if(state&&state.fallback)showSoundStatusEx('Uma qualidade escolhida não estava disponível. Foi usado o melhor banco alternativo nessa pista.');
     else if(state&&state.failed)showSoundStatusEx('Alguns timbres não puderam ser carregados. Os demais continuam disponíveis.');
-    else showSoundStatusEx(getSoundLoadedMessageEx(soundQuality));
+    else showSoundStatusEx('Sons das pistas carregados.');
     var completedMessage=document.getElementById('st').textContent;
     setTimeout(function(){var status=document.getElementById('st');if(status.textContent===completedMessage)status.style.display='none';},2800);
-  }
-  function updateSoundQualityControlEx(){
-    var select=document.getElementById('soundQualityEx');if(!select)return;
-    select.value=soundQuality;
-    select.title=soundQuality==='hq'?'Sons mais detalhados. Pode consumir mais dados e levar mais tempo para carregar.':'Carregamento mais rápido e menor uso de dados.';
   }
   function loadInstrumentFromQualityEx(program,destination,quality){
     var cfg=SOUND_QUALITY_CONFIG[quality]||SOUND_QUALITY_CONFIG.standard,key=cfg.soundfont+'/'+program,bucket=melodicInstrumentCache[key];
@@ -6432,13 +6476,9 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     bucket.set(destination,promise);return promise;
   }
   async function loadMelodicInstrumentEx(program,destination,quality){
-    var requested=SOUND_QUALITY_CONFIG[quality]?quality:'standard';
-    try{return{instrument:await loadInstrumentFromQualityEx(program,destination,requested),fallback:false};}
-    catch(error){
-      if(requested!=='hq')throw error;
-      console.warn('Falha ao carregar '+program+' no FatBoy; usando FluidR3_GM.',error);
-      return{instrument:await loadInstrumentFromQualityEx(program,destination,'standard'),fallback:true};
-    }
+    var requested=normalizeSoundQualityEx(quality),chain=requested==='superior'?['superior','medium','standard']:(requested==='medium'?['medium','standard']:['standard']),lastError=null;
+    for(var i=0;i<chain.length;i++)try{return{instrument:await loadInstrumentFromQualityEx(program,destination,chain[i]),fallback:i>0,requestedQuality:requested,actualQuality:chain[i]};}catch(error){lastError=error;console.warn('Falha ao carregar '+program+' em '+SOUND_QUALITY_CONFIG[chain[i]].soundfont+'.',error);}
+    throw lastError||new Error('Não foi possível carregar o instrumento.');
   }
 
   /* Variáveis do Scheduler */
@@ -6802,12 +6842,12 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       pianoChordGain=ac.createGain();pianoChordGain.gain.value=pianoChordConfig.vol/100;pianoChordGain.connect(inputGain);
     }
     var jobs=[];
-    if(!chordInst)jobs.push(loadMelodicInstrumentEx(chordConfig.program,chordGain,soundQuality).then(function(result){if(generation!==soundLoadGeneration)return;chordInst=result.instrument;loadState.fallback=loadState.fallback||result.fallback;}).catch(function(error){loadState.failed=true;console.error('Falha ao carregar o baixo das cifras.',error);}));
-    if(!pianoChordInst)jobs.push(loadMelodicInstrumentEx(pianoChordConfig.program,pianoChordGain,soundQuality).then(function(result){if(generation!==soundLoadGeneration)return;pianoChordInst=result.instrument;loadState.fallback=loadState.fallback||result.fallback;}).catch(function(error){loadState.failed=true;console.error('Falha ao carregar os acordes das cifras.',error);}));
+    if(!chordInst)jobs.push(loadMelodicInstrumentEx(chordConfig.program,chordGain,chordConfig.soundQuality).then(function(result){if(generation!==soundLoadGeneration)return;chordInst=result.instrument;loadState.fallback=loadState.fallback||result.fallback;}).catch(function(error){loadState.failed=true;console.error('Falha ao carregar o baixo das cifras.',error);}));
+    if(!pianoChordInst)jobs.push(loadMelodicInstrumentEx(pianoChordConfig.program,pianoChordGain,pianoChordConfig.soundQuality).then(function(result){if(generation!==soundLoadGeneration)return;pianoChordInst=result.instrument;loadState.fallback=loadState.fallback||result.fallback;}).catch(function(error){loadState.failed=true;console.error('Falha ao carregar os acordes das cifras.',error);}));
     await Promise.allSettled(jobs);return loadState;
   }
-  async function reloadChordInstrument(){var generation=++soundLoadGeneration;if(run)stopPlayback();else stopAll();if(!ac||ac.state==='closed'){ac=new(window.AudioContext||window.webkitAudioContext)();setupFx();}chordInst=null;showSoundStatusEx(getSoundLoadingMessageEx(soundQuality));var state=await ensureChordInstrument(generation,{fallback:false,failed:false});if(generation!==soundLoadGeneration)return;updateFullMix();showLoadedSoundStatusEx(state);}
-  async function reloadPianoChordInstrument(){var generation=++soundLoadGeneration;if(run)stopPlayback();else stopAll();if(!ac||ac.state==='closed'){ac=new(window.AudioContext||window.webkitAudioContext)();setupFx();}pianoChordInst=null;showSoundStatusEx(getSoundLoadingMessageEx(soundQuality));var state=await ensureChordInstrument(generation,{fallback:false,failed:false});if(generation!==soundLoadGeneration)return;updateFullMix();showLoadedSoundStatusEx(state);}
+  async function reloadChordInstrument(){var generation=soundLoadGeneration,localGeneration=++chordSoundLoadGeneration;if(run)stopPlayback();else stopAll();if(!ac||ac.state==='closed'){ac=new(window.AudioContext||window.webkitAudioContext)();setupFx();}if(!chordGain){chordGain=ac.createGain();chordGain.gain.value=chordConfig.vol/100;chordGain.connect(inputGain);}chordInst=null;showSoundStatusEx(getSoundLoadingMessageEx(chordConfig.soundQuality));var state={fallback:false,failed:false};try{var result=await loadMelodicInstrumentEx(chordConfig.program,chordGain,chordConfig.soundQuality);if(generation!==soundLoadGeneration||localGeneration!==chordSoundLoadGeneration)return;chordInst=result.instrument;state.fallback=result.fallback;}catch(error){state.failed=true;console.error('Falha ao carregar o baixo das cifras.',error);}if(generation!==soundLoadGeneration||localGeneration!==chordSoundLoadGeneration)return;updateFullMix();showLoadedSoundStatusEx(state);}
+  async function reloadPianoChordInstrument(){var generation=soundLoadGeneration,localGeneration=++pianoChordSoundLoadGeneration;if(run)stopPlayback();else stopAll();if(!ac||ac.state==='closed'){ac=new(window.AudioContext||window.webkitAudioContext)();setupFx();}if(!pianoChordGain){pianoChordGain=ac.createGain();pianoChordGain.gain.value=pianoChordConfig.vol/100;pianoChordGain.connect(inputGain);}pianoChordInst=null;showSoundStatusEx(getSoundLoadingMessageEx(pianoChordConfig.soundQuality));var state={fallback:false,failed:false};try{var result=await loadMelodicInstrumentEx(pianoChordConfig.program,pianoChordGain,pianoChordConfig.soundQuality);if(generation!==soundLoadGeneration||localGeneration!==pianoChordSoundLoadGeneration)return;pianoChordInst=result.instrument;state.fallback=result.fallback;}catch(error){state.failed=true;console.error('Falha ao carregar os acordes das cifras.',error);}if(generation!==soundLoadGeneration||localGeneration!==pianoChordSoundLoadGeneration)return;updateFullMix();showLoadedSoundStatusEx(state);}
 
   function updateFullMix(){
     updatePartMix();
@@ -7132,7 +7172,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   async function ensureInst(generation){
     if(melodicInstrumentsReadyEx())return;
     generation=generation===undefined?soundLoadGeneration:generation;
-    showSoundStatusEx(getSoundLoadingMessageEx(soundQuality));
+    showSoundStatusEx('Carregando sons das pistas…');
     var loadState={fallback:false,failed:false};
     var hasDrum=partConfigs.some(function(c){return c.program==='_drum_kit_gm';})||document.getElementById('met').checked||(chordStyleConfig.style!=='manual'&&chordStyleConfig.drums);
     if(hasDrum){await loadDrumSounds();initDrumEngine();}
@@ -7140,7 +7180,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var promises=partConfigs.map(async function(cfg,idx){
       var gain=partGains[idx];if(!gain){gain=ac.createGain();gain.connect(inputGain);partGains[idx]=gain;}
       if(cfg.program==='_drum_kit_gm'){partInsts[idx]={isDrumKit:true};return Promise.resolve();}
-      try{var result=await loadMelodicInstrumentEx(cfg.program,gain,soundQuality);if(generation!==soundLoadGeneration)return;partInsts[idx]=result.instrument;loadState.fallback=loadState.fallback||result.fallback;}
+      try{cfg.soundQuality=normalizeSoundQualityEx(cfg.soundQuality);var result=await loadMelodicInstrumentEx(cfg.program,gain,cfg.soundQuality);if(generation!==soundLoadGeneration)return;partInsts[idx]=result.instrument;loadState.fallback=loadState.fallback||result.fallback;}
       catch(error){loadState.failed=true;console.error('Falha ao carregar o timbre '+cfg.program+'.',error);}
     });
     await Promise.allSettled(promises);
@@ -7152,25 +7192,17 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   }
 
   async function reloadPartInstrumentEx(idx){
-    var generation=++soundLoadGeneration;if(run)stopPlayback();else stopAll();showSoundStatusEx(getSoundLoadingMessageEx(soundQuality));
+    var generation=soundLoadGeneration,localGeneration=(partSoundLoadGenerations[idx]||0)+1;partSoundLoadGenerations[idx]=localGeneration;if(run)stopPlayback();else stopAll();
     var cfg=partConfigs[idx];if(!cfg)return;
+    cfg.soundQuality=normalizeSoundQualityEx(cfg.soundQuality);showSoundStatusEx(cfg.program==='_drum_kit_gm'?'Carregando sons de percussão…':getSoundLoadingMessageEx(cfg.soundQuality));
     if(!ac||ac.state==='closed'){ac=new(window.AudioContext||window.webkitAudioContext)();setupFx();}
     var gain=partGains[idx];if(!gain){gain=ac.createGain();gain.connect(inputGain);partGains[idx]=gain;}
     var state={fallback:false,failed:false};
     try{
-      if(cfg.program==='_drum_kit_gm'){await loadDrumSounds();initDrumEngine();if(generation===soundLoadGeneration)partInsts[idx]={isDrumKit:true};}
-      else{var result=await loadMelodicInstrumentEx(cfg.program,gain,soundQuality);if(generation!==soundLoadGeneration)return;partInsts[idx]=result.instrument;state.fallback=result.fallback;}
+      if(cfg.program==='_drum_kit_gm'){await loadDrumSounds();initDrumEngine();if(generation===soundLoadGeneration&&localGeneration===partSoundLoadGenerations[idx])partInsts[idx]={isDrumKit:true};}
+      else{var result=await loadMelodicInstrumentEx(cfg.program,gain,cfg.soundQuality);if(generation!==soundLoadGeneration||localGeneration!==partSoundLoadGenerations[idx])return;partInsts[idx]=result.instrument;state.fallback=result.fallback;}
     }catch(error){state.failed=true;console.error('Falha ao carregar o timbre da parte.',error);}
-    if(generation!==soundLoadGeneration)return;updateFullMix();showLoadedSoundStatusEx(state);
-  }
-
-  async function changeSoundQualityEx(nextQuality){
-    nextQuality=SOUND_QUALITY_CONFIG[nextQuality]?nextQuality:'standard';
-    if(nextQuality===soundQuality){updateSoundQualityControlEx();return;}
-    soundQuality=nextQuality;updateSoundQualityControlEx();
-    var generation=++soundLoadGeneration;if(run)stopPlayback();else stopAll();partInsts=[];chordInst=null;pianoChordInst=null;
-    if(!ac||ac.state==='closed'){ac=new(window.AudioContext||window.webkitAudioContext)();setupFx();}
-    await ensureInst(generation);
+    if(generation!==soundLoadGeneration||localGeneration!==partSoundLoadGenerations[idx])return;updateFullMix();showLoadedSoundStatusEx(state);
   }
 
   async function play(off, loopStartDelay){
@@ -7214,8 +7246,6 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   }
 
   document.getElementById('rev').addEventListener('input',function(){updateReverb();});
-  document.getElementById('soundQualityEx').addEventListener('change',function(){changeSoundQualityEx(this.value);});
-  updateSoundQualityControlEx();
   document.getElementById('bpm').addEventListener('change',function(){
     eventsCache.bpm=null;cursorStepsCache.mode=null;
     buildMeasureTimeMap();
@@ -7312,6 +7342,13 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     OCT_OPTIONS_EX.forEach(function(o){var opt=document.createElement('option');opt.value=o[0];opt.textContent=o[1];if(String(val)===o[0])opt.selected=true;s.appendChild(opt);});
     s.onchange=onchange;return s;
   }
+  function makeSoundQualityButtonEx(config,onchange){
+    config.soundQuality=normalizeSoundQualityEx(config.soundQuality);
+    var button=document.createElement('button');button.type='button';
+    function refresh(){var quality=normalizeSoundQualityEx(config.soundQuality),info=SOUND_QUALITY_CONFIG[quality];button.className='quality-level-btn quality-'+quality;button.innerHTML='<span class="quality-bars" aria-hidden="true"><i><\/i><i><\/i><i><\/i><\/span><span>'+info.shortLabel+'<\/span>';button.setAttribute('aria-label','Qualidade do som: '+info.label+'. Clique para mudar.');button.title=info.label+' — '+(quality==='standard'?'menor uso de dados':(quality==='medium'?'FatBoy, mais detalhado':'MusyngKite, mais detalhado e pesado'))+'. Clique para o próximo nível.';}
+    button.onclick=function(){var levels=['standard','medium','superior'];config.soundQuality=levels[(levels.indexOf(normalizeSoundQualityEx(config.soundQuality))+1)%levels.length];refresh();onchange(config.soundQuality);};
+    refresh();return button;
+  }
   function makeDurSelExPC(val,onchange){
     var s=document.createElement('select');s.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px 4px;font-size:11px;background:#fff;color:#111827;cursor:pointer;';
     [[1,'1 tempo'],[2,'2 tempos'],[3,'3 tempos'],[4,'4 tempos'],[5,'arpejo em colcheias'],[6,'acordes em semínimas'],[7,'acordes em colcheias']].forEach(function(o){var opt=document.createElement('option');opt.value=o[0];opt.textContent=o[1];if(Number(val)===o[0])opt.selected=true;s.appendChild(opt);});
@@ -7349,7 +7386,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     updateGlobalTranspUIEx();
 
     partConfigs.forEach(function(cfg,idx){
-      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;';
+      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
       var nameSp=document.createElement('span');nameSp.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;';nameSp.textContent=cfg.name;
       var bMute=document.createElement('button');bMute.innerHTML=ICONS.mute+' Mute';bMute.style.cssText=S_BTN+(cfg.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
       bMute.onclick=function(){cfg.mute=!cfg.mute;bMute.style.cssText=S_BTN+(cfg.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
@@ -7366,8 +7403,10 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       if(cfg.isDrum){octS.disabled=true;octS.title="Percussão não permite transposição.";octS.style.opacity="0.5";cfg.oct=0;}
       var sel=document.createElement('select');sel.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
       sel.innerHTML=GM_OPTS_HTML;sel.value=cfg.program;
-      sel.onchange=function(){cfg.program=sel.value;cfg.isDrum=(sel.value==='_drum_kit_gm');if(cfg.isDrum)cfg.oct=0;eventsCache.bpm=null;cursorStepsCache.mode=null;reloadPartInstrumentEx(idx);};
+      var qualityBtn=makeSoundQualityButtonEx(cfg,function(){reloadPartInstrumentEx(idx);});qualityBtn.style.display=cfg.isDrum?'none':'inline-flex';
+      sel.onchange=function(){cfg.program=sel.value;cfg.isDrum=(sel.value==='_drum_kit_gm');if(cfg.isDrum)cfg.oct=0;qualityBtn.style.display=cfg.isDrum?'none':'inline-flex';eventsCache.bpm=null;cursorStepsCache.mode=null;reloadPartInstrumentEx(idx);};
       row.appendChild(nameSp);row.appendChild(volRange);row.appendChild(bMute);row.appendChild(bSolo);row.appendChild(octS);row.appendChild(sel);
+      row.appendChild(qualityBtn);
       pPanel.appendChild(row);
     });
 
@@ -7386,7 +7425,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     updateStyleControlsEx();styleRow.appendChild(styleName);styleRow.appendChild(styleSel);styleRow.appendChild(drumsLabel);styleRow.appendChild(drumsVol);
 
     pianoChordConfig.enabled=true;
-    var pchRow=document.createElement('div');pchRow.style.cssText='display:flex;align-items:center;gap:8px;';
+    var pchRow=document.createElement('div');pchRow.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
     var pchName=document.createElement('span');pchName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#6366f1;';pchName.textContent='Cifra: acordes';
     var bPMuteC=document.createElement('button');bPMuteC.innerHTML=ICONS.mute+' Mute';bPMuteC.style.cssText=S_BTN+(pianoChordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
     bPMuteC.onclick=function(){pianoChordConfig.mute=!pianoChordConfig.mute;bPMuteC.style.cssText=S_BTN+(pianoChordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
@@ -7403,10 +7442,10 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var selPC=document.createElement('select');selPC.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
     selPC.innerHTML=GM_OPTS_HTML;selPC.value=pianoChordConfig.program;
     selPC.onchange=function(){pianoChordConfig.program=selPC.value;pianoChordInst=null;eventsCache.bpm=null;reloadPianoChordInstrument();};
-    pchRow.appendChild(pchName);pchRow.appendChild(volPC);pchRow.appendChild(bPMuteC);pchRow.appendChild(bPSoloC);pchRow.appendChild(octPC);pchRow.appendChild(selPC);pchRow.appendChild(durPC);
+    pchRow.appendChild(pchName);pchRow.appendChild(volPC);pchRow.appendChild(bPMuteC);pchRow.appendChild(bPSoloC);pchRow.appendChild(octPC);pchRow.appendChild(selPC);pchRow.appendChild(durPC);pchRow.appendChild(makeSoundQualityButtonEx(pianoChordConfig,function(){reloadPianoChordInstrument();}));
     pPanel.appendChild(pchRow);
 
-    var chRow=document.createElement('div');chRow.style.cssText='display:flex;align-items:center;gap:8px;';
+    var chRow=document.createElement('div');chRow.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
     var chName=document.createElement('span');chName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#6366f1;';chName.textContent='Cifra: baixo';
     var bMuteC=document.createElement('button');bMuteC.innerHTML=ICONS.mute+' Mute';bMuteC.style.cssText=S_BTN+(chordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
     bMuteC.onclick=function(){chordConfig.mute=!chordConfig.mute;bMuteC.style.cssText=S_BTN+(chordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
@@ -7423,7 +7462,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var selC=document.createElement('select');selC.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
     selC.innerHTML=GM_OPTS_HTML;selC.value=chordConfig.program;
     selC.onchange=function(){chordConfig.program=selC.value;chordInst=null;eventsCache.bpm=null;reloadChordInstrument();};
-    chRow.appendChild(chName);chRow.appendChild(volC);chRow.appendChild(bMuteC);chRow.appendChild(bSoloC);chRow.appendChild(octC);chRow.appendChild(selC);chRow.appendChild(durC);
+    chRow.appendChild(chName);chRow.appendChild(volC);chRow.appendChild(bMuteC);chRow.appendChild(bSoloC);chRow.appendChild(octC);chRow.appendChild(selC);chRow.appendChild(durC);chRow.appendChild(makeSoundQualityButtonEx(chordConfig,function(){reloadChordInstrument();}));
     pPanel.appendChild(chRow);
     pPanel.appendChild(styleRow);
 
