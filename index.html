@@ -2388,18 +2388,35 @@
                 return (v >= 20 && v <= 400) ? v : null;
             }
             function extractMetaFromXml(xml) {
-                var title = '', m;
-                m = xml.match(/<work-title>([\s\S]*?)<\/work-title>/);
-                if (!m) m = xml.match(/<movement-title>([\s\S]*?)<\/movement-title>/);
-                if (m) title = m[1].trim();
-                return { title: title };
+                var doc = new DOMParser().parseFromString(xml, 'text/xml');
+                if (doc.querySelector('parsererror')) return { title: '' };
+                var titleEl = doc.querySelector('work-title, movement-title');
+                if (!titleEl) {
+                    Array.from(doc.querySelectorAll('credit')).some(function (credit) {
+                        var type = credit.querySelector('credit-type');
+                        if (type && type.textContent.trim().toLowerCase() === 'title') {
+                            titleEl = credit.querySelector('credit-words');
+                            return !!titleEl;
+                        }
+                        return false;
+                    });
+                }
+                return { title: titleEl ? titleEl.textContent.trim() : '' };
             }
             function applyMetaToXml(xml, title) {
-                if (/<work-title>/.test(xml))
-                    xml = xml.replace(/<work-title>[\s\S]*?<\/work-title>/, '<work-title>' + title + '</work-title>');
-                else if (/<movement-title>/.test(xml))
-                    xml = xml.replace(/<movement-title>[\s\S]*?<\/movement-title>/, '<movement-title>' + title + '</movement-title>');
-                return xml;
+                var doc = new DOMParser().parseFromString(xml, 'text/xml');
+                if (doc.querySelector('parsererror')) return xml;
+                var score = doc.documentElement;
+                var titleEl = doc.querySelector('work-title, movement-title');
+                if (!titleEl) {
+                    var ns = score.namespaceURI;
+                    var work = ns ? doc.createElementNS(ns, 'work') : doc.createElement('work');
+                    titleEl = ns ? doc.createElementNS(ns, 'work-title') : doc.createElement('work-title');
+                    work.appendChild(titleEl);
+                    score.insertBefore(work, score.firstChild);
+                }
+                titleEl.textContent = title || '';
+                return new XMLSerializer().serializeToString(doc);
             }
 
             function getMetronomeBeatLen() {
