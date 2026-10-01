@@ -5118,6 +5118,17 @@
                 setStatus('Cifra reposicionada no compasso ' + (targetMeasureIdx + 1) + '.', 'ok');
             }
 
+            function getSourceMeasureIndexFromRenderedId(renderedId) {
+                var sourceMeasures = osmd && osmd.Sheet && osmd.Sheet.SourceMeasures;
+                if (sourceMeasures) {
+                    for (var i = 0; i < sourceMeasures.length; i++) {
+                        if (Number(sourceMeasures[i].MeasureNumber) === renderedId) return i;
+                    }
+                    if (renderedId >= 0 && renderedId < sourceMeasures.length) return renderedId;
+                }
+                return renderedId > 0 ? renderedId - 1 : renderedId;
+            }
+
             function getMeasureIndexAtCoords(clientX, clientY) {
                 var renderedMeasures = document.querySelectorAll('#score svg:not(#annotationLayer) g.vf-measure');
                 var renderedBest = -1, renderedDistance = Infinity;
@@ -5126,7 +5137,7 @@
                     if (!isFinite(renderedIdx) || renderedIdx < 0) continue;
                     var renderedRect = renderedMeasures[r].getBoundingClientRect();
                     if (clientX >= renderedRect.left && clientX <= renderedRect.right && clientY >= renderedRect.top && clientY <= renderedRect.bottom) {
-                        return renderedIdx;
+                        return getSourceMeasureIndexFromRenderedId(renderedIdx);
                     }
                     var renderedDx = Math.max(0, renderedRect.left - clientX, clientX - renderedRect.right);
                     var renderedDy = Math.max(0, renderedRect.top - clientY, clientY - renderedRect.bottom);
@@ -5136,7 +5147,7 @@
                         renderedBest = renderedIdx;
                     }
                 }
-                return renderedBest;
+                return renderedBest < 0 ? renderedBest : getSourceMeasureIndexFromRenderedId(renderedBest);
             }
 
             function getMeasureNumberAtIndex(measureIdx) {
@@ -6927,16 +6938,25 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     }
   });
 
+  function getSourceMeasureIndexFromRenderedIdEx(renderedId){
+    var sourceMeasures=osmd&&osmd.Sheet&&osmd.Sheet.SourceMeasures;
+    if(sourceMeasures){
+      for(var i=0;i<sourceMeasures.length;i++)if(Number(sourceMeasures[i].MeasureNumber)===renderedId)return i;
+      if(renderedId>=0&&renderedId<sourceMeasures.length)return renderedId;
+    }
+    return renderedId>0?renderedId-1:renderedId;
+  }
+
   function getMeasureIndexAtCoordsEx(clientX,clientY){
     var measures=document.querySelectorAll('#score svg g.vf-measure'),best=-1,minDistance=Infinity;
     for(var m=0;m<measures.length;m++){
       var idx=parseInt(measures[m].getAttribute('id'),10);if(!isFinite(idx)||idx<0)continue;
       var rect=measures[m].getBoundingClientRect();
-      if(clientX>=rect.left&&clientX<=rect.right&&clientY>=rect.top&&clientY<=rect.bottom)return idx;
+      if(clientX>=rect.left&&clientX<=rect.right&&clientY>=rect.top&&clientY<=rect.bottom)return getSourceMeasureIndexFromRenderedIdEx(idx);
       var dx=Math.max(0,rect.left-clientX,clientX-rect.right),dy=Math.max(0,rect.top-clientY,clientY-rect.bottom),distance=Math.sqrt(dx*dx+dy*dy);
       if(distance<minDistance){minDistance=distance;best=idx;}
     }
-    return best;
+    return best<0?best:getSourceMeasureIndexFromRenderedIdEx(best);
   }
 
   async function playFromMeasureAtCoordsEx(clientX,clientY){
