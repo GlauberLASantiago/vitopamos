@@ -243,6 +243,14 @@
             cursor: default;
         }
 
+        .btn.export-processing,
+        .btn.export-processing:disabled {
+            color: #dc2626 !important;
+            background: #fff1f2 !important;
+            border: 1px solid #fecaca !important;
+            opacity: 1 !important;
+        }
+
         .btn-play {
             background: #22c55e;
             color: #fff;
@@ -1886,11 +1894,12 @@
                 var score = document.getElementById('score');
                 var musicSvg = Array.from(score.querySelectorAll('svg')).find(function (svg) { return svg.id !== 'annotationLayer'; });
                 if (!musicSvg) return null;
-                var scoreRect = score.getBoundingClientRect(), svgRect = musicSvg.getBoundingClientRect();
+                var scoreRect = score.getBoundingClientRect(), svgRect = musicSvg.getBoundingClientRect(), scoreStyle = getComputedStyle(score);
+                var borderLeft = parseFloat(scoreStyle.borderLeftWidth) || 0, borderTop = parseFloat(scoreStyle.borderTopWidth) || 0;
                 return {
                     score: score, width: Math.max(1, svgRect.width), height: Math.max(1, svgRect.height),
-                    left: svgRect.left - scoreRect.left + score.scrollLeft,
-                    top: svgRect.top - scoreRect.top + score.scrollTop
+                    left: svgRect.left - scoreRect.left - borderLeft + score.scrollLeft,
+                    top: svgRect.top - scoreRect.top - borderTop + score.scrollTop
                 };
             }
 
@@ -5101,30 +5110,48 @@
                 var score = document.getElementById('score'), previousSelection = selectedAnnotationId;
                 selectedAnnotationId = null; annotationDraft = null; renderAnnotations();
                 try {
-                    return await html2canvas(score, {
+                    await new Promise(function (resolve) { requestAnimationFrame(function () { requestAnimationFrame(resolve); }); });
+                    var layer = document.getElementById('annotationLayer');
+                    var scoreRect = score.getBoundingClientRect(), layerRect = layer ? layer.getBoundingClientRect() : null;
+                    var canvas = await html2canvas(score, {
                         backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false,
                         width: score.scrollWidth, height: score.scrollHeight,
                         windowWidth: Math.max(document.documentElement.clientWidth, score.scrollWidth + 40),
-                        ignoreElements: function (el) { return !!((el.id && el.id.indexOf('cursorImg') === 0) || (el.getAttribute && el.getAttribute('data-ann-selection'))); }
+                        ignoreElements: function (el) { return !!(el.id === 'annotationLayer' || (el.id && el.id.indexOf('cursorImg') === 0) || (el.getAttribute && el.getAttribute('data-ann-selection'))); }
                     });
+                    /* A partitura e as anotações são rasterizadas separadamente e
+                       reunidas pelas coordenadas realmente vistas na tela. Assim o
+                       html2canvas não pode arredondar cada SVG de uma forma diferente. */
+                    if (layer && layerRect && annotations.length) {
+                        var annotationCanvas = await html2canvas(layer, {
+                            backgroundColor: null, scale: 2, useCORS: true, logging: false,
+                            width: layerRect.width, height: layerRect.height,
+                            ignoreElements: function (el) { return !!(el.getAttribute && el.getAttribute('data-ann-selection')); }
+                        });
+                        var scaleX = canvas.width / score.scrollWidth, scaleY = canvas.height / score.scrollHeight;
+                        var drawX = (layerRect.left - scoreRect.left + score.scrollLeft) * scaleX;
+                        var drawY = (layerRect.top - scoreRect.top + score.scrollTop) * scaleY;
+                        canvas.getContext('2d').drawImage(annotationCanvas, Math.round(drawX), Math.round(drawY), Math.round(layerRect.width * scaleX), Math.round(layerRect.height * scaleY));
+                    }
+                    return canvas;
                 } finally {
                     selectedAnnotationId = previousSelection; renderAnnotations();
                 }
             }
 
             document.getElementById('btnSavePng').onclick = async function () {
-                var btn = this, old = btn.textContent; btn.disabled = true; btn.textContent = 'Gerando…';
+                var btn = this, old = btn.textContent; btn.disabled = true; btn.classList.add('export-processing'); btn.textContent = 'Gerando…';
                 try {
                     setStatus('Gerando PNG com o layout atual...', 'info');
                     var canvas = await captureVisibleScoreCanvas();
                     var blob = await new Promise(function (resolve, reject) { canvas.toBlob(function (value) { value ? resolve(value) : reject(new Error('Não foi possível criar o PNG.')); }, 'image/png'); });
                     downloadMediaBlob(blob, 'png'); setStatus('PNG salvo com o layout e zoom atuais.', 'ok');
                 } catch (err) { setStatus('ERRO PNG: ' + err.message, 'err'); }
-                finally { btn.disabled = false; btn.textContent = old; }
+                finally { btn.disabled = false; btn.classList.remove('export-processing'); btn.textContent = old; }
             };
 
             document.getElementById('btnSavePdf').onclick = async function () {
-                var btn = this, old = btn.textContent; btn.disabled = true; btn.textContent = 'Gerando…';
+                var btn = this, old = btn.textContent; btn.disabled = true; btn.classList.add('export-processing'); btn.textContent = 'Gerando…';
                 try {
                     if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('O gerador de PDF não foi carregado. Verifique a conexão com a internet.');
                     setStatus('Gerando PDF com o layout atual...', 'info');
@@ -5136,7 +5163,7 @@
                     pdf.addImage(canvas.toDataURL('image/jpeg', 0.96), 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
                     pdf.save(getMediaExportBaseName() + '.pdf'); setStatus('PDF salvo com o layout e zoom atuais.', 'ok');
                 } catch (err) { setStatus('ERRO PDF: ' + err.message, 'err'); }
-                finally { btn.disabled = false; btn.textContent = old; }
+                finally { btn.disabled = false; btn.classList.remove('export-processing'); btn.textContent = old; }
             };
 
             function floatToInt16(samples) {
@@ -5161,7 +5188,7 @@
                 if (mp3Exporting) return;
                 var btn = this, old = btn.textContent, loopBox = document.getElementById('loopCheck'), oldLoop = loopBox.checked;
                 var processor = null, silentGain = null, timer = null, leftChunks = [], rightChunks = [];
-                mp3Exporting = true; btn.disabled = true; btn.textContent = 'Gravando…';
+                mp3Exporting = true; btn.disabled = true; btn.classList.add('export-processing'); btn.textContent = 'Gravando…';
                 ['bp', 'bpa', 'bs'].forEach(function (id) { document.getElementById(id).disabled = true; });
                 try {
                     if (!window.lamejs) throw new Error('O codificador MP3 não foi carregado. Verifique a conexão com a internet.');
@@ -5197,7 +5224,7 @@
                     if (timer) clearInterval(timer);
                     if (processor) { processor.onaudioprocess = null; try { outputCompressor.disconnect(processor); } catch (_) { } try { processor.disconnect(); } catch (_) { } }
                     if (silentGain) try { silentGain.disconnect(); } catch (_) { }
-                    loopBox.checked = oldLoop; mp3Exporting = false; btn.disabled = false; btn.textContent = old;
+                    loopBox.checked = oldLoop; mp3Exporting = false; btn.disabled = false; btn.classList.remove('export-processing'); btn.textContent = old;
                     ['bp', 'bpa', 'bs'].forEach(function (id) { document.getElementById(id).disabled = !rawXml; });
                 }
             };
@@ -5746,10 +5773,10 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var score=document.getElementById('score'),musicSvg=Array.from(score.querySelectorAll('svg')).find(function(svg){return svg.id!=='annotationLayer';}),old=document.getElementById('annotationLayer');
     if(!musicSvg){if(old)old.remove();return;}
     score.style.setProperty('position','relative','important');score.style.setProperty('box-sizing','content-box','important');
-    var sr=score.getBoundingClientRect(),r=musicSvg.getBoundingClientRect(),w=Math.max(1,r.width),h=Math.max(1,r.height),layer=old||annSvg('svg',{id:'annotationLayer','aria-label':'Anotações da partitura'});
+    var sr=score.getBoundingClientRect(),r=musicSvg.getBoundingClientRect(),scoreStyle=getComputedStyle(score),borderLeft=parseFloat(scoreStyle.borderLeftWidth)||0,borderTop=parseFloat(scoreStyle.borderTopWidth)||0,w=Math.max(1,r.width),h=Math.max(1,r.height),layer=old||annSvg('svg',{id:'annotationLayer','aria-label':'Anotações da partitura'});
     if(!old)score.appendChild(layer);
     layer.style.setProperty('position','absolute','important');layer.style.setProperty('display','block','important');layer.style.setProperty('z-index','20','important');layer.style.setProperty('pointer-events','none','important');layer.style.setProperty('overflow','visible','important');layer.style.setProperty('max-width','none','important');
-    layer.style.setProperty('left',(r.left-sr.left+score.scrollLeft)+'px','important');layer.style.setProperty('top',(r.top-sr.top+score.scrollTop)+'px','important');layer.style.setProperty('width',w+'px','important');layer.style.setProperty('height',h+'px','important');layer.setAttribute('width',w);layer.setAttribute('height',h);layer.setAttribute('viewBox','0 0 '+w+' '+h);
+    layer.style.setProperty('left',(r.left-sr.left-borderLeft+score.scrollLeft)+'px','important');layer.style.setProperty('top',(r.top-sr.top-borderTop+score.scrollTop)+'px','important');layer.style.setProperty('width',w+'px','important');layer.style.setProperty('height',h+'px','important');layer.setAttribute('width',w);layer.setAttribute('height',h);layer.setAttribute('viewBox','0 0 '+w+' '+h);
     layer.innerHTML='<defs><marker id="annArrowHead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,4 L0,8 z" fill="context-stroke"><\/path><\/marker><\/defs>';
     annotations.forEach(function(item){
       var color=item.color||'#dc2626',g=annSvg('g',{}),common={fill:'none',stroke:color,'stroke-width':3,'stroke-linecap':'round','stroke-linejoin':'round','vector-effect':'non-scaling-stroke'};
