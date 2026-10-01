@@ -5111,29 +5111,12 @@
                 selectedAnnotationId = null; annotationDraft = null; renderAnnotations();
                 try {
                     await new Promise(function (resolve) { requestAnimationFrame(function () { requestAnimationFrame(resolve); }); });
-                    var layer = document.getElementById('annotationLayer');
-                    var scoreRect = score.getBoundingClientRect(), layerRect = layer ? layer.getBoundingClientRect() : null;
-                    var canvas = await html2canvas(score, {
+                    return await html2canvas(score, {
                         backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false,
                         width: score.scrollWidth, height: score.scrollHeight,
                         windowWidth: Math.max(document.documentElement.clientWidth, score.scrollWidth + 40),
-                        ignoreElements: function (el) { return !!(el.id === 'annotationLayer' || (el.id && el.id.indexOf('cursorImg') === 0) || (el.getAttribute && el.getAttribute('data-ann-selection'))); }
+                        ignoreElements: function (el) { return !!((el.id && el.id.indexOf('cursorImg') === 0) || (el.getAttribute && el.getAttribute('data-ann-selection'))); }
                     });
-                    /* A partitura e as anotações são rasterizadas separadamente e
-                       reunidas pelas coordenadas realmente vistas na tela. Assim o
-                       html2canvas não pode arredondar cada SVG de uma forma diferente. */
-                    if (layer && layerRect && annotations.length) {
-                        var annotationCanvas = await html2canvas(layer, {
-                            backgroundColor: null, scale: 2, useCORS: true, logging: false,
-                            width: layerRect.width, height: layerRect.height,
-                            ignoreElements: function (el) { return !!(el.getAttribute && el.getAttribute('data-ann-selection')); }
-                        });
-                        var scaleX = canvas.width / score.scrollWidth, scaleY = canvas.height / score.scrollHeight;
-                        var drawX = (layerRect.left - scoreRect.left + score.scrollLeft) * scaleX;
-                        var drawY = (layerRect.top - scoreRect.top + score.scrollTop) * scaleY;
-                        canvas.getContext('2d').drawImage(annotationCanvas, Math.round(drawX), Math.round(drawY), Math.round(layerRect.width * scaleX), Math.round(layerRect.height * scaleY));
-                    }
-                    return canvas;
                 } finally {
                     selectedAnnotationId = previousSelection; renderAnnotations();
                 }
