@@ -1410,6 +1410,14 @@
                 return 60 + base + alter;
             }
 
+            function stripEmbeddedChordRoot(value, rootStep) {
+                var text = String(value || '').trim();
+                if (!text || !rootStep) return text;
+                var escapedRoot = String(rootStep).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                var match = text.match(new RegExp('^' + escapedRoot + '(?:[#♯b♭])?(?=(?:M|m|maj|min|dim|aug|sus|add|[0-9+º°ø]))', 'i'));
+                return match ? text.slice(match[0].length).trim() : text;
+            }
+
             var STEP_SEMITONES = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
             function rootToMidi(step, alter) {
@@ -1650,6 +1658,7 @@
                                     kindStr = kindEl.textContent || '';
                                     var kindTextAttr = kindEl.getAttribute('text');
                                     if (kindTextAttr) kindStr += ' ' + kindTextAttr;
+                                    kindStr = stripEmbeddedChordRoot(kindStr, rootStep ? rootStep.textContent.trim() : '');
                                 }
                                 var degrees = node.querySelectorAll('degree');
                                 for (var d = 0; d < degrees.length; d++) {
@@ -4192,7 +4201,7 @@
                 if (alter === 1) root += '#';
                 else if (alter === -1) root += 'b';
 
-                var kindText = evt.kindText || '';
+                var kindText = stripEmbeddedChordRoot(evt.kindText || '', evt.rootStep);
                 if (!kindText) {
                     var kindVal = evt.kindVal || 'major';
                     if (kindVal === 'minor') kindText = 'm';
@@ -4203,6 +4212,7 @@
                     else if (kindVal === 'diminished-seventh') kindText = 'dim7';
                     else if (kindVal === 'half-diminished') kindText = 'm7b5';
                     else if (kindVal === 'major-minor') kindText = 'm(maj7)';
+                    else if (kindVal !== 'major' && /^(?:[A-G][#b♯♭]?)?(?:[0-9]|M|m|\+|º|°|ø)/.test(kindVal)) kindText = stripEmbeddedChordRoot(kindVal, evt.rootStep);
                 }
 
                 var name = root + kindText;
