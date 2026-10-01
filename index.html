@@ -261,16 +261,12 @@
         }
 
         .btn-play.is-playing {
-            background: #15803d;
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, .2), 0 4px 12px rgba(21, 128, 61, .25);
+            background: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, .2), 0 4px 12px rgba(217, 119, 6, .2);
         }
 
-        .btn-play.is-playing .play-state-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-            animation: playPulse 1s ease-in-out infinite;
+        .btn-play.is-playing:not(:disabled):hover {
+            background: #d97706;
         }
 
         .btn-play.is-loading {
@@ -289,31 +285,18 @@
             animation: soundSpin .75s linear infinite;
         }
 
-        @keyframes playPulse {
-            0%, 100% { opacity: .45; transform: scale(.8); }
-            50% { opacity: 1; transform: scale(1.15); }
-        }
-
         @keyframes soundSpin {
             to { transform: rotate(360deg); }
         }
 
-        .btn-pause {
-            background: #f59e0b;
-            color: #fff;
+        .btn-reset {
+            background: #e2e8f0;
+            color: #334155;
+            border: 1px solid #cbd5e1;
         }
 
-        .btn-pause:not(:disabled):hover {
-            background: #d97706;
-        }
-
-        .btn-stop {
-            background: #ef4444;
-            color: #fff;
-        }
-
-        .btn-stop:not(:disabled):hover {
-            background: #dc2626;
+        .btn-reset:not(:disabled):hover {
+            background: #cbd5e1;
         }
 
         .btn-export {
@@ -982,20 +965,14 @@
                     <svg class="icon-svg" style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24">
                         <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
-                    Play
+                    Tocar
                 </button>
-                <button class="btn btn-pause" id="bpa" disabled>
-                    <svg class="icon-svg" style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24">
-                        <rect x="6" y="4" width="4" height="16"></rect>
-                        <rect x="14" y="4" width="4" height="16"></rect>
+                <button class="btn btn-reset" id="bs" disabled title="Interromper e voltar ao início do trecho">
+                    <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24">
+                        <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+                        <polyline points="3 4 3 10 9 10"></polyline>
                     </svg>
-                    Pause
-                </button>
-                <button class="btn btn-stop" id="bs" disabled>
-                    <svg class="icon-svg" style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24">
-                        <rect x="4" y="4" width="16" height="16"></rect>
-                    </svg>
-                    Stop
+                    Reiniciar
                 </button>
                 <!-- Bluetooth Delay Button & Panel -->
                 <div class="bt-wrap" id="btWrap">
@@ -1222,7 +1199,7 @@
         <div class="inst-steps">
             <div class="step"><span class="step-num">1</span><b>Preparar a partitura</b>No MuseScore ou em outro editor, exporte a obra em MusicXML (.musicxml, .xml ou .mxl). O formato preserva notas, vozes, cifras, repetições e indicações musicais.</div>
             <div class="step"><span class="step-num">2</span><b>Carregar ou retomar um projeto</b>Arraste o MusicXML para “Carregar partitura”. Para continuar um trabalho anterior com configurações e anotações, abra o arquivo de projeto .vtp.</div>
-            <div class="step"><span class="step-num">3</span><b>Configurar a execução</b>Ajuste BPM, qualidade do som, metrônomo, contagem, reverberação, cursor e BT Delay. “Econômica” carrega mais rápido; “Alta qualidade” usa timbres mais detalhados sob demanda. O cursor acompanha a execução e o atraso Bluetooth pode ser compensado.</div>
+            <div class="step"><span class="step-num">3</span><b>Configurar a execução</b>Use Tocar/Pausar para iniciar, interromper momentaneamente e continuar do mesmo ponto; Reiniciar volta ao início do trecho. Ajuste BPM, qualidade do som, metrônomo, contagem, reverberação, cursor e BT Delay. “Econômica” carrega mais rápido; “Alta qualidade” usa timbres mais detalhados sob demanda.</div>
             <div class="step"><span class="step-num">4</span><b>Estudar trechos e repetições</b>Defina os compassos inicial e final e ative Loop para repetir uma passagem sem pausa perceptível. Para iniciar rapidamente de outro ponto, segure Ctrl e clique no compasso desejado. Sinais e casas de repetição do MusicXML são considerados na reprodução.</div>
             <div class="step"><span class="step-num">5</span><b>Organizar o acompanhamento</b>No mixer, ajuste volume, Mute, Solo, oitavas e timbres. Em “Levada das cifras”, escolha Manual, Automático, Ataque, Canção, Bossa, Arpejo, Colcheias ou Valsa, com baixo e bateria gerados pelo navegador.</div>
             <div class="step"><span class="step-num">6</span><b>Editar cifras</b>Ative “Editar Cifras”. Clique numa cifra e depois no novo ponto da pauta para movê-la; use duplo clique para alterar seu texto. A cifragem brasileira é reconhecida: A7M, por exemplo, equivale a Amaj7.</div>
@@ -1962,13 +1939,15 @@
 
             /* ─── Estado global ──────────────────────────────────────────────── */
             var partInsts = [], partConfigs = [], partGains = [], isAnySolo = false;
-            var evs = [], ac = null, sc = [], retiredSc = [], sat = 0, pat = 0, run = false, rawXml = '', xmlDoc = null, isLoadingProject = false, playbackStartOffset = 0;
+            var evs = [], ac = null, sc = [], retiredSc = [], sat = 0, pat = 0, run = false, paused = false, rawXml = '', xmlDoc = null, isLoadingProject = false, playbackStartOffset = 0;
             var transportStartAudio = 0, transportStartOffset = 0;
             var cursorTimer = null, cursorSteps = [], cursorIndex = 0;
             var inputGain = null, masterGain = null, dryGain = null, wetGain = null, convolver = null, outputCompressor = null;
             var mp3Exporting = false;
             var playbackEndTimer = null, pieceEnd = 0;
             var playButtonIdleHtml = document.getElementById('bp').innerHTML;
+            var playButtonPauseHtml = '<svg class="icon-svg" style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>Pausar';
+            var playButtonResumeHtml = '<svg class="icon-svg" style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Continuar';
 
             function updatePlayButtonVisual(mode) {
                 var button = document.getElementById('bp');
@@ -1977,16 +1956,19 @@
                 button.classList.toggle('is-playing', visualMode === 'playing');
                 button.classList.toggle('is-loading', visualMode === 'loading');
                 button.setAttribute('aria-busy', visualMode === 'loading' ? 'true' : 'false');
-                button.setAttribute('aria-label', visualMode === 'loading' ? 'Carregando sons' : (visualMode === 'playing' ? 'Tocando' : 'Play'));
+                button.setAttribute('aria-label', visualMode === 'loading' ? 'Carregando sons' : (visualMode === 'playing' ? 'Pausar' : (paused ? 'Continuar' : 'Tocar')));
                 if (visualMode === 'loading') {
                     button.innerHTML = '<span class="sound-loading-spinner" aria-hidden="true"></span>Carregando sons…';
                     button.title = 'Aguarde enquanto o banco de sons é carregado.';
                 } else if (visualMode === 'playing') {
-                    button.innerHTML = '<span class="play-state-dot" aria-hidden="true"></span>Tocando';
-                    button.title = 'A música está tocando. Use Pause ou Stop para interromper.';
+                    button.innerHTML = playButtonPauseHtml;
+                    button.title = 'Pausar e manter a posição atual.';
+                } else if (paused) {
+                    button.innerHTML = playButtonResumeHtml;
+                    button.title = 'Continuar do ponto em que foi pausado.';
                 } else {
                     button.innerHTML = playButtonIdleHtml;
-                    button.title = 'Iniciar reprodução';
+                    button.title = 'Tocar a partir do início do trecho.';
                 }
             }
             var scoreClickTimer = null;
@@ -2483,6 +2465,7 @@
                     rangeTo = rangeFrom;
                     document.getElementById('rangeTo').value = rangeTo;
                 }
+                if (paused) stopPlayback(false);
             });
             document.getElementById('rangeTo').addEventListener('change', function () {
                 var v = parseInt(this.value, 10) || maxMeasureNumber;
@@ -2494,6 +2477,7 @@
                     rangeFrom = rangeTo;
                     document.getElementById('rangeFrom').value = rangeFrom;
                 }
+                if (paused) stopPlayback(false);
             });
 
             /* ─── Dicionário de Bateria ──────────────────────────────────────── */
@@ -3438,7 +3422,7 @@
                 if (isLoop && run) {
                     restartFromBeginningAndPlay();
                 } else {
-                    run = false; pat = 0; stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); resetCursorToStart();
+                    run = false; paused = false; pat = 0; stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); resetCursorToStart();
                     updatePlayButtonVisual();
                     setStatus('Fim da música. Voltou ao início.', 'ok');
                 }
@@ -3447,20 +3431,21 @@
                 if (!run || !ac) return;
                 pat = getPlaybackPosition(ac.currentTime, 0);
                 run = false;
+                paused = true;
                 stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer();
                 updatePlayButtonVisual();
-                setStatus('Pausado.');
+                setStatus('Pausado. Clique em Continuar para retomar.');
             }
             function stopPlayback(showStatus) {
-                run = false; pat = 0; stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); resetCursorToStart();
+                run = false; paused = false; pat = 0; stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); resetCursorToStart();
                 updatePlayButtonVisual();
-                if (showStatus !== false) setStatus('Parado.');
+                if (showStatus !== false) setStatus('Reiniciado. Cursor no início do trecho.');
             }
             async function restartFromBeginningAndPlay(isLoop) {
                 stopPlayback(false);
                 if (!partInsts.length || !ac) return;
                 var startT = getRangeStartTime();
-                run = true; updatePlayButtonVisual(); await scheduleFrom(startT, isLoop ? 0.02 : undefined); startCursorFollow(startT); pat = 0;
+                run = true; paused = false; updatePlayButtonVisual(); await scheduleFrom(startT, isLoop ? 0.02 : undefined); startCursorFollow(startT); pat = 0;
                 setStatus('Tocando...', 'ok');
             }
             function armPlaybackEnd(offset, startDelay) {
@@ -3997,7 +3982,7 @@
                 var loopDuration = rangeEndT - getRangeStartTime();
                 if (isLoopEnabled() && loopDuration > 0.001 && lookAheadLimit >= rangeEndT - 0.001) {
                     /* Solta referências da volta anterior depois da fronteira, mas ainda
-                       permite que Stop as cancele enquanto ela estiver audível. */
+                       permite que Reiniciar as cancele enquanto ela estiver audível. */
                     var completedHandles = sc;
                     sc = [];
                     retiredSc = retiredSc.concat(completedHandles);
@@ -4165,7 +4150,7 @@
                 setupFx(); initParts();
                 buildMeasureTimeMap();
                 updateRangeInputs();
-                sat = 0; pat = 0; run = false; evs = []; sc = []; pieceEnd = 0;
+                sat = 0; pat = 0; run = false; paused = false; evs = []; sc = []; pieceEnd = 0;
                 updatePlayButtonVisual();
                 clearPlaybackEndTimer();
 
@@ -4173,7 +4158,7 @@
                 if (typeof bindSvgChordClicks === 'function') bindSvgChordClicks();
 
                 setStatus('Pronto!', 'ok');
-                ['bp', 'bpa', 'bs', 'bx', 'bdl', 'btnSavePdf', 'btnSavePng', 'btnSaveMp3', 'reverbAmt', 'btnApplyMeta', 'rangeFrom', 'rangeTo', 'btnToggleEditMode', 'btnToggleAnnotations', 'btnSaveProject'].forEach(function (id) {
+                ['bp', 'bs', 'bx', 'bdl', 'btnSavePdf', 'btnSavePng', 'btnSaveMp3', 'reverbAmt', 'btnApplyMeta', 'rangeFrom', 'rangeTo', 'btnToggleEditMode', 'btnToggleAnnotations', 'btnSaveProject'].forEach(function (id) {
                     var btn = document.getElementById(id);
                     if (btn) btn.disabled = false;
                 });
@@ -4308,10 +4293,15 @@
             loadFromUrl('https://raw.githubusercontent.com/GlauberLASantiago/vitopamos/main/Vitopamos.musicxml');
 
             document.getElementById('bp').onclick = async function () {
-                if (run || !partInsts.length || !ac) return;
+                if (!partInsts.length || !ac) return;
+                if (run) {
+                    pausePlayback();
+                    return;
+                }
+                var startT = paused ? pat : getRangeStartTime();
                 run = true;
+                paused = false;
                 updatePlayButtonVisual();
-                var startT = getRangeStartTime();
                 await scheduleFrom(startT); startCursorFollow(startT); pat = 0;
                 setStatus('Tocando...', 'ok');
             };
@@ -4321,7 +4311,7 @@
                 var title = document.getElementById('metaTitle').value;
                 rawXml = applyMetaToXml(rawXml, title);
                 xmlDoc = new DOMParser().parseFromString(rawXml, 'text/xml');
-                var wasRunning = run, savedOffset = wasRunning ? getPlaybackPosition(ac.currentTime, 0) : pat;
+                var wasRunning = run, wasPaused = paused, savedOffset = wasRunning ? getPlaybackPosition(ac.currentTime, 0) : pat;
                 stopPlayback(false);
                 setStatus('Aplicando metadados...', 'info');
                 await osmd.load(rawXml);
@@ -4332,12 +4322,11 @@
                 if (typeof renderChordManager === 'function') renderChordManager();
                 if (typeof bindSvgChordClicks === 'function') bindSvgChordClicks();
 
-                if (wasRunning) { run = true; updatePlayButtonVisual(); await scheduleFrom(savedOffset, 0.02); startCursorFollow(savedOffset); }
-                else pat = savedOffset;
+                if (wasRunning) { run = true; paused = false; updatePlayButtonVisual(); await scheduleFrom(savedOffset, 0.02); startCursorFollow(savedOffset); }
+                else { pat = savedOffset; paused = wasPaused; updatePlayButtonVisual(); }
                 setStatus('Metadados atualizados!', 'ok');
             };
 
-            document.getElementById('bpa').onclick = function () { pausePlayback(); };
             document.getElementById('bs').onclick = function () { stopPlayback(true); };
             document.getElementById('loopCheck').addEventListener('change', function () {
                 clearPlaybackEndTimer();
@@ -4428,9 +4417,10 @@
                     if (detail === 2) { stopPlayback(true); return; }
                     if (run) { pausePlayback(); }
                     else if (partInsts.length && ac) {
+                        var startT = paused ? pat : getRangeStartTime();
                         run = true;
+                        paused = false;
                         updatePlayButtonVisual();
-                        var startT = pat || getRangeStartTime();
                         await scheduleFrom(startT); startCursorFollow(startT); pat = 0;
                         setStatus('Tocando...', 'ok');
                     }
@@ -4702,7 +4692,7 @@
 
                     buildMeasureTimeMap();
                     updateRangeInputs();
-                    sat = 0; pat = 0; run = false; evs = []; sc = []; pieceEnd = 0;
+                    sat = 0; pat = 0; run = false; paused = false; evs = []; sc = []; pieceEnd = 0;
                     updatePlayButtonVisual();
                     clearPlaybackEndTimer();
 
@@ -5420,6 +5410,7 @@
                 }
                 stopPlayback(false);
                 run = true;
+                paused = false;
                 updatePlayButtonVisual();
                 await scheduleFrom(startT);
                 startCursorFollow(startT);
@@ -5716,7 +5707,7 @@
                 var btn = this, old = btn.textContent, loopBox = document.getElementById('loopCheck'), oldLoop = loopBox.checked;
                 var processor = null, silentGain = null, timer = null, leftChunks = [], rightChunks = [];
                 mp3Exporting = true; btn.disabled = true; btn.classList.add('export-processing'); btn.textContent = 'Gravando…';
-                ['bp', 'bpa', 'bs'].forEach(function (id) { document.getElementById(id).disabled = true; });
+                ['bp', 'bs'].forEach(function (id) { document.getElementById(id).disabled = true; });
                 try {
                     if (!window.lamejs) throw new Error('O codificador MP3 não foi carregado. Verifique a conexão com a internet.');
                     if (!ac || ac.state === 'closed') { ac = new (window.AudioContext || window.webkitAudioContext)(); setupFx(); await loadAllInstruments(); }
@@ -5752,7 +5743,7 @@
                     if (processor) { processor.onaudioprocess = null; try { outputCompressor.disconnect(processor); } catch (_) { } try { processor.disconnect(); } catch (_) { } }
                     if (silentGain) try { silentGain.disconnect(); } catch (_) { }
                     loopBox.checked = oldLoop; mp3Exporting = false; btn.disabled = false; btn.classList.remove('export-processing'); btn.textContent = old;
-                    ['bp', 'bpa', 'bs'].forEach(function (id) { document.getElementById(id).disabled = !rawXml; });
+                    ['bp', 'bs'].forEach(function (id) { document.getElementById(id).disabled = !rawXml; });
                 }
             };
 
