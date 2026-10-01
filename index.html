@@ -154,8 +154,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            padding: 32px 20px;
+            gap: 8px;
+            padding: 20px 20px;
             background: var(--card-bg);
             color: var(--text-sub);
             border: 2px dashed var(--border);
@@ -176,8 +176,8 @@
         }
 
         .load-btn .icon-svg {
-            width: 32px;
-            height: 32px;
+            width: 27px;
+            height: 27px;
             color: var(--text-sub);
             margin-right: 0 !important;
             transition: color 0.2s ease;
@@ -492,8 +492,14 @@
         #annotationLayer.eraser { cursor: pointer; }
         #annotationLayer [data-ann-id] { cursor: grab; }
         #annotationLayer [data-ann-id]:active { cursor: grabbing; }
-        #annotationTools { display:none; align-items:center; flex-wrap:wrap; gap:7px; }
+        .notation-tools-row { display:flex; align-items:flex-start; flex-wrap:wrap; gap:10px; width:100%; }
+        .notation-tools-row > button { height:38px; margin:0; justify-content:center; }
+        #annotationTools { display:none; flex:1; min-width:0; align-items:flex-start; flex-wrap:wrap; gap:8px 12px; }
         #annotationTools.visible { display:flex; }
+        .annotation-tool-group { display:flex; align-items:center; flex-wrap:wrap; gap:7px; min-height:38px; }
+        .annotation-tool-group .btn { height:38px; padding:0 15px; display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap; }
+        .annotation-hints { flex-basis:100%; display:flex; align-items:center; flex-wrap:wrap; gap:6px 18px; padding-left:1px; font-size:11px; color:var(--text-sub); line-height:1.35; }
+        .annotation-lock-note { color:#7c3aed; font-weight:600; }
         .ann-tool.active { background:#7c3aed !important; color:#fff !important; border-color:#7c3aed !important; }
         .ann-color-preset { width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #94a3b8;cursor:pointer;padding:0; }
         .ann-color-preset.active { box-shadow:0 0 0 3px #7c3aed; }
@@ -1078,7 +1084,7 @@
             </div>
 
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; width: 100%; margin-top: 15px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="notation-tools-row">
                     <button class="btn" id="btnToggleEditMode"
                         style="display:inline-flex; align-items:center; gap:6px; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); cursor:pointer; font-weight:600; padding:6px 12px; border-radius:6px;"
                         disabled>
@@ -1104,27 +1110,39 @@
                         <span>✎ Anotar</span>
                     </button>
                     <div id="annotationTools">
-                        <button type="button" class="btn ann-tool active" data-ann-tool="pen">Lápis</button>
-                        <button type="button" class="btn ann-tool" data-ann-tool="ellipse">Círculo</button>
-                        <button type="button" class="btn ann-tool" data-ann-tool="rectangle">Retângulo</button>
-                        <button type="button" class="btn ann-tool" data-ann-tool="arrow">Seta</button>
-                        <button type="button" class="btn ann-tool" data-ann-tool="callout">Balão</button>
-                        <button type="button" class="btn ann-tool" data-ann-tool="text">Texto livre</button>
-                        <button type="button" class="btn ann-tool" data-ann-tool="eraser">Borracha</button>
-                        <span id="annotationColorPresets" style="display:inline-flex;align-items:center;gap:7px;padding:2px 4px;" aria-label="Cores rápidas">
-                            <button type="button" class="ann-color-preset active" data-ann-color="#dc2626" style="background:#dc2626" title="Vermelho"></button>
-                            <button type="button" class="ann-color-preset" data-ann-color="#2563eb" style="background:#2563eb" title="Azul"></button>
-                            <button type="button" class="ann-color-preset" data-ann-color="#16a34a" style="background:#16a34a" title="Verde"></button>
-                            <button type="button" class="ann-color-preset" data-ann-color="#ea580c" style="background:#ea580c" title="Laranja"></button>
-                            <button type="button" class="ann-color-preset" data-ann-color="#7c3aed" style="background:#7c3aed" title="Roxo"></button>
-                            <button type="button" class="ann-color-preset" data-ann-color="#111827" style="background:#111827" title="Preto"></button>
-                        </span>
-                        <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-sub);cursor:pointer;" title="Escolher qualquer outra cor">Outra
-                            <input type="color" id="annotationColor" value="#dc2626" title="Escolher qualquer cor" style="width:30px;height:28px;padding:1px;border:1px solid var(--border);border-radius:5px;background:var(--card-bg);cursor:pointer;">
-                        </label>
-                        <button type="button" class="btn" id="btnUndoAnnotation">Desfazer</button>
-                        <button type="button" class="btn" id="btnClearAnnotations">Limpar</button>
-                        <span style="font-size:11px;color:var(--text-sub);white-space:nowrap;">Duplo clique para selecionar/editar</span>
+                        <div class="annotation-tool-group">
+                            <button type="button" class="btn ann-tool active" data-ann-tool="pen">Lápis</button>
+                            <button type="button" class="btn ann-tool" data-ann-tool="ellipse">Círculo</button>
+                            <button type="button" class="btn ann-tool" data-ann-tool="rectangle">Retângulo</button>
+                            <button type="button" class="btn ann-tool" data-ann-tool="arrow">Seta</button>
+                            <button type="button" class="btn ann-tool" data-ann-tool="callout">Balão</button>
+                            <button type="button" class="btn ann-tool" data-ann-tool="text">Texto livre</button>
+                            <button type="button" class="btn ann-tool" data-ann-tool="eraser">Borracha</button>
+                        </div>
+                        <div class="annotation-tool-group">
+                            <span id="annotationColorPresets" style="display:inline-flex;align-items:center;gap:7px;padding:2px 4px;" aria-label="Cores rápidas">
+                                <button type="button" class="ann-color-preset active" data-ann-color="#dc2626" style="background:#dc2626" title="Vermelho"></button>
+                                <button type="button" class="ann-color-preset" data-ann-color="#2563eb" style="background:#2563eb" title="Azul"></button>
+                                <button type="button" class="ann-color-preset" data-ann-color="#16a34a" style="background:#16a34a" title="Verde"></button>
+                                <button type="button" class="ann-color-preset" data-ann-color="#ea580c" style="background:#ea580c" title="Laranja"></button>
+                                <button type="button" class="ann-color-preset" data-ann-color="#7c3aed" style="background:#7c3aed" title="Roxo"></button>
+                                <button type="button" class="ann-color-preset" data-ann-color="#111827" style="background:#111827" title="Preto"></button>
+                            </span>
+                            <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-sub);cursor:pointer;" title="Escolher qualquer outra cor">Outra
+                                <input type="color" id="annotationColor" value="#dc2626" title="Escolher qualquer cor" style="width:30px;height:30px;padding:1px;border:1px solid var(--border);border-radius:5px;background:var(--card-bg);cursor:pointer;">
+                            </label>
+                        </div>
+                        <div class="annotation-tool-group">
+                            <button type="button" class="btn" id="btnUndoAnnotation" title="Desfazer a última alteração nas anotações (Ctrl+Z)" disabled>
+                                <svg class="icon-svg" style="width:15px;height:15px;" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"></polyline><path d="M4 9h10a6 6 0 0 1 0 12h-2"></path></svg>
+                                <span>Desfazer</span>
+                            </button>
+                            <button type="button" class="btn" id="btnClearAnnotations">Limpar</button>
+                        </div>
+                        <div class="annotation-hints">
+                            <span>Duplo clique para selecionar ou editar.</span>
+                            <span class="annotation-lock-note">🔒 Ao ativar “Anotar”, zoom e layout ficam bloqueados para preservar o posicionamento.</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1815,7 +1833,7 @@
             var playbackEndTimer = null, pieceEnd = 0;
             var scoreClickTimer = null;
             var percInfo = null;
-            var annotations = [], annotationMode = false, annotationTool = 'pen', annotationDraft = null;
+            var annotations = [], annotationHistory = [], annotationMode = false, annotationTool = 'pen', annotationDraft = null;
             var selectedAnnotationId = null, annotationInteraction = null;
             var annotationLayoutLock = null;
             var cursorStepsCache = { bpm: null, xml: null, mode: 3 };
@@ -1835,6 +1853,27 @@
                 return el;
             }
 
+            function cloneAnnotations(value) { return JSON.parse(JSON.stringify(value === undefined ? annotations : value)); }
+            function updateAnnotationUndoButton() {
+                var button = document.getElementById('btnUndoAnnotation');
+                if (button) button.disabled = annotationHistory.length === 0;
+            }
+            function resetAnnotationHistory() { annotationHistory = []; updateAnnotationUndoButton(); }
+            function rememberAnnotationState(state) {
+                var snapshot = cloneAnnotations(state);
+                var last = annotationHistory.length ? annotationHistory[annotationHistory.length - 1] : null;
+                if (!last || JSON.stringify(last) !== JSON.stringify(snapshot)) annotationHistory.push(snapshot);
+                if (annotationHistory.length > 80) annotationHistory.shift();
+                updateAnnotationUndoButton();
+            }
+            function undoAnnotationChange() {
+                if (!annotationHistory.length) return;
+                annotations = cloneAnnotations(annotationHistory.pop());
+                selectedAnnotationId = null; annotationDraft = null; annotationInteraction = null;
+                syncAnnotationLayoutLock(); renderAnnotations(); updateAnnotationUndoButton();
+                setStatus('Última alteração das anotações desfeita.', 'ok');
+            }
+
             function captureAnnotationLayoutLock() {
                 var score = document.getElementById('score');
                 var musicSvg = Array.from(score.querySelectorAll('svg')).find(function (svg) { return svg.id !== 'annotationLayer'; });
@@ -1852,7 +1891,7 @@
             }
 
             function applyAnnotationLayoutLock() {
-                var locked = !!(annotationLayoutLock && annotations.length);
+                var locked = !!(annotationLayoutLock && (annotations.length || annotationMode));
                 var score = document.getElementById('score');
                 var zoom = document.getElementById('zoomInp');
                 var layout = document.getElementById('layoutMode');
@@ -1881,9 +1920,10 @@
             }
 
             function syncAnnotationLayoutLock() {
-                if (annotations.length && !annotationLayoutLock) annotationLayoutLock = captureAnnotationLayoutLock();
-                if (!annotations.length) annotationLayoutLock = null;
-                if (annotations.length && annotationLayoutLock && (!annotationLayoutLock.renderWidth || !annotationLayoutLock.renderHeight)) {
+                var needsLock = annotations.length || annotationMode;
+                if (needsLock && !annotationLayoutLock) annotationLayoutLock = captureAnnotationLayoutLock();
+                if (!needsLock) annotationLayoutLock = null;
+                if (needsLock && annotationLayoutLock && (!annotationLayoutLock.renderWidth || !annotationLayoutLock.renderHeight)) {
                     var current = captureAnnotationLayoutLock();
                     annotationLayoutLock.renderWidth = current.renderWidth; annotationLayoutLock.renderHeight = current.renderHeight; annotationLayoutLock.svgViewBox = current.svgViewBox;
                 }
@@ -2012,6 +2052,8 @@
                 tools.classList.toggle('visible', annotationMode);
                 btn.style.background = annotationMode ? '#7c3aed' : 'var(--bg-main)';
                 btn.style.color = annotationMode ? '#fff' : 'var(--text-main)';
+                syncAnnotationLayoutLock();
+                if (annotationMode) setStatus('Modo Anotar ativo: zoom e layout bloqueados para manter as marcações alinhadas.', 'info');
                 renderAnnotations();
             }
 
@@ -2020,7 +2062,7 @@
                 document.querySelectorAll('[data-ann-color]').forEach(function (button) { button.classList.toggle('active', button.getAttribute('data-ann-color').toLowerCase() === color.toLowerCase()); });
                 if (applyToSelection && selectedAnnotationId) {
                     var item = annotations.find(function (a) { return String(a.id) === String(selectedAnnotationId); });
-                    if (item) { item.color = color; renderAnnotations(); }
+                    if (item && item.color !== color) { rememberAnnotationState(); item.color = color; renderAnnotations(); }
                 }
             }
 
@@ -2039,10 +2081,18 @@
                     colorButton.onclick = function () { setAnnotationColor(colorButton.getAttribute('data-ann-color'), true); };
                 });
                 document.getElementById('annotationColor').addEventListener('input', function () { setAnnotationColor(this.value, true); });
-                document.getElementById('btnUndoAnnotation').onclick = function () { annotations.pop(); syncAnnotationLayoutLock(); renderAnnotations(); };
-                document.getElementById('btnClearAnnotations').onclick = function () { if (annotations.length && confirm('Apagar todas as anotações da partitura?')) { annotations = []; syncAnnotationLayoutLock(); renderAnnotations(); } };
+                document.getElementById('btnUndoAnnotation').onclick = undoAnnotationChange;
+                document.getElementById('btnClearAnnotations').onclick = function () { if (annotations.length && confirm('Apagar todas as anotações da partitura?')) { rememberAnnotationState(); annotations = []; syncAnnotationLayoutLock(); renderAnnotations(); } };
                 window.addEventListener('resize', function () { if (rawXml) renderAnnotations(); });
-                document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && annotationMode) setAnnotationMode(false); });
+                document.addEventListener('keydown', function (ev) {
+                    if (ev.key === 'Escape' && annotationMode) setAnnotationMode(false);
+                    var tag = ev.target && ev.target.tagName ? ev.target.tagName.toLowerCase() : '';
+                    var isEditingText = tag === 'input' || tag === 'textarea' || tag === 'select' || (ev.target && ev.target.isContentEditable);
+                    if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z' && !ev.shiftKey && !isEditingText && annotationHistory.length) {
+                        ev.preventDefault(); undoAnnotationChange();
+                    }
+                });
+                updateAnnotationUndoButton();
             }
 
             bindAnnotationUi();
@@ -2104,13 +2154,13 @@
                 var handleEl = ev.target.closest('[data-ann-handle]');
                 var target = ev.target.closest('[data-ann-id]');
                 if (annotationTool === 'eraser') {
-                    if (target) { var id = target.getAttribute('data-ann-id'); annotations = annotations.filter(function (a) { return String(a.id) !== id; }); syncAnnotationLayoutLock(); renderAnnotations(); }
+                    if (target) { rememberAnnotationState(); var id = target.getAttribute('data-ann-id'); annotations = annotations.filter(function (a) { return String(a.id) !== id; }); syncAnnotationLayoutLock(); renderAnnotations(); }
                     return;
                 }
                 if (handleEl || (target && target.getAttribute('data-ann-id') === selectedAnnotationId)) {
                     var selected = annotations.find(function (a) { return String(a.id) === String(selectedAnnotationId); });
                     var selection = layer.querySelector('[data-ann-selection]'), values = selection ? selection.getAttribute('data-ann-bounds').split(',').map(Number) : [0, 0, 1, 1];
-                    if (selected) annotationInteraction = { mode: handleEl ? 'resize' : 'move', handle: handleEl ? handleEl.getAttribute('data-ann-handle') : '', start: annotationPoint(ev, layer), bounds: { x: values[0], y: values[1], w: values[2], h: values[3] }, snapshot: JSON.parse(JSON.stringify(selected)) };
+                    if (selected) annotationInteraction = { mode: handleEl ? 'resize' : 'move', handle: handleEl ? handleEl.getAttribute('data-ann-handle') : '', start: annotationPoint(ev, layer), bounds: { x: values[0], y: values[1], w: values[2], h: values[3] }, snapshot: JSON.parse(JSON.stringify(selected)), beforeAll: cloneAnnotations() };
                     try { layer.setPointerCapture(ev.pointerId); } catch (_) { }
                     return;
                 }
@@ -2141,14 +2191,18 @@
             document.getElementById('score').addEventListener('pointerup', function (ev) {
                 if (!annotationMode || (!annotationDraft && !annotationInteraction)) return;
                 ev.preventDefault(); ev.stopPropagation();
-                if (annotationInteraction) { annotationInteraction = null; renderAnnotations(); return; }
+                if (annotationInteraction) {
+                    var changedItem = annotations.find(function (a) { return String(a.id) === String(selectedAnnotationId); });
+                    if (changedItem && JSON.stringify(changedItem) !== JSON.stringify(annotationInteraction.snapshot)) rememberAnnotationState(annotationInteraction.beforeAll);
+                    annotationInteraction = null; renderAnnotations(); return;
+                }
                 var item = annotationDraft; annotationDraft = null;
                 item.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
                 if (item.type === 'callout' || item.type === 'text') {
-                    showAnnotationTextDialog(item, function (label) { item.text = label; annotations.push(item); selectedAnnotationId = item.id; syncAnnotationLayoutLock(); renderAnnotations(); });
+                    showAnnotationTextDialog(item, function (label) { rememberAnnotationState(); item.text = label; annotations.push(item); selectedAnnotationId = item.id; syncAnnotationLayoutLock(); renderAnnotations(); });
                     return;
                 }
-                annotations.push(item); selectedAnnotationId = item.id; syncAnnotationLayoutLock(); renderAnnotations();
+                rememberAnnotationState(); annotations.push(item); selectedAnnotationId = item.id; syncAnnotationLayoutLock(); renderAnnotations();
             }, true);
 
             document.getElementById('score').addEventListener('pointercancel', function () { annotationDraft = null; annotationInteraction = null; renderAnnotations(); }, true);
@@ -2161,7 +2215,7 @@
                 var item = annotations.find(function (a) { return String(a.id) === String(selectedAnnotationId); });
                 if (item && item.color) setAnnotationColor(item.color, false);
                 renderAnnotations();
-                if (item && (item.type === 'callout' || item.type === 'text')) showAnnotationTextDialog(item, function (label) { item.text = label; renderAnnotations(); });
+                if (item && (item.type === 'callout' || item.type === 'text')) showAnnotationTextDialog(item, function (label) { if (item.text !== label) { rememberAnnotationState(); item.text = label; renderAnnotations(); } });
             }, true);
 
             document.getElementById('score').addEventListener('click', function (ev) { if (annotationMode) { ev.preventDefault(); ev.stopImmediatePropagation(); } }, true);
@@ -2884,7 +2938,7 @@
                 drumsVol.oninput = function () { chordStyleConfig.drumVol = +drumsVol.value; if (styleDrumGain && ac) styleDrumGain.gain.setTargetAtTime(chordStyleConfig.drumVol / 100, ac.currentTime, 0.03); };
                 updateStyleControls();
                 styleCtrls.appendChild(styleSel); styleCtrls.appendChild(drumsLabel); styleCtrls.appendChild(drumsVol);
-                styleRow.appendChild(styleName); styleRow.appendChild(styleCtrls); p.appendChild(styleRow);
+                styleRow.appendChild(styleName); styleRow.appendChild(styleCtrls);
 
                 /* ── Linha especial: Acorde Completo ♩ ── */
                 var pChRow = document.createElement('div'); pChRow.className = 'part-row';
@@ -2939,6 +2993,7 @@
                 instSelC.onchange = function () { chordConfig.program = instSelC.value; reloadChordInstrument(); };
                 chCtrls.appendChild(volC); chCtrls.appendChild(bMuteC); chCtrls.appendChild(bSoloC); chCtrls.appendChild(octSelC); chCtrls.appendChild(instSelC); chCtrls.appendChild(durSelC);
                 chRow.appendChild(chName); chRow.appendChild(chCtrls); p.appendChild(chRow);
+                p.appendChild(styleRow);
             }
 
             async function loadAllInstruments() {
@@ -3780,6 +3835,7 @@
                 try {
                     isLoadingProject = false;
                     annotations = [];
+                    resetAnnotationHistory();
                     annotationLayoutLock = null;
                     applyAnnotationLayoutLock();
                     rawXml = f.name.toLowerCase().endsWith('.mxl') ? await getXmlFromMxl(f) : await f.text();
@@ -3807,6 +3863,7 @@
                         if (project.pianoChordConfig) pianoChordConfig = project.pianoChordConfig;
                         if (project.chordStyleConfig) chordStyleConfig = project.chordStyleConfig;
                         annotations = Array.isArray(project.annotations) ? project.annotations : [];
+                        resetAnnotationHistory();
                         annotationLayoutLock = project.annotationLayoutLock || null;
                         if (annotationLayoutLock && annotations.length) {
                             document.getElementById('zoomInp').value = annotationLayoutLock.zoom || 100;
@@ -3883,6 +3940,7 @@
                 setStatus('Carregando partitura de exemplo...', 'info');
                 try {
                     annotations = [];
+                    resetAnnotationHistory();
                     annotationLayoutLock = null;
                     applyAnnotationLayoutLock();
                     var resp = await fetch(url); if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -6742,7 +6800,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     styleSel.onchange=function(){chordStyleConfig.style=styleSel.value;updateStyleControlsEx();applyChordStyleChangeEx();};
     drumsCheck.onchange=function(){chordStyleConfig.drums=drumsCheck.checked;updateStyleControlsEx();applyChordStyleChangeEx();};
     drumsVol.oninput=function(){chordStyleConfig.drumVol=+drumsVol.value;if(styleDrumGain&&ac)styleDrumGain.gain.setTargetAtTime(chordStyleConfig.drumVol/100,ac.currentTime,.03);};
-    updateStyleControlsEx();styleRow.appendChild(styleName);styleRow.appendChild(styleSel);styleRow.appendChild(drumsLabel);styleRow.appendChild(drumsVol);pPanel.appendChild(styleRow);
+    updateStyleControlsEx();styleRow.appendChild(styleName);styleRow.appendChild(styleSel);styleRow.appendChild(drumsLabel);styleRow.appendChild(drumsVol);
 
     pianoChordConfig.enabled=true;
     var pchRow=document.createElement('div');pchRow.style.cssText='display:flex;align-items:center;gap:8px;';
@@ -6784,6 +6842,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     selC.onchange=function(){chordConfig.program=selC.value;chordInst=null;chordGain=null;eventsCache.bpm=null;ensureInst();};
     chRow.appendChild(chName);chRow.appendChild(volC);chRow.appendChild(bMuteC);chRow.appendChild(bSoloC);chRow.appendChild(octC);chRow.appendChild(selC);chRow.appendChild(durC);
     pPanel.appendChild(chRow);
+    pPanel.appendChild(styleRow);
 
     ctrls.appendChild(pPanel);
   }
