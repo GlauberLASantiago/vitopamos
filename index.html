@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=1200">
     <title>ViToPaMoS - Visualizador e Tocador de Partituras</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#312e81">
@@ -72,6 +72,11 @@
             color: #f1f5f9;
         }
 
+        html {
+            min-width: 1200px;
+            overflow-x: auto;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -79,6 +84,7 @@
         }
 
         body {
+            min-width: 1200px;
             font-family: var(--font-body);
             background-color: var(--bg);
             background-image: linear-gradient(var(--page-overlay), var(--page-overlay)), url('https://raw.githubusercontent.com/GlauberLASantiago/gl-cores-fontes-e-fundos/main/musica/23_realista_partitura_musical_antiga.png');
@@ -95,6 +101,7 @@
         body, p, span, a, input, button, select, textarea, label, summary { font-family: var(--font-body); }
 
         .card {
+            min-width: 1150px;
             max-width: 1440px;
             margin: 0 auto;
             background: var(--card-bg);
