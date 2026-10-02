@@ -7502,13 +7502,13 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   function renderExPartsPanel(){
     var ctrls=document.getElementById('ctrlsEx');
     var btnMix=document.createElement('button');
-    btnMix.className='mix-toggle active';
-    btnMix.setAttribute('aria-expanded','true');
-    btnMix.innerHTML='<span style="${L}">Recolher mixer</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+    btnMix.className='mix-toggle';
+    btnMix.setAttribute('aria-expanded','false');
+    btnMix.innerHTML='<span style="${L}">Abrir mixer</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
     ctrls.appendChild(btnMix);
 
     var pPanel=document.createElement('div');
-    pPanel.style.cssText='width:100%;display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed #cbd5e1;';
+    pPanel.style.cssText='width:100%;display:none;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed #cbd5e1;';
     
     btnMix.onclick=function(){
       var isCol=(pPanel.style.display==='none');
