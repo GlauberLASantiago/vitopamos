@@ -631,6 +631,48 @@
             display: flex;
         }
 
+        .html-editor-panel {
+            display: none;
+            width: 100%;
+            background: var(--status-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            gap: 12px;
+            box-sizing: border-box;
+        }
+
+        .html-editor-panel.visible { display: grid; grid-template-columns: 1fr 1fr; }
+        .html-editor-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .html-editor-field label { font-size: 11px; font-weight: 700; color: var(--text-sub); }
+        .rich-text-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 5px; border: 1px solid var(--border); border-bottom: 0; border-radius: 7px 7px 0 0; background: var(--bg-main); }
+        .rich-text-toolbar button, .rich-text-toolbar select {
+            min-width: 30px; height: 28px; padding: 0 8px; border: 1px solid var(--border); border-radius: 5px;
+            background: var(--card-bg); color: var(--text-main); font: 600 12px var(--font-body); cursor: pointer;
+        }
+        .rich-text-toolbar button:hover { background: var(--accent-soft); }
+        .rich-text-editor {
+            width: 100%; min-height: 115px; max-height: 300px; overflow-y: auto; box-sizing: border-box;
+            padding: 10px 12px; border: 1px solid var(--border); border-radius: 0 0 7px 7px;
+            background: var(--card-bg); color: var(--text-main); font: 14px/1.55 var(--font-body); outline: none;
+        }
+        .rich-text-editor:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,.12); }
+        .rich-text-editor:empty::before { content: attr(data-placeholder); color: var(--text-muted); pointer-events: none; }
+        .rich-text-editor p { margin: 0 0 8px; }
+        .rich-text-editor h2, .rich-text-editor h3 { margin: 5px 0 8px; }
+        .rich-text-editor ul, .rich-text-editor ol { margin: 6px 0 10px; padding-left: 30px; }
+        .rich-text-editor li { padding-left: 3px; margin: 3px 0; }
+        .html-editor-note { grid-column: 1 / -1; margin: 0; font-size: 11px; color: var(--text-sub); }
+        .embedded-html-content { background: #fff; color: #111827; padding: 14px 18px; overflow-wrap: anywhere; }
+        .embedded-html-content:empty { display: none; }
+        .embedded-html-content p { margin: 0 0 8px; }
+        .embedded-html-content h2, .embedded-html-content h3 { margin: 5px 0 8px; }
+        .embedded-html-content ul, .embedded-html-content ol { margin: 6px 0 10px; padding-left: 30px; list-style-position: outside; }
+        .embedded-html-content li { padding-left: 3px; margin: 3px 0; }
+        #htmlBeforeContent { margin-top: 15px; border: 1px solid #e5e7eb; border-bottom: 0; border-radius: 8px 8px 0 0; }
+        #htmlBeforeContent:not(:empty) + #score { margin-top: 0; border-radius: 0; }
+        #htmlAfterContent { border: 1px solid #e5e7eb; border-top: 0; border-radius: 0 0 8px 8px; }
+
         .meta-field {
             display: flex;
             flex-direction: column;
@@ -691,7 +733,7 @@
         .mixer-heading {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-end;
             width: 100%;
         }
 
@@ -1198,6 +1240,20 @@
                         disabled title="Desenhar e escrever sobre a partitura">
                         <span>✎ Anotar</span>
                     </button>
+                    <button class="btn" id="btnToggleMeta"
+                        style="display:inline-flex; align-items:center; gap:6px; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); cursor:pointer; font-weight:600; padding:6px 12px; border-radius:6px;"
+                        disabled aria-expanded="false" title="Abrir o campo para alterar o título da partitura">
+                        <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24">
+                            <path d="M4 20h16"></path><path d="M8 16 16.5 7.5a2.1 2.1 0 0 0-3-3L5 13v3h3Z"></path>
+                        </svg>
+                        <span>Alterar Título</span>
+                    </button>
+                    <button class="btn" id="btnToggleHtmlEditor"
+                        style="display:inline-flex; align-items:center; gap:6px; background:var(--bg-main); color:var(--text-main); border:1px solid var(--border); cursor:pointer; font-weight:600; padding:6px 12px; border-radius:6px;"
+                        disabled aria-expanded="false" title="Inserir textos formatados antes e depois da partitura">
+                        <svg class="icon-svg" style="width:15px;height:15px;" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"></path></svg>
+                        <span>Inserir Texto</span>
+                    </button>
                     <div id="annotationTools">
                         <div class="annotation-tool-group">
                             <button type="button" class="btn ann-tool active" data-ann-tool="pen">Lápis</button>
@@ -1238,8 +1294,7 @@
 
                 <div class="meta-edit-panel" id="metaPanel" style="margin: 0; padding: 6px 12px; border-radius: 8px; align-items: center; gap: 10px;">
                     <div class="meta-field" style="display: flex; flex-direction: row; align-items: center; gap: 6px; margin: 0; flex: none;">
-                        <label for="metaTitle" style="font-weight: 600; font-size: 13px; color: var(--text-main); white-space: nowrap; margin-bottom: 0;">Título:</label>
-                        <input type="text" id="metaTitle" placeholder="Título da peça" style="padding: 5px 10px; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); color: var(--text-main); min-width: 640px;">
+                        <input type="text" id="metaTitle" aria-label="Novo título da partitura" placeholder="Novo título da partitura" style="padding: 5px 10px; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); color: var(--text-main); min-width: 640px;">
                     </div>
                     <button class="btn btn-apply" id="btnApplyMeta" style="padding: 5px 12px; border-radius: 6px; font-size: 13px; margin: 0;">
                         <svg class="icon-svg" style="width:14px;height:14px;" viewBox="0 0 24 24">
@@ -1248,9 +1303,48 @@
                         Aplicar
                     </button>
                 </div>
+                <div class="html-editor-panel" id="htmlEditorPanel">
+                    <div class="html-editor-field">
+                        <label for="htmlBeforeInput">Texto antes da partitura</label>
+                        <div class="rich-text-toolbar" data-editor="htmlBeforeInput">
+                            <select data-command="formatBlock" title="Estilo do texto"><option value="p">Normal</option><option value="h2">Título</option><option value="h3">Subtítulo</option></select>
+                            <button type="button" data-command="bold" title="Negrito"><b>N</b></button>
+                            <button type="button" data-command="italic" title="Itálico"><i>I</i></button>
+                            <button type="button" data-command="underline" title="Sublinhado"><u>S</u></button>
+                            <button type="button" data-command="insertUnorderedList" title="Lista com marcadores">• Lista</button>
+                            <button type="button" data-command="insertOrderedList" title="Lista numerada">1. Lista</button>
+                            <button type="button" data-command="justifyLeft" title="Alinhar à esquerda">≡</button>
+                            <button type="button" data-command="justifyCenter" title="Centralizar">≣</button>
+                            <button type="button" data-command="createLink" title="Inserir link">Link</button>
+                            <button type="button" data-command="removeFormat" title="Limpar formatação">Limpar</button>
+                        </div>
+                        <div id="htmlBeforeInput" class="rich-text-editor" contenteditable="true" spellcheck="true" data-placeholder="Digite aqui o texto que aparecerá antes da partitura..."></div>
+                    </div>
+                    <div class="html-editor-field">
+                        <label for="htmlAfterInput">Texto depois da partitura</label>
+                        <div class="rich-text-toolbar" data-editor="htmlAfterInput">
+                            <select data-command="formatBlock" title="Estilo do texto"><option value="p">Normal</option><option value="h2">Título</option><option value="h3">Subtítulo</option></select>
+                            <button type="button" data-command="bold" title="Negrito"><b>N</b></button>
+                            <button type="button" data-command="italic" title="Itálico"><i>I</i></button>
+                            <button type="button" data-command="underline" title="Sublinhado"><u>S</u></button>
+                            <button type="button" data-command="insertUnorderedList" title="Lista com marcadores">• Lista</button>
+                            <button type="button" data-command="insertOrderedList" title="Lista numerada">1. Lista</button>
+                            <button type="button" data-command="justifyLeft" title="Alinhar à esquerda">≡</button>
+                            <button type="button" data-command="justifyCenter" title="Centralizar">≣</button>
+                            <button type="button" data-command="createLink" title="Inserir link">Link</button>
+                            <button type="button" data-command="removeFormat" title="Limpar formatação">Limpar</button>
+                        </div>
+                        <div id="htmlAfterInput" class="rich-text-editor" contenteditable="true" spellcheck="true" data-placeholder="Digite aqui o texto que aparecerá depois da partitura..."></div>
+                    </div>
+                    <p class="html-editor-note">Selecione um trecho para formatá-lo. A visualização é atualizada enquanto você digita.</p>
+                </div>
             </div>
 
-            <div id="score"></div>
+            <div id="scoreComposition">
+                <div id="htmlBeforeContent" class="embedded-html-content"></div>
+                <div id="score"></div>
+                <div id="htmlAfterContent" class="embedded-html-content"></div>
+            </div>
         </div>
     </div>
 
@@ -2062,6 +2156,34 @@
             var scoreClickTimer = null;
             var percInfo = null;
             var annotations = [], annotationHistory = [], annotationMode = false, annotationTool = 'pen', annotationDraft = null;
+            var embeddedHtmlBefore = '', embeddedHtmlAfter = '';
+
+            function sanitizeEmbeddedHtml(value) {
+                var template = document.createElement('template');
+                template.innerHTML = String(value || '');
+                template.content.querySelectorAll('script,iframe,object,embed,base,meta,link,form').forEach(function (element) { element.remove(); });
+                template.content.querySelectorAll('*').forEach(function (element) {
+                    Array.from(element.attributes).forEach(function (attribute) {
+                        var name = attribute.name.toLowerCase(), attrValue = attribute.value.trim().toLowerCase();
+                        if (name.indexOf('on') === 0 || name === 'srcdoc' || ((name === 'href' || name === 'src' || name === 'xlink:href') && attrValue.indexOf('javascript:') === 0)) element.removeAttribute(attribute.name);
+                    });
+                });
+                return template.innerHTML;
+            }
+
+            function renderEmbeddedHtml() {
+                var beforeEditor = document.getElementById('htmlBeforeInput'), afterEditor = document.getElementById('htmlAfterInput');
+                embeddedHtmlBefore = beforeEditor.textContent.trim() || beforeEditor.querySelector('img,video,audio') ? sanitizeEmbeddedHtml(beforeEditor.innerHTML) : '';
+                embeddedHtmlAfter = afterEditor.textContent.trim() || afterEditor.querySelector('img,video,audio') ? sanitizeEmbeddedHtml(afterEditor.innerHTML) : '';
+                document.getElementById('htmlBeforeContent').innerHTML = embeddedHtmlBefore;
+                document.getElementById('htmlAfterContent').innerHTML = embeddedHtmlAfter;
+            }
+
+            function setEmbeddedHtml(before, after) {
+                document.getElementById('htmlBeforeInput').innerHTML = sanitizeEmbeddedHtml(before || '');
+                document.getElementById('htmlAfterInput').innerHTML = sanitizeEmbeddedHtml(after || '');
+                renderEmbeddedHtml();
+            }
             var selectedAnnotationId = null, annotationInteraction = null;
             var annotationLayoutLock = null;
             var cursorStepsCache = { bpm: null, xml: null, mode: 3 };
@@ -3170,7 +3292,6 @@
                 p.style.display = 'flex'; p.innerHTML = '';
 
                 var mixerHeading = document.createElement('div'); mixerHeading.className = 'mixer-heading';
-                var mixerTitle = document.createElement('span'); mixerTitle.className = 'part-name'; mixerTitle.textContent = 'Mixer';
                 var mixerToggle = document.createElement('button'); mixerToggle.type = 'button'; mixerToggle.className = 'mixer-toggle';
                 var mixerBody = document.createElement('div'); mixerBody.className = 'mixer-body';
                 function refreshMixerToggle() {
@@ -3180,7 +3301,7 @@
                 }
                 mixerToggle.onclick = function () { mixerExpanded = !mixerExpanded; refreshMixerToggle(); };
                 refreshMixerToggle();
-                mixerHeading.appendChild(mixerTitle); mixerHeading.appendChild(mixerToggle);
+                mixerHeading.appendChild(mixerToggle);
                 p.appendChild(mixerHeading); p.appendChild(mixerBody);
 
                 updateGlobalInstrumentTransposition();
@@ -4297,7 +4418,8 @@
                 }
                 var meta = extractMetaFromXml(rawXml);
                 document.getElementById('metaTitle').value = meta.title;
-                document.getElementById('metaPanel').classList.add('visible');
+                document.getElementById('metaPanel').classList.remove('visible');
+                document.getElementById('btnToggleMeta').setAttribute('aria-expanded', 'false');
                 applyAnnotationLayoutLock();
                 if (annotationLayoutLock && annotations.length) osmd.Zoom = (annotationLayoutLock.zoom || 100) / 100;
                 await osmd.load(rawXml);
@@ -4317,7 +4439,7 @@
                 if (typeof bindSvgChordClicks === 'function') bindSvgChordClicks();
 
                 setStatus('Pronto!', 'ok');
-                ['bp', 'bs', 'bx', 'bdl', 'btnSavePdf', 'btnSavePng', 'btnSaveMp3', 'reverbAmt', 'btnApplyMeta', 'rangeFrom', 'rangeTo', 'btnToggleEditMode', 'btnToggleAnnotations', 'btnSaveProject'].forEach(function (id) {
+                ['bp', 'bs', 'bx', 'bdl', 'btnSavePdf', 'btnSavePng', 'btnSaveMp3', 'reverbAmt', 'btnApplyMeta', 'rangeFrom', 'rangeTo', 'btnToggleEditMode', 'btnToggleAnnotations', 'btnToggleMeta', 'btnToggleHtmlEditor', 'btnSaveProject'].forEach(function (id) {
                     var btn = document.getElementById(id);
                     if (btn) btn.disabled = false;
                 });
@@ -4330,6 +4452,7 @@
                 try {
                     isLoadingProject = false;
                     annotations = [];
+                    setEmbeddedHtml('', '');
                     resetAnnotationHistory();
                     annotationLayoutLock = null;
                     applyAnnotationLayoutLock();
@@ -4362,6 +4485,7 @@
                         chordConfig.soundQuality = normalizeSoundQuality(chordConfig.soundQuality || legacyQuality);
                         pianoChordConfig.soundQuality = normalizeSoundQuality(pianoChordConfig.soundQuality || legacyQuality);
                         annotations = Array.isArray(project.annotations) ? project.annotations : [];
+                        setEmbeddedHtml(project.embeddedHtmlBefore || '', project.embeddedHtmlAfter || '');
                         resetAnnotationHistory();
                         annotationLayoutLock = project.annotationLayoutLock || null;
                         if (annotationLayoutLock && annotations.length) {
@@ -4418,6 +4542,8 @@
                     pianoChordConfig: pianoChordConfig || null,
                     chordStyleConfig: chordStyleConfig || null,
                     annotations: annotations || [],
+                    embeddedHtmlBefore: embeddedHtmlBefore || '',
+                    embeddedHtmlAfter: embeddedHtmlAfter || '',
                     annotationLayoutLock: annotationLayoutLock || null,
                     bpm: parseInt(document.getElementById('bpm').value, 10) || 100,
                     btDelayMs: btDelayMs || 0,
@@ -4439,6 +4565,7 @@
                 setStatus('Carregando partitura de exemplo...', 'info');
                 try {
                     annotations = [];
+                    setEmbeddedHtml('', '');
                     resetAnnotationHistory();
                     annotationLayoutLock = null;
                     applyAnnotationLayoutLock();
@@ -4466,6 +4593,43 @@
                 setStatus('Tocando...', 'ok');
             };
 
+            document.getElementById('btnToggleMeta').onclick = function () {
+                var panel = document.getElementById('metaPanel');
+                var willOpen = !panel.classList.contains('visible');
+                panel.classList.toggle('visible', willOpen);
+                this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                this.title = willOpen ? 'Recolher o campo de título' : 'Abrir o campo para alterar o título da partitura';
+                if (willOpen) document.getElementById('metaTitle').focus();
+            };
+
+            document.getElementById('btnToggleHtmlEditor').onclick = function () {
+                var panel = document.getElementById('htmlEditorPanel');
+                var willOpen = !panel.classList.contains('visible');
+                panel.classList.toggle('visible', willOpen);
+                this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                this.title = willOpen ? 'Recolher os editores de texto' : 'Inserir textos formatados antes e depois da partitura';
+                if (willOpen) document.getElementById('htmlBeforeInput').focus();
+            };
+            document.getElementById('htmlBeforeInput').addEventListener('input', renderEmbeddedHtml);
+            document.getElementById('htmlAfterInput').addEventListener('input', renderEmbeddedHtml);
+            document.querySelectorAll('.rich-text-toolbar button').forEach(function (button) {
+                button.addEventListener('mousedown', function (event) { event.preventDefault(); });
+            });
+            document.querySelectorAll('.rich-text-toolbar [data-command]').forEach(function (control) {
+                var eventName = control.tagName === 'SELECT' ? 'change' : 'click';
+                control.addEventListener(eventName, function () {
+                    var editor = document.getElementById(this.closest('.rich-text-toolbar').dataset.editor);
+                    var command = this.dataset.command, value = this.value || null;
+                    if (command === 'createLink') {
+                        value = prompt('Endereço do link (https://...)', 'https://');
+                        if (!value) return;
+                    }
+                    document.execCommand(command, false, value);
+                    editor.focus();
+                    renderEmbeddedHtml();
+                });
+            });
+
             document.getElementById('btnApplyMeta').onclick = async function () {
                 if (!rawXml) return;
                 var title = document.getElementById('metaTitle').value;
@@ -4484,6 +4648,9 @@
 
                 if (wasRunning) { run = true; paused = false; updatePlayButtonVisual(); await scheduleFrom(savedOffset, 0.02); startCursorFollow(savedOffset); }
                 else { pat = savedOffset; paused = wasPaused; updatePlayButtonVisual(); }
+                document.getElementById('metaPanel').classList.remove('visible');
+                document.getElementById('btnToggleMeta').setAttribute('aria-expanded', 'false');
+                document.getElementById('btnToggleMeta').title = 'Abrir o campo para alterar o título da partitura';
                 setStatus('Metadados atualizados!', 'ok');
             };
 
@@ -5800,15 +5967,16 @@
             async function captureVisibleScoreCanvas() {
                 if (!window.html2canvas) throw new Error('O gerador de imagem não foi carregado. Verifique a conexão com a internet.');
                 if (document.fonts && document.fonts.ready) await document.fonts.ready;
-                var score = document.getElementById('score'), previousSelection = selectedAnnotationId, cleanupMergedAnnotations = function () { };
+                var score = document.getElementById('score'), composition = document.getElementById('scoreComposition'), previousSelection = selectedAnnotationId, cleanupMergedAnnotations = function () { };
                 selectedAnnotationId = null; annotationDraft = null; renderAnnotations();
                 try {
                     await new Promise(function (resolve) { requestAnimationFrame(function () { requestAnimationFrame(resolve); }); });
                     cleanupMergedAnnotations = mergeAnnotationsIntoMusicSvgForCapture();
-                    return await html2canvas(score, {
+                    var captureWidth = Math.max(composition.scrollWidth, score.scrollWidth);
+                    return await html2canvas(composition, {
                         backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false,
-                        width: score.scrollWidth, height: score.scrollHeight,
-                        windowWidth: Math.max(document.documentElement.clientWidth, score.scrollWidth + 40),
+                        width: captureWidth, height: composition.scrollHeight,
+                        windowWidth: Math.max(document.documentElement.clientWidth, captureWidth + 40),
                         ignoreElements: function (el) { return !!(el.id === 'annotationLayer' || (el.id && el.id.indexOf('cursorImg') === 0) || (el.getAttribute && el.getAttribute('data-ann-selection'))); }
                     });
                 } finally {
@@ -5956,6 +6124,9 @@
                 var transpShift = document.getElementById('transSel').value;
                 var zoomValue = document.getElementById('zoomInp').value || 100;
                 var hideCtrls = document.getElementById('hideControlsInExport').checked;
+                renderEmbeddedHtml();
+                var exportHtmlBefore = embeddedHtmlBefore;
+                var exportHtmlAfter = embeddedHtmlAfter;
 
                 var xmlB64 = encodeBase64Unicode(xml);
                 var safePartConfigs = JSON.stringify(partConfigs);
@@ -5981,8 +6152,8 @@
                 var loopOn = document.getElementById('loopCheck').checked;
                 var loopAttr = loopOn ? 'checked' : '';
 
-                var C = 'display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #d1d5db;border-radius:5px;padding:3px 10px;white-space:nowrap;';
-                var L = 'font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;font-family:var(--font-body);';
+                var C = 'display:inline-flex;align-items:center;gap:6px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:7px;padding:6px 10px;min-height:32px;box-sizing:border-box;white-space:nowrap;box-shadow:0 1px 2px rgba(15,23,42,.05);';
+                var L = 'font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.45px;font-family:var(--font-body);';
                 var I = 'border:none;background:transparent;font-size:13px;font-weight:700;color:#111827;font-family:var(--font-body);';
                 var S = 'border:none;background:transparent;font-size:12px;font-weight:600;color:#111827;font-family:var(--font-body);cursor:pointer;';
 
@@ -6017,6 +6188,15 @@ h1,h2,h3,h4{font-family:var(--font-title);}body,p,span,a,input,button,select,tex
 #score svg{display:block;width:auto;height:auto;}
 ${exportLayoutLocked ? '#score svg:not(#annotationLayer){width:auto!important;height:auto!important;min-width:0!important;max-width:none!important;}' : ''}
 #annotationLayer{position:absolute;z-index:20;pointer-events:none;overflow:visible;}
+.embedded-html-content{background:#fff;color:#111827;padding:14px 18px;overflow-wrap:anywhere;}
+.embedded-html-content:empty{display:none;}
+.embedded-html-content p{margin:0 0 8px;}
+.embedded-html-content h2,.embedded-html-content h3{margin:5px 0 8px;}
+.embedded-html-content ul,.embedded-html-content ol{margin:6px 0 10px;padding-left:30px;list-style-position:outside;}
+.embedded-html-content li{padding-left:3px;margin:3px 0;}
+#htmlBeforeContent{border:1px solid #e5e7eb;border-bottom:0;border-radius:8px 8px 0 0;}
+#htmlBeforeContent:not(:empty)+#score{border-radius:0;}
+#htmlAfterContent{border:1px solid #e5e7eb;border-top:0;border-radius:0 0 8px 8px;}
 .mix-toggle{display:inline-flex;align-items:center;gap:6px;background:#eee;border:1px solid #d1d5db;border-radius:5px;padding:3px 10px;white-space:nowrap;font-size:12px;font-weight:600;color:#111827;cursor:pointer;font-family:var(--font-body);user-select:none;transition:all 0.2s;margin-left:auto;}
 .mix-toggle:hover{background:#e5e7eb;}
 .mix-toggle svg{transition:transform 0.2s;color:#6b7280;}
@@ -6029,7 +6209,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
 <\/style>
 <\/head>
 <body style="margin:10px;">
-<div id="ctrlsEx" style="display:${hideCtrls ? 'none' : 'flex'};flex-wrap:wrap;gap:8px;margin-bottom:12px;padding:10px 14px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;align-items:center;">
+<div id="ctrlsEx" style="display:${hideCtrls ? 'none' : 'flex'};flex-wrap:wrap;gap:9px;margin-bottom:12px;padding:14px;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 3px 12px rgba(15,23,42,.07);align-items:center;">
   <span style="${C}background:#eee;"><span style="${L}">BPM<\/span><input type="number" id="bpm" value="${bpm}" style="${I}width:44px;text-align:center;"><\/span>
   <span style="${C}background:#eee;"><span style="${L}">Contagem<\/span><select id="countInEx" style="${S}">
     <option value="0" ${countInVal === 0 ? 'selected' : ''}>Desl.<\/option>
@@ -6053,7 +6233,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   <span style="${C}background:#eee;"><span style="${L}">Loop<\/span><input type="checkbox" id="loopEx" ${loopAttr} style="width:15px;height:15px;cursor:pointer;"><\/span>
   <span style="${C}background:#eee;"><span style="${L}">Scroll<\/span><input type="checkbox" id="autoScrollEx" checked style="width:15px;height:15px;cursor:pointer;" title="Rolagem automática"><\/span>
 <\/div>
-<div id="helpEx" style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:10px;padding:0 10px;font-size:11px;color:#6b7280;">
+<div id="helpEx" style="display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:9px;margin:0 0 10px;padding:8px 12px;background:rgba(255,255,255,.92);border:1px solid #e2e8f0;border-radius:8px;font-size:11px;color:#64748b;">
   <span><svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>/<svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>&nbsp;clique</span>
   <span>&bull;</span>
   <span><svg class="icon-svg" style="width:12px;height:12px;fill:currentColor;" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"></rect></svg>&nbsp;duplo</span>
@@ -6067,7 +6247,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   <a href="https://github.com/gleitz/midi-js-soundfonts" target="_blank" rel="noopener noreferrer" title="FluidR3_GM: CC BY 3.0; FatBoy e MusyngKite: CC BY-SA 3.0" style="text-decoration:none;color:#94a3b8;font-size:10px;">Timbres MIDI.js Soundfonts</a>
 </div>
 <p id="st" style="display:none;text-align:center;font-size:13px;color:#6b7280;"><\/p>
-<div id="scoreViewport" style="width:100%;overflow-x:auto;"><div id="score" style="cursor:pointer;position:relative;box-sizing:content-box;${exportLayoutLocked ? 'width:' + exportScoreWidth + 'px;max-width:none;' : ''}"><\/div><\/div>
+<div id="scoreViewport" style="width:100%;overflow-x:auto;"><div id="scoreComposition"><div id="htmlBeforeContent" class="embedded-html-content">${exportHtmlBefore}<\/div><div id="score" style="cursor:pointer;position:relative;box-sizing:content-box;${exportLayoutLocked ? 'width:' + exportScoreWidth + 'px;max-width:none;' : ''}"><\/div><div id="htmlAfterContent" class="embedded-html-content">${exportHtmlAfter}<\/div><\/div><\/div>
 
 <script>
 (function(){
@@ -7479,24 +7659,31 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   ];
   function makeOctSelEx(val,onchange){
     var s=document.createElement('select');
-    s.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px 4px;font-size:11px;background:#fff;color:#111827;cursor:pointer;';
+    s.style.cssText='height:29px;border:1px solid #cbd5e1;border-radius:6px;padding:2px 7px;font-size:11px;background:#fff;color:#1e293b;cursor:pointer;';
     OCT_OPTIONS_EX.forEach(function(o){var opt=document.createElement('option');opt.value=o[0];opt.textContent=o[1];if(String(val)===o[0])opt.selected=true;s.appendChild(opt);});
     s.onchange=onchange;return s;
   }
   function makeSoundQualityButtonEx(config,onchange){
     config.soundQuality=normalizeSoundQualityEx(config.soundQuality);
     var button=document.createElement('button');button.type='button';
-    function refresh(){var quality=normalizeSoundQualityEx(config.soundQuality),info=SOUND_QUALITY_CONFIG[quality],drumNote=config.isDrum?' Na bateria, altera somente bumbo e caixa.':'';button.className='quality-level-btn quality-'+quality;button.innerHTML='<span class="quality-bars" aria-hidden="true"><i><\/i><i><\/i><i><\/i><\/span><span>'+info.shortLabel+'<\/span>';button.setAttribute('aria-label',info.label+'. Clique para mudar.'+drumNote);button.title=info.label+' — '+(quality==='standard'?'banco inicial':(quality==='medium'?'banco FatBoy':'banco MusyngKite'))+'.'+drumNote+' Clique para o próximo banco.';}
+    function refresh(){
+      var quality=normalizeSoundQualityEx(config.soundQuality),info=SOUND_QUALITY_CONFIG[quality],drumNote=config.isDrum?' Na bateria, altera somente bumbo e caixa.':'';
+      var qualityColors=quality==='superior'?'background:#f5f3ff;border-color:#a78bfa;color:#6d28d9;':(quality==='medium'?'background:#eff6ff;border-color:#60a5fa;color:#1d4ed8;':'background:#ffffff;border-color:#94a3b8;color:#334155;');
+      button.className='quality-level-btn quality-'+quality;
+      button.style.cssText='min-width:84px;height:30px;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 1px 2px rgba(15,23,42,.08);'+qualityColors;
+      button.innerHTML='<span aria-hidden="true" style="font-size:12px;line-height:1;color:currentColor;">▥<\/span><span>'+info.shortLabel+'<\/span>';
+      button.setAttribute('aria-label',info.label+'. Clique para mudar.'+drumNote);button.title=info.label+' — '+(quality==='standard'?'banco inicial':(quality==='medium'?'banco FatBoy':'banco MusyngKite'))+'.'+drumNote+' Clique para o próximo banco.';
+    }
     button.onclick=function(){var levels=['standard','medium','superior'];config.soundQuality=levels[(levels.indexOf(normalizeSoundQualityEx(config.soundQuality))+1)%levels.length];refresh();onchange(config.soundQuality);};
     refresh();return button;
   }
   function makeDurSelExPC(val,onchange){
-    var s=document.createElement('select');s.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px 4px;font-size:11px;background:#fff;color:#111827;cursor:pointer;';
+    var s=document.createElement('select');s.style.cssText='height:29px;border:1px solid #cbd5e1;border-radius:6px;padding:2px 7px;font-size:11px;background:#fff;color:#1e293b;cursor:pointer;';
     [[1,'1 tempo'],[2,'2 tempos'],[3,'3 tempos'],[4,'4 tempos'],[5,'arpejo em colcheias'],[6,'acordes em semínimas'],[7,'acordes em colcheias']].forEach(function(o){var opt=document.createElement('option');opt.value=o[0];opt.textContent=o[1];if(Number(val)===o[0])opt.selected=true;s.appendChild(opt);});
     s.onchange=onchange;return s;
   }
   function makeDurSelExC(val,onchange){
-    var s=document.createElement('select');s.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px 4px;font-size:11px;background:#fff;color:#111827;cursor:pointer;';
+    var s=document.createElement('select');s.style.cssText='height:29px;border:1px solid #cbd5e1;border-radius:6px;padding:2px 7px;font-size:11px;background:#fff;color:#1e293b;cursor:pointer;';
     [[1,'1 tempo'],[2,'2 tempos'],[3,'3 tempos'],[4,'4 tempos'],[5,'subdivisões em semínimas'],[6,'subdivisões em colcheias'],[7,'semínima pontuada e colcheia']].forEach(function(o){var opt=document.createElement('option');opt.value=o[0];opt.textContent=o[1];if(Number(val)===o[0])opt.selected=true;s.appendChild(opt);});
     s.onchange=onchange;return s;
   }
@@ -7510,12 +7697,13 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var ctrls=document.getElementById('ctrlsEx');
     var btnMix=document.createElement('button');
     btnMix.className='mix-toggle';
+    btnMix.style.cssText='display:inline-flex;align-items:center;gap:7px;margin-left:auto;height:32px;padding:0 12px;background:#334155;color:#fff;border:1px solid #1e293b;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;box-shadow:0 2px 5px rgba(15,23,42,.16);';
     btnMix.setAttribute('aria-expanded','false');
     btnMix.innerHTML='<span style="${L}">Abrir mixer</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
     ctrls.appendChild(btnMix);
 
     var pPanel=document.createElement('div');
-    pPanel.style.cssText='width:100%;display:none;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed #cbd5e1;';
+    pPanel.style.cssText='width:100%;display:none;flex-direction:column;gap:5px;margin-top:5px;padding:12px 14px;background:#ffffff;border:1px solid #cbd5e1;border-radius:9px;box-shadow:inset 4px 0 0 #7c3aed;box-sizing:border-box;';
     
     btnMix.onclick=function(){
       var isCol=(pPanel.style.display==='none');
@@ -7524,20 +7712,20 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       btnMix.setAttribute('aria-expanded',isCol?'true':'false');
       btnMix.querySelector('span').textContent=isCol?'Recolher mixer':'Abrir mixer';
     };
-    var S_BTN='border:1px solid #d1d5db;border-radius:4px;padding:3px 6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-body);color:#475569;background:#f8fafc;';
+    var S_BTN='height:29px;border:1px solid #cbd5e1;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-body);color:#334155;background:#f8fafc;box-shadow:0 1px 2px rgba(15,23,42,.05);';
 
     updateGlobalInstrumentTransposition();
     updateGlobalTranspUIEx();
 
     partConfigs.forEach(function(cfg,idx){
-      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
-      var nameSp=document.createElement('span');nameSp.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;';nameSp.textContent=cfg.name;
+      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:36px;padding:4px 6px;border-bottom:1px solid #f1f5f9;';
+      var nameSp=document.createElement('span');nameSp.style.cssText='font-size:12px;font-weight:700;min-width:120px;color:#1e293b;';nameSp.textContent=cfg.name;
       var bMute=document.createElement('button');bMute.innerHTML=ICONS.mute+' Mute';bMute.style.cssText=S_BTN+(cfg.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
       bMute.onclick=function(){cfg.mute=!cfg.mute;bMute.style.cssText=S_BTN+(cfg.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
       var bSolo=document.createElement('button');bSolo.innerHTML=ICONS.solo+' Solo';bSolo.style.cssText=S_BTN+(cfg.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');
       bSolo.setAttribute('data-solo-idx',idx);
       bSolo.onclick=function(){cfg.solo=!cfg.solo;bSolo.style.cssText=S_BTN+(cfg.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');updateFullMix();};
-      var volRange=document.createElement('input');volRange.type='range';volRange.min=0;volRange.max=100;volRange.value=cfg.vol||100;volRange.style.width='55px';
+      var volRange=document.createElement('input');volRange.type='range';volRange.min=0;volRange.max=100;volRange.value=cfg.vol||100;volRange.style.cssText='width:72px;accent-color:#7c3aed;';
       volRange.oninput=function(){cfg.vol=+volRange.value;updateFullMix();};
       var octS=makeOctSelEx(cfg.oct||0,function(){
         cfg.oct=parseInt(octS.value,10);
@@ -7545,7 +7733,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
         updateGlobalTranspUIEx();
       });
       if(cfg.isDrum){octS.disabled=true;octS.title="Percussão não permite transposição.";octS.style.opacity="0.5";cfg.oct=0;}
-      var sel=document.createElement('select');sel.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
+      var sel=document.createElement('select');sel.style.cssText='height:29px;border:1px solid #cbd5e1;border-radius:6px;padding:2px 7px;font-size:11px;max-width:165px;background:#fff;color:#1e293b;';
       sel.innerHTML=GM_OPTS_HTML;sel.value=cfg.program;
       var qualityBtn=makeSoundQualityButtonEx(cfg,function(){reloadPartInstrumentEx(idx);});
       sel.onchange=function(){cfg.program=sel.value;cfg.isDrum=(sel.value==='_drum_kit_gm');if(cfg.isDrum)cfg.oct=0;eventsCache.bpm=null;cursorStepsCache.mode=null;reloadPartInstrumentEx(idx);};
@@ -7554,9 +7742,9 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       pPanel.appendChild(row);
     });
 
-    var styleRow=document.createElement('div');styleRow.style.cssText='display:flex;align-items:center;gap:8px;';
+    var styleRow=document.createElement('div');styleRow.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:36px;padding:6px;background:#f8fafc;border-radius:7px;margin-top:3px;';
     var styleName=document.createElement('span');styleName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;font-style:italic;';styleName.textContent='Levada das cifras';
-    var styleSel=document.createElement('select');styleSel.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:160px;background:#fff;color:#111827;';
+    var styleSel=document.createElement('select');styleSel.style.cssText='height:29px;border:1px solid #cbd5e1;border-radius:6px;padding:2px 7px;font-size:11px;max-width:160px;background:#fff;color:#1e293b;';
     [['manual','Manual'],['auto','Automático'],['ataque','Ataque'],['cancao','Canção'],['bossa','Bossa'],['arpejo','Arpejo'],['colcheias','Colcheias'],['valsa','Valsa']].forEach(function(o){var opt=document.createElement('option');opt.value=o[0];opt.textContent=o[1];if(chordStyleConfig.style===o[0])opt.selected=true;styleSel.appendChild(opt);});
     styleSel.title='Automático usa bossa em compassos binários/quaternários e valsa em ternários/compostos.';
     var drumsLabel=document.createElement('label');drumsLabel.style.cssText='display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#64748b;white-space:nowrap;';
@@ -7569,13 +7757,13 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     updateStyleControlsEx();styleRow.appendChild(styleName);styleRow.appendChild(styleSel);styleRow.appendChild(drumsLabel);styleRow.appendChild(drumsVol);
 
     pianoChordConfig.enabled=true;
-    var pchRow=document.createElement('div');pchRow.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+    var pchRow=document.createElement('div');pchRow.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:36px;padding:4px 6px;border-bottom:1px solid #f1f5f9;';
     var pchName=document.createElement('span');pchName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;font-style:italic;';pchName.textContent='Cifra: acordes';
     var bPMuteC=document.createElement('button');bPMuteC.innerHTML=ICONS.mute+' Mute';bPMuteC.style.cssText=S_BTN+(pianoChordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
     bPMuteC.onclick=function(){pianoChordConfig.mute=!pianoChordConfig.mute;bPMuteC.style.cssText=S_BTN+(pianoChordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
     var bPSoloC=document.createElement('button');bPSoloC.innerHTML=ICONS.solo+' Solo';bPSoloC.style.cssText=S_BTN+(pianoChordConfig.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');
     bPSoloC.onclick=function(){pianoChordConfig.solo=!pianoChordConfig.solo;bPSoloC.style.cssText=S_BTN+(pianoChordConfig.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');updateFullMix();};
-    var volPC=document.createElement('input');volPC.type='range';volPC.min=0;volPC.max=100;volPC.value=pianoChordConfig.vol;volPC.style.width='55px';
+    var volPC=document.createElement('input');volPC.type='range';volPC.min=0;volPC.max=100;volPC.value=pianoChordConfig.vol;volPC.style.cssText='width:72px;accent-color:#7c3aed;';
     volPC.oninput=function(){pianoChordConfig.vol=+volPC.value;updateFullMix();};
     var octPC=makeOctSelEx(pianoChordConfig.oct,function(){
       pianoChordConfig.oct=parseInt(octPC.value,10);
@@ -7583,19 +7771,19 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       updateGlobalTranspUIEx();
     });
     var durPC=makeDurSelExPC(pianoChordConfig.durVal,function(){pianoChordConfig.durVal=Number(durPC.value);});
-    var selPC=document.createElement('select');selPC.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
+    var selPC=document.createElement('select');selPC.style.cssText='height:29px;border:1px solid #cbd5e1;border-radius:6px;padding:2px 7px;font-size:11px;max-width:165px;background:#fff;color:#1e293b;';
     selPC.innerHTML=GM_OPTS_HTML;selPC.value=pianoChordConfig.program;
     selPC.onchange=function(){pianoChordConfig.program=selPC.value;pianoChordInst=null;eventsCache.bpm=null;reloadPianoChordInstrument();};
     pchRow.appendChild(pchName);pchRow.appendChild(volPC);pchRow.appendChild(bPMuteC);pchRow.appendChild(bPSoloC);pchRow.appendChild(octPC);pchRow.appendChild(selPC);pchRow.appendChild(durPC);pchRow.appendChild(makeSoundQualityButtonEx(pianoChordConfig,function(){reloadPianoChordInstrument();}));
     pPanel.appendChild(pchRow);
 
-    var chRow=document.createElement('div');chRow.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+    var chRow=document.createElement('div');chRow.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:36px;padding:4px 6px;border-bottom:1px solid #f1f5f9;';
     var chName=document.createElement('span');chName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;font-style:italic;';chName.textContent='Cifra: baixo';
     var bMuteC=document.createElement('button');bMuteC.innerHTML=ICONS.mute+' Mute';bMuteC.style.cssText=S_BTN+(chordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
     bMuteC.onclick=function(){chordConfig.mute=!chordConfig.mute;bMuteC.style.cssText=S_BTN+(chordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
     var bSoloC=document.createElement('button');bSoloC.innerHTML=ICONS.solo+' Solo';bSoloC.style.cssText=S_BTN+(chordConfig.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');
     bSoloC.onclick=function(){chordConfig.solo=!chordConfig.solo;bSoloC.style.cssText=S_BTN+(chordConfig.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');updateFullMix();};
-    var volC=document.createElement('input');volC.type='range';volC.min=0;volC.max=100;volC.value=chordConfig.vol;volC.style.width='55px';
+    var volC=document.createElement('input');volC.type='range';volC.min=0;volC.max=100;volC.value=chordConfig.vol;volC.style.cssText='width:72px;accent-color:#7c3aed;';
     volC.oninput=function(){chordConfig.vol=+volC.value;updateFullMix();};
     var octC=makeOctSelEx(chordConfig.oct,function(){
       chordConfig.oct=parseInt(octC.value,10);
@@ -7603,7 +7791,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       updateGlobalTranspUIEx();
     });
     var durC=makeDurSelExC(chordConfig.durVal,function(){chordConfig.durVal=Number(durC.value);});
-    var selC=document.createElement('select');selC.style.cssText='border:1px solid #d1d5db;border-radius:4px;padding:2px;font-size:11px;max-width:140px;background:#fff;color:#111827;';
+    var selC=document.createElement('select');selC.style.cssText='height:29px;border:1px solid #cbd5e1;border-radius:6px;padding:2px 7px;font-size:11px;max-width:165px;background:#fff;color:#1e293b;';
     selC.innerHTML=GM_OPTS_HTML;selC.value=chordConfig.program;
     selC.onchange=function(){chordConfig.program=selC.value;chordInst=null;eventsCache.bpm=null;reloadChordInstrument();};
     chRow.appendChild(chName);chRow.appendChild(volC);chRow.appendChild(bMuteC);chRow.appendChild(bSoloC);chRow.appendChild(octC);chRow.appendChild(selC);chRow.appendChild(durC);chRow.appendChild(makeSoundQualityButtonEx(chordConfig,function(){reloadChordInstrument();}));
