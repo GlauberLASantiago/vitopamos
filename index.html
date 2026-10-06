@@ -170,7 +170,6 @@
             cursor: pointer;
             font-family: inherit;
             transition: all 0.2s ease;
-            margin-bottom: 12px;
             width: 100%;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             box-sizing: border-box;
@@ -209,6 +208,36 @@
 
         .load-btn input {
             display: none;
+        }
+
+        .load-row {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+
+        .demo-btn {
+            min-width: 112px;
+            padding: 0 18px;
+            border: 1px solid #6366f1;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, 0.10);
+            color: #6366f1;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .demo-btn:hover {
+            background: #6366f1;
+            color: #ffffff;
+        }
+
+        .demo-btn:disabled {
+            cursor: wait;
+            opacity: 0.7;
         }
 
         .fname {
@@ -1011,13 +1040,16 @@
         </div>
 
         <div class="body">
-            <label class="load-btn">
-                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
-                </svg>
-                <span>Carregar partitura</span>
-                <input type="file" id="fi" accept=".xml,.musicxml,.mxl">
-            </label>
+            <div class="load-row">
+                <label class="load-btn">
+                    <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
+                    </svg>
+                    <span>Carregar partitura</span>
+                    <input type="file" id="fi" accept=".xml,.musicxml,.mxl">
+                </label>
+                <button type="button" class="demo-btn" id="btnToggleDemo" title="Abrir a outra demonstração">Demo 2</button>
+            </div>
 
             <div class="fname" id="fname">Nenhum arquivo selecionado</div>
 
@@ -1921,9 +1953,12 @@
                 return chords;
             }
 
-            var chordConfig = { name: 'Cifra: baixo', program: 'acoustic_bass', vol: 75, mute: false, solo: false, oct: -24, enabled: true, durVal: 2, soundQuality: 'standard' };
-            var pianoChordConfig = { name: 'Cifra: acordes', program: 'electric_piano_1', vol: 50, mute: false, solo: false, oct: 0, enabled: true, durVal: 2, soundQuality: 'standard' };
-            var chordStyleConfig = { style: 'manual', drums: true, drumVol: 55 };
+            function defaultChordConfig() { return { name: 'Cifra: baixo', program: 'acoustic_bass', vol: 75, mute: false, solo: false, oct: -24, enabled: true, durVal: 2, soundQuality: 'standard' }; }
+            function defaultPianoChordConfig() { return { name: 'Cifra: acordes', program: 'electric_piano_1', vol: 50, mute: false, solo: false, oct: 0, enabled: true, durVal: 2, soundQuality: 'standard' }; }
+            function defaultChordStyleConfig() { return { style: 'manual', drums: true, drumVol: 55 }; }
+            var chordConfig = defaultChordConfig();
+            var pianoChordConfig = defaultPianoChordConfig();
+            var chordStyleConfig = defaultChordStyleConfig();
             var chordInst = null, pianoChordInst = null;
             var chordGain = null, pianoChordGain = null;
             var styleDrumGain = null;
@@ -2121,7 +2156,8 @@
 
             /* ─── Estado global ──────────────────────────────────────────────── */
             var partInsts = [], partConfigs = [], partGains = [], isAnySolo = false;
-            var evs = [], ac = null, sc = [], retiredSc = [], sat = 0, pat = 0, run = false, paused = false, rawXml = '', xmlDoc = null, isLoadingProject = false, playbackStartOffset = 0;
+            var evs = [], ac = null, sc = [], retiredSc = [], sat = 0, pat = 0, run = false, paused = false, rawXml = '', xmlDoc = null, isLoadingProject = false, playbackStartOffset = 0, currentDemo = 0;
+            var EMBEDDED_DEMO_2_BASE64 = 'ewogICJyYXdYbWwiOiAiPD94bWwgdmVyc2lvbj1cIjEuMFwiIGVuY29kaW5nPVwiVVRGLThcIj8+XG48IURPQ1RZUEUgc2NvcmUtcGFydHdpc2UgUFVCTElDIFwiLS8vUmVjb3JkYXJlLy9EVEQgTXVzaWNYTUwgNC4wIFBhcnR3aXNlLy9FTlwiIFwiaHR0cDovL3d3dy5tdXNpY3htbC5vcmcvZHRkcy9wYXJ0d2lzZS5kdGRcIj5cbjxzY29yZS1wYXJ0d2lzZSB2ZXJzaW9uPVwiNC4wXCI+XG4gIDx3b3JrPlxuICAgIDx3b3JrLXRpdGxlPk91dHJhIGRlbW9uc3RyYcOnw6NvIHBhcmEgbyBWaVRvUGFNb1M8L3dvcmstdGl0bGU+XG4gICAgPC93b3JrPlxuICA8aWRlbnRpZmljYXRpb24+XG4gICAgPGNyZWF0b3IgdHlwZT1cImNvbXBvc2VyXCI+R2xhdWJlciBTYW50aWFnbzwvY3JlYXRvcj5cbiAgICA8ZW5jb2Rpbmc+XG4gICAgICA8c29mdHdhcmU+TXVzZVNjb3JlIFN0dWRpbyA0LjcuMzwvc29mdHdhcmU+XG4gICAgICA8ZW5jb2RpbmctZGF0ZT4yMDI2LTEwLTA2PC9lbmNvZGluZy1kYXRlPlxuICAgICAgPHN1cHBvcnRzIGVsZW1lbnQ9XCJhY2NpZGVudGFsXCIgdHlwZT1cInllc1wiLz5cbiAgICAgIDxzdXBwb3J0cyBlbGVtZW50PVwiYmVhbVwiIHR5cGU9XCJ5ZXNcIi8+XG4gICAgICA8c3VwcG9ydHMgZWxlbWVudD1cInByaW50XCIgYXR0cmlidXRlPVwibmV3LXBhZ2VcIiB0eXBlPVwibm9cIi8+XG4gICAgICA8c3VwcG9ydHMgZWxlbWVudD1cInByaW50XCIgYXR0cmlidXRlPVwibmV3LXN5c3RlbVwiIHR5cGU9XCJub1wiLz5cbiAgICAgIDxzdXBwb3J0cyBlbGVtZW50PVwic3RlbVwiIHR5cGU9XCJ5ZXNcIi8+XG4gICAgICA8L2VuY29kaW5nPlxuICAgIDxtaXNjZWxsYW5lb3VzPlxuICAgICAgPG1pc2NlbGxhbmVvdXMtZmllbGQgbmFtZT1cImNyZWF0aW9uRGF0ZVwiPjIwMjYtMTAtMDY8L21pc2NlbGxhbmVvdXMtZmllbGQ+XG4gICAgICA8bWlzY2VsbGFuZW91cy1maWVsZCBuYW1lPVwicGxhdGZvcm1cIj5NaWNyb3NvZnQgV2luZG93czwvbWlzY2VsbGFuZW91cy1maWVsZD5cbiAgICAgIDwvbWlzY2VsbGFuZW91cz5cbiAgICA8L2lkZW50aWZpY2F0aW9uPlxuICA8cGFydC1saXN0PlxuICAgIDxzY29yZS1wYXJ0IGlkPVwiUDFcIj5cbiAgICAgIDxwYXJ0LW5hbWUgcHJpbnQtb2JqZWN0PVwibm9cIj5PYm/DqTwvcGFydC1uYW1lPlxuICAgICAgPHBhcnQtYWJicmV2aWF0aW9uIHByaW50LW9iamVjdD1cIm5vXCI+T2IuPC9wYXJ0LWFiYnJldmlhdGlvbj5cbiAgICAgIDxzY29yZS1pbnN0cnVtZW50IGlkPVwiUDEtSTFcIj5cbiAgICAgICAgPGluc3RydW1lbnQtbmFtZT5PYm/DqTwvaW5zdHJ1bWVudC1uYW1lPlxuICAgICAgICA8aW5zdHJ1bWVudC1zb3VuZD53aW5kLnJlZWQub2JvZTwvaW5zdHJ1bWVudC1zb3VuZD5cbiAgICAgICAgPC9zY29yZS1pbnN0cnVtZW50PlxuICAgICAgPG1pZGktZGV2aWNlIGlkPVwiUDEtSTFcIiBwb3J0PVwiMVwiPjwvbWlkaS1kZXZpY2U+XG4gICAgICA8bWlkaS1pbnN0cnVtZW50IGlkPVwiUDEtSTFcIj5cbiAgICAgICAgPG1pZGktY2hhbm5lbD4zPC9taWRpLWNoYW5uZWw+XG4gICAgICAgIDxtaWRpLXByb2dyYW0+Njk8L21pZGktcHJvZ3JhbT5cbiAgICAgICAgPHZvbHVtZT43OC43NDAyPC92b2x1bWU+XG4gICAgICAgIDxwYW4+MDwvcGFuPlxuICAgICAgICA8L21pZGktaW5zdHJ1bWVudD5cbiAgICAgIDwvc2NvcmUtcGFydD5cbiAgICA8L3BhcnQtbGlzdD5cbiAgPHBhcnQgaWQ9XCJQMVwiPlxuICAgIDxtZWFzdXJlIG51bWJlcj1cIjFcIj5cbiAgICAgIDxhdHRyaWJ1dGVzPlxuICAgICAgICA8ZGl2aXNpb25zPjQ8L2RpdmlzaW9ucz5cbiAgICAgICAgPGtleT5cbiAgICAgICAgICA8ZmlmdGhzPi0zPC9maWZ0aHM+XG4gICAgICAgICAgPC9rZXk+XG4gICAgICAgIDx0aW1lPlxuICAgICAgICAgIDxiZWF0cz4yPC9iZWF0cz5cbiAgICAgICAgICA8YmVhdC10eXBlPjQ8L2JlYXQtdHlwZT5cbiAgICAgICAgICA8L3RpbWU+XG4gICAgICAgIDxjbGVmPlxuICAgICAgICAgIDxzaWduPkc8L3NpZ24+XG4gICAgICAgICAgPGxpbmU+MjwvbGluZT5cbiAgICAgICAgICA8L2NsZWY+XG4gICAgICAgIDwvYXR0cmlidXRlcz5cbiAgICAgIDxoYXJtb255IHByaW50LWZyYW1lPVwibm9cIj5cbiAgICAgICAgPHJvb3Q+XG4gICAgICAgICAgPHJvb3Qtc3RlcD5FPC9yb290LXN0ZXA+XG4gICAgICAgICAgPHJvb3QtYWx0ZXI+LTE8L3Jvb3QtYWx0ZXI+XG4gICAgICAgICAgPC9yb290PlxuICAgICAgICA8a2luZCB0ZXh0PVwibWFqN1wiPm1ham9yLXNldmVudGg8L2tpbmQ+XG4gICAgICAgIDwvaGFybW9ueT5cbiAgICAgIDxkaXJlY3Rpb24gcGxhY2VtZW50PVwiYWJvdmVcIiBzeXN0ZW09XCJvbmx5LXRvcFwiPlxuICAgICAgICA8ZGlyZWN0aW9uLXR5cGU+XG4gICAgICAgICAgPG1ldHJvbm9tZSBwYXJlbnRoZXNlcz1cIm5vXCI+XG4gICAgICAgICAgICA8YmVhdC11bml0PnF1YXJ0ZXI8L2JlYXQtdW5pdD5cbiAgICAgICAgICAgIDxwZXItbWludXRlPjc2PC9wZXItbWludXRlPlxuICAgICAgICAgICAgPC9tZXRyb25vbWU+XG4gICAgICAgICAgPC9kaXJlY3Rpb24tdHlwZT5cbiAgICAgICAgPHNvdW5kIHRlbXBvPVwiNzZcIi8+XG4gICAgICAgIDwvZGlyZWN0aW9uPlxuICAgICAgPG5vdGU+XG4gICAgICAgIDxwaXRjaD5cbiAgICAgICAgICA8c3RlcD5HPC9zdGVwPlxuICAgICAgICAgIDxvY3RhdmU+NDwvb2N0YXZlPlxuICAgICAgICAgIDwvcGl0Y2g+XG4gICAgICAgIDxkdXJhdGlvbj4xPC9kdXJhdGlvbj5cbiAgICAgICAgPHZvaWNlPjE8L3ZvaWNlPlxuICAgICAgICA8dHlwZT4xNnRoPC90eXBlPlxuICAgICAgICA8c3RlbT51cDwvc3RlbT5cbiAgICAgICAgPGJlYW0gbnVtYmVyPVwiMVwiPmJlZ2luPC9iZWFtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIyXCI+Zm9yd2FyZCBob29rPC9iZWFtPlxuICAgICAgICA8L25vdGU+XG4gICAgICA8bm90ZT5cbiAgICAgICAgPHBpdGNoPlxuICAgICAgICAgIDxzdGVwPkE8L3N0ZXA+XG4gICAgICAgICAgPGFsdGVyPi0xPC9hbHRlcj5cbiAgICAgICAgICA8b2N0YXZlPjQ8L29jdGF2ZT5cbiAgICAgICAgICA8L3BpdGNoPlxuICAgICAgICA8ZHVyYXRpb24+MjwvZHVyYXRpb24+XG4gICAgICAgIDx2b2ljZT4xPC92b2ljZT5cbiAgICAgICAgPHR5cGU+ZWlnaHRoPC90eXBlPlxuICAgICAgICA8c3RlbT51cDwvc3RlbT5cbiAgICAgICAgPGJlYW0gbnVtYmVyPVwiMVwiPmNvbnRpbnVlPC9iZWFtPlxuICAgICAgICA8L25vdGU+XG4gICAgICA8bm90ZT5cbiAgICAgICAgPHBpdGNoPlxuICAgICAgICAgIDxzdGVwPkI8L3N0ZXA+XG4gICAgICAgICAgPGFsdGVyPi0xPC9hbHRlcj5cbiAgICAgICAgICA8b2N0YXZlPjQ8L29jdGF2ZT5cbiAgICAgICAgICA8L3BpdGNoPlxuICAgICAgICA8ZHVyYXRpb24+MTwvZHVyYXRpb24+XG4gICAgICAgIDx0aWUgdHlwZT1cInN0YXJ0XCIvPlxuICAgICAgICA8dm9pY2U+MTwvdm9pY2U+XG4gICAgICAgIDx0eXBlPjE2dGg8L3R5cGU+XG4gICAgICAgIDxzdGVtPnVwPC9zdGVtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIxXCI+ZW5kPC9iZWFtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIyXCI+YmFja3dhcmQgaG9vazwvYmVhbT5cbiAgICAgICAgPG5vdGF0aW9ucz5cbiAgICAgICAgICA8dGllZCB0eXBlPVwic3RhcnRcIi8+XG4gICAgICAgICAgPC9ub3RhdGlvbnM+XG4gICAgICAgIDwvbm90ZT5cbiAgICAgIDxub3RlPlxuICAgICAgICA8cGl0Y2g+XG4gICAgICAgICAgPHN0ZXA+Qjwvc3RlcD5cbiAgICAgICAgICA8YWx0ZXI+LTE8L2FsdGVyPlxuICAgICAgICAgIDxvY3RhdmU+NDwvb2N0YXZlPlxuICAgICAgICAgIDwvcGl0Y2g+XG4gICAgICAgIDxkdXJhdGlvbj40PC9kdXJhdGlvbj5cbiAgICAgICAgPHRpZSB0eXBlPVwic3RvcFwiLz5cbiAgICAgICAgPHZvaWNlPjE8L3ZvaWNlPlxuICAgICAgICA8dHlwZT5xdWFydGVyPC90eXBlPlxuICAgICAgICA8c3RlbT5kb3duPC9zdGVtPlxuICAgICAgICA8bm90YXRpb25zPlxuICAgICAgICAgIDx0aWVkIHR5cGU9XCJzdG9wXCIvPlxuICAgICAgICAgIDwvbm90YXRpb25zPlxuICAgICAgICA8L25vdGU+XG4gICAgICA8L21lYXN1cmU+XG4gICAgPG1lYXN1cmUgbnVtYmVyPVwiMlwiPlxuICAgICAgPGhhcm1vbnkgcHJpbnQtZnJhbWU9XCJub1wiPlxuICAgICAgICA8cm9vdD5cbiAgICAgICAgICA8cm9vdC1zdGVwPkI8L3Jvb3Qtc3RlcD5cbiAgICAgICAgICA8L3Jvb3Q+XG4gICAgICAgIDxraW5kIHRleHQ9XCJkaW03XCI+ZGltaW5pc2hlZC1zZXZlbnRoPC9raW5kPlxuICAgICAgICA8L2hhcm1vbnk+XG4gICAgICA8bm90ZT5cbiAgICAgICAgPHJlc3QvPlxuICAgICAgICA8ZHVyYXRpb24+MTwvZHVyYXRpb24+XG4gICAgICAgIDx2b2ljZT4xPC92b2ljZT5cbiAgICAgICAgPHR5cGU+MTZ0aDwvdHlwZT5cbiAgICAgICAgPC9ub3RlPlxuICAgICAgPG5vdGU+XG4gICAgICAgIDxwaXRjaD5cbiAgICAgICAgICA8c3RlcD5BPC9zdGVwPlxuICAgICAgICAgIDxhbHRlcj4tMTwvYWx0ZXI+XG4gICAgICAgICAgPG9jdGF2ZT40PC9vY3RhdmU+XG4gICAgICAgICAgPC9waXRjaD5cbiAgICAgICAgPGR1cmF0aW9uPjE8L2R1cmF0aW9uPlxuICAgICAgICA8dm9pY2U+MTwvdm9pY2U+XG4gICAgICAgIDx0eXBlPjE2dGg8L3R5cGU+XG4gICAgICAgIDxzdGVtPnVwPC9zdGVtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIxXCI+YmVnaW48L2JlYW0+XG4gICAgICAgIDxiZWFtIG51bWJlcj1cIjJcIj5iZWdpbjwvYmVhbT5cbiAgICAgICAgPC9ub3RlPlxuICAgICAgPG5vdGU+XG4gICAgICAgIDxwaXRjaD5cbiAgICAgICAgICA8c3RlcD5HPC9zdGVwPlxuICAgICAgICAgIDxvY3RhdmU+NDwvb2N0YXZlPlxuICAgICAgICAgIDwvcGl0Y2g+XG4gICAgICAgIDxkdXJhdGlvbj4xPC9kdXJhdGlvbj5cbiAgICAgICAgPHZvaWNlPjE8L3ZvaWNlPlxuICAgICAgICA8dHlwZT4xNnRoPC90eXBlPlxuICAgICAgICA8c3RlbT51cDwvc3RlbT5cbiAgICAgICAgPGJlYW0gbnVtYmVyPVwiMVwiPmNvbnRpbnVlPC9iZWFtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIyXCI+Y29udGludWU8L2JlYW0+XG4gICAgICAgIDwvbm90ZT5cbiAgICAgIDxub3RlPlxuICAgICAgICA8cGl0Y2g+XG4gICAgICAgICAgPHN0ZXA+Rjwvc3RlcD5cbiAgICAgICAgICA8b2N0YXZlPjQ8L29jdGF2ZT5cbiAgICAgICAgICA8L3BpdGNoPlxuICAgICAgICA8ZHVyYXRpb24+MTwvZHVyYXRpb24+XG4gICAgICAgIDx0aWUgdHlwZT1cInN0YXJ0XCIvPlxuICAgICAgICA8dm9pY2U+MTwvdm9pY2U+XG4gICAgICAgIDx0eXBlPjE2dGg8L3R5cGU+XG4gICAgICAgIDxzdGVtPnVwPC9zdGVtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIxXCI+ZW5kPC9iZWFtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIyXCI+ZW5kPC9iZWFtPlxuICAgICAgICA8bm90YXRpb25zPlxuICAgICAgICAgIDx0aWVkIHR5cGU9XCJzdGFydFwiLz5cbiAgICAgICAgICA8L25vdGF0aW9ucz5cbiAgICAgICAgPC9ub3RlPlxuICAgICAgPG5vdGU+XG4gICAgICAgIDxwaXRjaD5cbiAgICAgICAgICA8c3RlcD5GPC9zdGVwPlxuICAgICAgICAgIDxvY3RhdmU+NDwvb2N0YXZlPlxuICAgICAgICAgIDwvcGl0Y2g+XG4gICAgICAgIDxkdXJhdGlvbj40PC9kdXJhdGlvbj5cbiAgICAgICAgPHRpZSB0eXBlPVwic3RvcFwiLz5cbiAgICAgICAgPHZvaWNlPjE8L3ZvaWNlPlxuICAgICAgICA8dHlwZT5xdWFydGVyPC90eXBlPlxuICAgICAgICA8c3RlbT51cDwvc3RlbT5cbiAgICAgICAgPG5vdGF0aW9ucz5cbiAgICAgICAgICA8dGllZCB0eXBlPVwic3RvcFwiLz5cbiAgICAgICAgICA8L25vdGF0aW9ucz5cbiAgICAgICAgPC9ub3RlPlxuICAgICAgPC9tZWFzdXJlPlxuICAgIDxtZWFzdXJlIG51bWJlcj1cIjNcIj5cbiAgICAgIDxoYXJtb255IHByaW50LWZyYW1lPVwibm9cIj5cbiAgICAgICAgPHJvb3Q+XG4gICAgICAgICAgPHJvb3Qtc3RlcD5DPC9yb290LXN0ZXA+XG4gICAgICAgICAgPC9yb290PlxuICAgICAgICA8a2luZCB0ZXh0PVwibTdcIj5taW5vci1zZXZlbnRoPC9raW5kPlxuICAgICAgICA8L2hhcm1vbnk+XG4gICAgICA8bm90ZT5cbiAgICAgICAgPHBpdGNoPlxuICAgICAgICAgIDxzdGVwPkU8L3N0ZXA+XG4gICAgICAgICAgPGFsdGVyPi0xPC9hbHRlcj5cbiAgICAgICAgICA8b2N0YXZlPjQ8L29jdGF2ZT5cbiAgICAgICAgICA8L3BpdGNoPlxuICAgICAgICA8ZHVyYXRpb24+MTwvZHVyYXRpb24+XG4gICAgICAgIDx2b2ljZT4xPC92b2ljZT5cbiAgICAgICAgPHR5cGU+MTZ0aDwvdHlwZT5cbiAgICAgICAgPHN0ZW0+dXA8L3N0ZW0+XG4gICAgICAgIDxiZWFtIG51bWJlcj1cIjFcIj5iZWdpbjwvYmVhbT5cbiAgICAgICAgPGJlYW0gbnVtYmVyPVwiMlwiPmZvcndhcmQgaG9vazwvYmVhbT5cbiAgICAgICAgPC9ub3RlPlxuICAgICAgPG5vdGU+XG4gICAgICAgIDxwaXRjaD5cbiAgICAgICAgICA8c3RlcD5EPC9zdGVwPlxuICAgICAgICAgIDxvY3RhdmU+NDwvb2N0YXZlPlxuICAgICAgICAgIDwvcGl0Y2g+XG4gICAgICAgIDxkdXJhdGlvbj4yPC9kdXJhdGlvbj5cbiAgICAgICAgPHZvaWNlPjE8L3ZvaWNlPlxuICAgICAgICA8dHlwZT5laWdodGg8L3R5cGU+XG4gICAgICAgIDxzdGVtPnVwPC9zdGVtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIxXCI+Y29udGludWU8L2JlYW0+XG4gICAgICAgIDwvbm90ZT5cbiAgICAgIDxub3RlPlxuICAgICAgICA8cGl0Y2g+XG4gICAgICAgICAgPHN0ZXA+RTwvc3RlcD5cbiAgICAgICAgICA8YWx0ZXI+LTE8L2FsdGVyPlxuICAgICAgICAgIDxvY3RhdmU+NDwvb2N0YXZlPlxuICAgICAgICAgIDwvcGl0Y2g+XG4gICAgICAgIDxkdXJhdGlvbj4xPC9kdXJhdGlvbj5cbiAgICAgICAgPHRpZSB0eXBlPVwic3RhcnRcIi8+XG4gICAgICAgIDx2b2ljZT4xPC92b2ljZT5cbiAgICAgICAgPHR5cGU+MTZ0aDwvdHlwZT5cbiAgICAgICAgPHN0ZW0+dXA8L3N0ZW0+XG4gICAgICAgIDxiZWFtIG51bWJlcj1cIjFcIj5lbmQ8L2JlYW0+XG4gICAgICAgIDxiZWFtIG51bWJlcj1cIjJcIj5iYWNrd2FyZCBob29rPC9iZWFtPlxuICAgICAgICA8bm90YXRpb25zPlxuICAgICAgICAgIDx0aWVkIHR5cGU9XCJzdGFydFwiLz5cbiAgICAgICAgICA8L25vdGF0aW9ucz5cbiAgICAgICAgPC9ub3RlPlxuICAgICAgPG5vdGU+XG4gICAgICAgIDxwaXRjaD5cbiAgICAgICAgICA8c3RlcD5FPC9zdGVwPlxuICAgICAgICAgIDxhbHRlcj4tMTwvYWx0ZXI+XG4gICAgICAgICAgPG9jdGF2ZT40PC9vY3RhdmU+XG4gICAgICAgICAgPC9waXRjaD5cbiAgICAgICAgPGR1cmF0aW9uPjE8L2R1cmF0aW9uPlxuICAgICAgICA8dGllIHR5cGU9XCJzdG9wXCIvPlxuICAgICAgICA8dm9pY2U+MTwvdm9pY2U+XG4gICAgICAgIDx0eXBlPjE2dGg8L3R5cGU+XG4gICAgICAgIDxzdGVtPnVwPC9zdGVtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIxXCI+YmVnaW48L2JlYW0+XG4gICAgICAgIDxiZWFtIG51bWJlcj1cIjJcIj5mb3J3YXJkIGhvb2s8L2JlYW0+XG4gICAgICAgIDxub3RhdGlvbnM+XG4gICAgICAgICAgPHRpZWQgdHlwZT1cInN0b3BcIi8+XG4gICAgICAgICAgPC9ub3RhdGlvbnM+XG4gICAgICAgIDwvbm90ZT5cbiAgICAgIDxub3RlPlxuICAgICAgICA8cGl0Y2g+XG4gICAgICAgICAgPHN0ZXA+Rjwvc3RlcD5cbiAgICAgICAgICA8b2N0YXZlPjQ8L29jdGF2ZT5cbiAgICAgICAgICA8L3BpdGNoPlxuICAgICAgICA8ZHVyYXRpb24+MjwvZHVyYXRpb24+XG4gICAgICAgIDx2b2ljZT4xPC92b2ljZT5cbiAgICAgICAgPHR5cGU+ZWlnaHRoPC90eXBlPlxuICAgICAgICA8c3RlbT51cDwvc3RlbT5cbiAgICAgICAgPGJlYW0gbnVtYmVyPVwiMVwiPmNvbnRpbnVlPC9iZWFtPlxuICAgICAgICA8L25vdGU+XG4gICAgICA8bm90ZT5cbiAgICAgICAgPHBpdGNoPlxuICAgICAgICAgIDxzdGVwPkc8L3N0ZXA+XG4gICAgICAgICAgPG9jdGF2ZT40PC9vY3RhdmU+XG4gICAgICAgICAgPC9waXRjaD5cbiAgICAgICAgPGR1cmF0aW9uPjE8L2R1cmF0aW9uPlxuICAgICAgICA8dGllIHR5cGU9XCJzdGFydFwiLz5cbiAgICAgICAgPHZvaWNlPjE8L3ZvaWNlPlxuICAgICAgICA8dHlwZT4xNnRoPC90eXBlPlxuICAgICAgICA8c3RlbT51cDwvc3RlbT5cbiAgICAgICAgPGJlYW0gbnVtYmVyPVwiMVwiPmVuZDwvYmVhbT5cbiAgICAgICAgPGJlYW0gbnVtYmVyPVwiMlwiPmJhY2t3YXJkIGhvb2s8L2JlYW0+XG4gICAgICAgIDxub3RhdGlvbnM+XG4gICAgICAgICAgPHRpZWQgdHlwZT1cInN0YXJ0XCIvPlxuICAgICAgICAgIDwvbm90YXRpb25zPlxuICAgICAgICA8L25vdGU+XG4gICAgICA8L21lYXN1cmU+XG4gICAgPG1lYXN1cmUgbnVtYmVyPVwiNFwiPlxuICAgICAgPG5vdGU+XG4gICAgICAgIDxwaXRjaD5cbiAgICAgICAgICA8c3RlcD5HPC9zdGVwPlxuICAgICAgICAgIDxvY3RhdmU+NDwvb2N0YXZlPlxuICAgICAgICAgIDwvcGl0Y2g+XG4gICAgICAgIDxkdXJhdGlvbj4xPC9kdXJhdGlvbj5cbiAgICAgICAgPHRpZSB0eXBlPVwic3RvcFwiLz5cbiAgICAgICAgPHZvaWNlPjE8L3ZvaWNlPlxuICAgICAgICA8dHlwZT4xNnRoPC90eXBlPlxuICAgICAgICA8c3RlbT5kb3duPC9zdGVtPlxuICAgICAgICA8YmVhbSBudW1iZXI9XCIxXCI+YmVnaW48L2JlYW0+XG4gICAgICAgIDxiZWFtIG51bWJlcj1cIjJcIj5mb3J3YXJkIGhvb2s8L2JlYW0+XG4gICAgICAgIDxub3RhdGlvbnM+XG4gICAgICAgICAgPHRpZWQgdHlwZT1cInN0b3BcIi8+XG4gICAgICAgICAgPC9ub3RhdGlvbnM+XG4gICAgICAgIDwvbm90ZT5cbiAgICAgIDxub3RlPlxuICAgICAgICA8cGl0Y2g+XG4gICAgICAgICAgPHN0ZXA+QTwvc3RlcD5cbiAgICAgICAgICA8YWx0ZXI+LTE8L2FsdGVyPlxuICAgICAgICAgIDxvY3RhdmU+NDwvb2N0YXZlPlxuICAgICAgICAgIDwvcGl0Y2g+XG4gICAgICAgIDxkdXJhdGlvbj4yPC9kdXJhdGlvbj5cbiAgICAgICAgPHZvaWNlPjE8L3ZvaWNlPlxuICAgICAgICA8dHlwZT5laWdodGg8L3R5cGU+XG4gICAgICAgIDxzdGVtPmRvd248L3N0ZW0+XG4gICAgICAgIDxiZWFtIG51bWJlcj1cIjFcIj5jb250aW51ZTwvYmVhbT5cbiAgICAgICAgPC9ub3RlPlxuICAgICAgPG5vdGU+XG4gICAgICAgIDxwaXRjaD5cbiAgICAgICAgICA8c3RlcD5CPC9zdGVwPlxuICAgICAgICAgIDxhbHRlcj4tMTwvYWx0ZXI+XG4gICAgICAgICAgPG9jdGF2ZT40PC9vY3RhdmU+XG4gICAgICAgICAgPC9waXRjaD5cbiAgICAgICAgPGR1cmF0aW9uPjI8L2R1cmF0aW9uPlxuICAgICAgICA8dm9pY2U+MTwvdm9pY2U+XG4gICAgICAgIDx0eXBlPmVpZ2h0aDwvdHlwZT5cbiAgICAgICAgPHN0ZW0+ZG93bjwvc3RlbT5cbiAgICAgICAgPGJlYW0gbnVtYmVyPVwiMVwiPmNvbnRpbnVlPC9iZWFtPlxuICAgICAgICA8L25vdGU+XG4gICAgICA8bm90ZT5cbiAgICAgICAgPHBpdGNoPlxuICAgICAgICAgIDxzdGVwPkM8L3N0ZXA+XG4gICAgICAgICAgPG9jdGF2ZT41PC9vY3RhdmU+XG4gICAgICAgICAgPC9waXRjaD5cbiAgICAgICAgPGR1cmF0aW9uPjI8L2R1cmF0aW9uPlxuICAgICAgICA8dm9pY2U+MTwvdm9pY2U+XG4gICAgICAgIDx0eXBlPmVpZ2h0aDwvdHlwZT5cbiAgICAgICAgPHN0ZW0+ZG93bjwvc3RlbT5cbiAgICAgICAgPGJlYW0gbnVtYmVyPVwiMVwiPmNvbnRpbnVlPC9iZWFtPlxuICAgICAgICA8L25vdGU+XG4gICAgICA8bm90ZT5cbiAgICAgICAgPHBpdGNoPlxuICAgICAgICAgIDxzdGVwPkQ8L3N0ZXA+XG4gICAgICAgICAgPGFsdGVyPi0xPC9hbHRlcj5cbiAgICAgICAgICA8b2N0YXZlPjU8L29jdGF2ZT5cbiAgICAgICAgICA8L3BpdGNoPlxuICAgICAgICA8ZHVyYXRpb24+MTwvZHVyYXRpb24+XG4gICAgICAgIDx0aWUgdHlwZT1cInN0YXJ0XCIvPlxuICAgICAgICA8dm9pY2U+MTwvdm9pY2U+XG4gICAgICAgIDx0eXBlPjE2dGg8L3R5cGU+XG4gICAgICAgIDxhY2NpZGVudGFsPmZsYXQ8L2FjY2lkZW50YWw+XG4gICAgICAgIDxzdGVtPmRvd248L3N0ZW0+XG4gICAgICAgIDxiZWFtIG51bWJlcj1cIjFcIj5lbmQ8L2JlYW0+XG4gICAgICAgIDxiZWFtIG51bWJlcj1cIjJcIj5iYWNrd2FyZCBob29rPC9iZWFtPlxuICAgICAgICA8bm90YXRpb25zPlxuICAgICAgICAgIDx0aWVkIHR5cGU9XCJzdGFydFwiLz5cbiAgICAgICAgICA8L25vdGF0aW9ucz5cbiAgICAgICAgPC9ub3RlPlxuICAgICAgPC9tZWFzdXJlPlxuICAgIDxtZWFzdXJlIG51bWJlcj1cIjVcIj5cbiAgICAgIDxoYXJtb255IHByaW50LWZyYW1lPVwibm9cIj5cbiAgICAgICAgPHJvb3Q+XG4gICAgICAgICAgPHJvb3Qtc3RlcD5CPC9yb290LXN0ZXA+XG4gICAgICAgICAgPHJvb3QtYWx0ZXI+LTE8L3Jvb3QtYWx0ZXI+XG4gICAgICAgICAgPC9yb290PlxuICAgICAgICA8a2luZCB0ZXh0PVwibTdcIj5taW5vci1zZXZlbnRoPC9raW5kPlxuICAgICAgICA8L2hhcm1vbnk+XG4gICAgICA8bm90ZT5cbiAgICAgICAgPHBpdGNoPlxuICAgICAgICAgIDxzdGVwPkQ8L3N0ZXA+XG4gICAgICAgICAgPGFsdGVyPi0xPC9hbHRlcj5cbiAgICAgICAgICA8b2N0YXZlPjU8L29jdGF2ZT5cbiAgICAgICAgICA8L3BpdGNoPlxuICAgICAgICA8ZHVyYXRpb24+ODwvZHVyYXRpb24+XG4gICAgICAgIDx0aWUgdHlwZT1cInN0b3BcIi8+XG4gICAgICAgIDx2b2ljZT4xPC92b2ljZT5cbiAgICAgICAgPHR5cGU+aGFsZjwvdHlwZT5cbiAgICAgICAgPHN0ZW0+ZG93bjwvc3RlbT5cbiAgICAgICAgPG5vdGF0aW9ucz5cbiAgICAgICAgICA8dGllZCB0eXBlPVwic3RvcFwiLz5cbiAgICAgICAgICA8L25vdGF0aW9ucz5cbiAgICAgICAgPC9ub3RlPlxuICAgICAgPGJhcmxpbmUgbG9jYXRpb249XCJyaWdodFwiPlxuICAgICAgICA8YmFyLXN0eWxlPmxpZ2h0LWhlYXZ5PC9iYXItc3R5bGU+XG4gICAgICAgIDwvYmFybGluZT5cbiAgICAgIDwvbWVhc3VyZT5cbiAgICA8L3BhcnQ+XG4gIDwvc2NvcmUtcGFydHdpc2U+XG4iLAogICJjaG9yZEV2ZW50cyI6IFsKICAgIHsKICAgICAgInQiOiAwLAogICAgICAibWlkaSI6IDYzLAogICAgICAicm9vdE1pZGkiOiA2MywKICAgICAgImludGVydmFscyI6IFsKICAgICAgICAwLAogICAgICAgIDQsCiAgICAgICAgNywKICAgICAgICAxMQogICAgICBdLAogICAgICAibWVhc3VyZUlkeCI6IDAsCiAgICAgICJoYXJtb255SWR4IjogMCwKICAgICAgImJlYXRPZmZzZXQiOiAwLAogICAgICAiYmVhdHMiOiAyLAogICAgICAiYmVhdFR5cGUiOiA0LAogICAgICAibWVhc3VyZVF1YXJ0ZXJCZWF0cyI6IDIsCiAgICAgICJyb290U3RlcCI6ICJFIiwKICAgICAgInJvb3RBbHRlciI6IC0xLAogICAgICAia2luZFRleHQiOiAibWFqNyIsCiAgICAgICJraW5kVmFsIjogIm1ham9yLXNldmVudGgiLAogICAgICAiZnJvbUZpbmFsZVRleHQiOiBmYWxzZSwKICAgICAgImJhc3NTdGVwIjogIiIsCiAgICAgICJiYXNzQWx0ZXIiOiAwCiAgICB9LAogICAgewogICAgICAidCI6IDEuNTc4OTQ3MzY4NDIxMDUyNywKICAgICAgIm1pZGkiOiA3MSwKICAgICAgInJvb3RNaWRpIjogNzEsCiAgICAgICJpbnRlcnZhbHMiOiBbCiAgICAgICAgMCwKICAgICAgICAzLAogICAgICAgIDYsCiAgICAgICAgOQogICAgICBdLAogICAgICAibWVhc3VyZUlkeCI6IDEsCiAgICAgICJoYXJtb255SWR4IjogMCwKICAgICAgImJlYXRPZmZzZXQiOiAwLAogICAgICAiYmVhdHMiOiAyLAogICAgICAiYmVhdFR5cGUiOiA0LAogICAgICAibWVhc3VyZVF1YXJ0ZXJCZWF0cyI6IDIsCiAgICAgICJyb290U3RlcCI6ICJCIiwKICAgICAgInJvb3RBbHRlciI6IDAsCiAgICAgICJraW5kVGV4dCI6ICJkaW03IiwKICAgICAgImtpbmRWYWwiOiAiZGltaW5pc2hlZC1zZXZlbnRoIiwKICAgICAgImZyb21GaW5hbGVUZXh0IjogZmFsc2UsCiAgICAgICJiYXNzU3RlcCI6ICIiLAogICAgICAiYmFzc0FsdGVyIjogMAogICAgfSwKICAgIHsKICAgICAgInQiOiAzLjE1Nzg5NDczNjg0MjEwNTMsCiAgICAgICJtaWRpIjogNjAsCiAgICAgICJyb290TWlkaSI6IDYwLAogICAgICAiaW50ZXJ2YWxzIjogWwogICAgICAgIDAsCiAgICAgICAgMywKICAgICAgICA3LAogICAgICAgIDEwCiAgICAgIF0sCiAgICAgICJtZWFzdXJlSWR4IjogMiwKICAgICAgImhhcm1vbnlJZHgiOiAwLAogICAgICAiYmVhdE9mZnNldCI6IDAsCiAgICAgICJiZWF0cyI6IDIsCiAgICAgICJiZWF0VHlwZSI6IDQsCiAgICAgICJtZWFzdXJlUXVhcnRlckJlYXRzIjogMiwKICAgICAgInJvb3RTdGVwIjogIkMiLAogICAgICAicm9vdEFsdGVyIjogMCwKICAgICAgImtpbmRUZXh0IjogIm03IiwKICAgICAgImtpbmRWYWwiOiAibWlub3Itc2V2ZW50aCIsCiAgICAgICJmcm9tRmluYWxlVGV4dCI6IGZhbHNlLAogICAgICAiYmFzc1N0ZXAiOiAiIiwKICAgICAgImJhc3NBbHRlciI6IDAKICAgIH0sCiAgICB7CiAgICAgICJ0IjogNi4zMTU3ODk0NzM2ODQyMTEsCiAgICAgICJtaWRpIjogNzAsCiAgICAgICJyb290TWlkaSI6IDcwLAogICAgICAiaW50ZXJ2YWxzIjogWwogICAgICAgIDAsCiAgICAgICAgMywKICAgICAgICA3LAogICAgICAgIDEwCiAgICAgIF0sCiAgICAgICJtZWFzdXJlSWR4IjogNCwKICAgICAgImhhcm1vbnlJZHgiOiAwLAogICAgICAiYmVhdE9mZnNldCI6IDAsCiAgICAgICJiZWF0cyI6IDIsCiAgICAgICJiZWF0VHlwZSI6IDQsCiAgICAgICJtZWFzdXJlUXVhcnRlckJlYXRzIjogMiwKICAgICAgInJvb3RTdGVwIjogIkIiLAogICAgICAicm9vdEFsdGVyIjogLTEsCiAgICAgICJraW5kVGV4dCI6ICJtNyIsCiAgICAgICJraW5kVmFsIjogIm1pbm9yLXNldmVudGgiLAogICAgICAiZnJvbUZpbmFsZVRleHQiOiBmYWxzZSwKICAgICAgImJhc3NTdGVwIjogIiIsCiAgICAgICJiYXNzQWx0ZXIiOiAwCiAgICB9CiAgXSwKICAicGFydENvbmZpZ3MiOiBbCiAgICB7CiAgICAgICJuYW1lIjogIk9ib8OpIiwKICAgICAgInByb2dyYW0iOiAib2JvZSIsCiAgICAgICJtdXRlIjogZmFsc2UsCiAgICAgICJzb2xvIjogZmFsc2UsCiAgICAgICJ2b2wiOiA2OCwKICAgICAgIm9jdCI6IDAsCiAgICAgICJpc0RydW0iOiBmYWxzZSwKICAgICAgInNvdW5kUXVhbGl0eSI6ICJtZWRpdW0iCiAgICB9CiAgXSwKICAiY2hvcmRDb25maWciOiB7CiAgICAibmFtZSI6ICJDaWZyYTogYmFpeG8iLAogICAgInByb2dyYW0iOiAiYWNvdXN0aWNfYmFzcyIsCiAgICAidm9sIjogNzUsCiAgICAibXV0ZSI6IGZhbHNlLAogICAgInNvbG8iOiBmYWxzZSwKICAgICJvY3QiOiAtMjQsCiAgICAiZW5hYmxlZCI6IHRydWUsCiAgICAiZHVyVmFsIjogMiwKICAgICJzb3VuZFF1YWxpdHkiOiAic3RhbmRhcmQiCiAgfSwKICAicGlhbm9DaG9yZENvbmZpZyI6IHsKICAgICJuYW1lIjogIkNpZnJhOiBhY29yZGVzIiwKICAgICJwcm9ncmFtIjogImVsZWN0cmljX3BpYW5vXzEiLAogICAgInZvbCI6IDUwLAogICAgIm11dGUiOiBmYWxzZSwKICAgICJzb2xvIjogZmFsc2UsCiAgICAib2N0IjogMCwKICAgICJlbmFibGVkIjogdHJ1ZSwKICAgICJkdXJWYWwiOiAyLAogICAgInNvdW5kUXVhbGl0eSI6ICJzdGFuZGFyZCIKICB9LAogICJjaG9yZFN0eWxlQ29uZmlnIjogewogICAgInN0eWxlIjogImJvc3NhIiwKICAgICJkcnVtcyI6IHRydWUsCiAgICAiZHJ1bVZvbCI6IDU1CiAgfSwKICAiYW5ub3RhdGlvbnMiOiBbCiAgICB7CiAgICAgICJ0eXBlIjogImVsbGlwc2UiLAogICAgICAieDEiOiAwLjEzMDYwNzgxNDc2MTIxNTYzLAogICAgICAieTEiOiAwLjU4NDIwNjA4MTA4MTA4MTEsCiAgICAgICJ4MiI6IDAuMTUzMDM5MDczODA2MDc4MTUsCiAgICAgICJ5MiI6IDAuNjcwNjkyNTY3NTY3NTY3NiwKICAgICAgImNvbG9yIjogIiNkYzI2MjYiLAogICAgICAiaWQiOiAibXV4MjcwcGw2YmpvZiIKICAgIH0sCiAgICB7CiAgICAgICJ0eXBlIjogImNhbGxvdXQiLAogICAgICAieDEiOiAwLjIzNzMzMDQ2MTcwMzgxNTU1LAogICAgICAieTEiOiAwLjQ4Nzk0MjA5NjM5ODUwODgsCiAgICAgICJ4MiI6IDAuMDY5NDEzMDI3ODMwODMwMjUsCiAgICAgICJ5MiI6IDAuMDM4MzI3MTI4Njg3MjcwMzU0LAogICAgICAiY29sb3IiOiAiI2RjMjYyNiIsCiAgICAgICJpZCI6ICJtdXgyOHk2OGl4MHVmIiwKICAgICAgInRleHQiOiAiUGVuc2UgbmEgZnVuw6fDo28gXG5oYXJtw7RuaWNhIFxuZGVzdGUgYWNvcmRlISIsCiAgICAgICJzY2FsZSI6IDEuODQ1NDk0Nzg1NTk4NzQwMwogICAgfSwKICAgIHsKICAgICAgInR5cGUiOiAibWFzayIsCiAgICAgICJ4MSI6IDAuMzczMDEwMTMwMjQ2MDIwMjYsCiAgICAgICJ5MSI6IDAuNTI3NDQ5MzI0MzI0MzI0MywKICAgICAgIngyIjogMC41MDk3Njg0NTE1MTk1MzY5LAogICAgICAieTIiOiAwLjc1NDQ3NjM1MTM1MTM1MTQsCiAgICAgICJjb2xvciI6ICIjZGMyNjI2IiwKICAgICAgImlkIjogIm11eDJiMmQ0b2R3eDAiCiAgICB9LAogICAgewogICAgICAidHlwZSI6ICJtYXNrIiwKICAgICAgIngxIjogMC41NzQ4OTE0NjE2NDk3ODI5LAogICAgICAieTEiOiAwLjgyMjA0MzkxODkxODkxODksCiAgICAgICJ4MiI6IDAuNTc0ODkxNDYxNjQ5NzgyOSwKICAgICAgInkyIjogMC44MjIwNDM5MTg5MTg5MTg5LAogICAgICAiY29sb3IiOiAiI2RjMjYyNiIsCiAgICAgICJpZCI6ICJtdXgyYjM3NGk4bWU3IgogICAgfSwKICAgIHsKICAgICAgInR5cGUiOiAidGV4dCIsCiAgICAgICJ4MSI6IDAuNDA4NDY1OTkxMzE2OTMyLAogICAgICAieTEiOiAwLjcxMzkzNTgxMDgxMDgxMDgsCiAgICAgICJ4MiI6IDAuNDA4NDY1OTkxMzE2OTMyLAogICAgICAieTIiOiAwLjcxMzkzNTgxMDgxMDgxMDgsCiAgICAgICJjb2xvciI6ICIjZGMyNjI2IiwKICAgICAgImlkIjogIm11eDJiZHM4NHN4NjAiLAogICAgICAidGV4dCI6ICJRdWFpcyBub3RhcyB0ZW1vcyBhcXVpPyIKICAgIH0sCiAgICB7CiAgICAgICJ0eXBlIjogImFycm93IiwKICAgICAgIngxIjogMC42MzQyMjU3NTk3Njg0NTE1LAogICAgICAieTEiOiAwLjQxNjYzODUxMzUxMzUxMzUsCiAgICAgICJ4MiI6IDAuNjM5MjkwODgyNzc4NTgxOCwKICAgICAgInkyIjogMC41MzAxNTIwMjcwMjcwMjcsCiAgICAgICJjb2xvciI6ICIjMjU2M2ViIiwKICAgICAgImlkIjogIm11eDJkdm5seTFrZngiCiAgICB9CiAgXSwKICAiZW1iZWRkZWRIdG1sQmVmb3JlIjogIjxoMj5FeGVyY8OtY2lvIDE8L2gyPklsdXN0cmUgZXN0dWRhbnRlLCBuZXN0YSBhdGl2aWRhZGUgdm9jw6ogZGV2ZSBpbmljaWFsbWVudGUgb2JzZXJ2YXIgYSBwYXJ0aXR1cmEuIERlcG9pczo8ZGl2PjxvbD48bGk+TXVkZSBvIGFuZGFtZW50byBwYXJhIDYwIGJwbTwvbGk+PGxpPk91w6dhIG8gw6F1ZGlvLjwvbGk+PGxpPkNhbnRlIGp1bnRvIGNvbSBvIMOhdWRpby48L2xpPjxsaT5Wb2x0ZSBwYXJhIG8gYW5kYW1lbnRvIG9yaWdpbmFsIGUgcmVwaXRhIGEgb3BlcmHDp8Ojby48L2xpPjwvb2w+QWzDqW0gZGlzc286PC9kaXY+PGRpdj48dWw+PGxpPklkZW50aWZpcXVlIGFzIG5vdGFzIGRhIG1lbG9kaWEgbm8gY29tcGFzc28gMy48L2xpPjxsaT5QZW5zZTogTyBxdWUgZmF6IG8gQmRpbTcgbmVzdGUgdHJlY2hvPzwvbGk+PGxpPkEgbm90YSByw6liIChzZXRhIGF6dWwpIMOpIHVtYSBub3RhIGFndWRhLiBBdGVudGUtc2UgcGFyYSBnYXJhbnRpciBhIGFmaW5hw6fDo28uPC9saT48L3VsPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PiIsCiAgImVtYmVkZGVkSHRtbEFmdGVyIjogIkRlcG9pcyBkZSBjYW50YXIsIGNvcGllIGVtIHNldSBjYWRlcm5vIG8gdHJlY2hvIGNvbXBsZXRvLCBpbmNsdWluZG8gbyBjb21wYXNzbyAzLiZuYnNwOzxkaXY+UG9yIGZpbSwgcmVzcG9uZGE6IFBvciBxdWUgZXhpc3RlIHVtYSBub3RhIGzDoWIgY2lyY3VsYWRhIGRlIHZlcm1lbGhvPzwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+TGVtYnJlLXNlIHF1ZSBwYXJhIG1haXMgbWF0ZXJpYWwgdGVtb3MgbyBzaXRlOiZuYnNwO2h0dHBzOi8vYXByZW5kYS1tdXNpY2EtY29taWdvLndlYi5hcHAvPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5TdWNlc3NvITwvZGl2PjxkaXY+QXQudGUsJm5ic3A7PC9kaXY+PGRpdj5Qcm9mLiBHbGF1YmVyPC9kaXY+PGRpdj48YnI+PC9kaXY+IiwKICAiYW5ub3RhdGlvbkxheW91dExvY2siOiB7CiAgICAiY29udGVudFdpZHRoIjogMTM2MCwKICAgICJyZW5kZXJXaWR0aCI6IDEzODIsCiAgICAicmVuZGVySGVpZ2h0IjogMzcwLAogICAgInN2Z1ZpZXdCb3giOiAiMCAwIDEzODIgMzcwIiwKICAgICJ6b29tIjogMTAwLAogICAgImxheW91dE1vZGUiOiAiYXV0byIsCiAgICAibWVhc3VyZXNQZXJTeXN0ZW0iOiA0CiAgfSwKICAiYnBtIjogNzYsCiAgImJ0RGVsYXlNcyI6IDAsCiAgImNvdW50SW5WYWwiOiAwLAogICJsb29wQ2hlY2siOiBmYWxzZQp9Cg==';
             var transportStartAudio = 0, transportStartOffset = 0;
             var cursorTimer = null, cursorSteps = [], cursorIndex = 0;
             var inputGain = null, masterGain = null, dryGain = null, wetGain = null, convolver = null, outputCompressor = null;
@@ -3921,7 +3957,7 @@
                 var pattern = { bass: [], chords: [], drums: [] };
                 function add(list, offset, dur, extra) {
                     if (offset < -0.0001 || offset >= maxBeats - 0.0001) return;
-                    var event = { offset: offset, dur: Math.max(0.05, Math.min(dur, maxBeats - offset)) };
+                    var event = { offset: offset, dur: Math.max(0.02, Math.min(dur, maxBeats - offset)) };
                     if (extra) Object.keys(extra).forEach(function (key) { event[key] = extra[key]; });
                     list.push(event);
                 }
@@ -3945,28 +3981,32 @@
                         for (var h = 0; h < 2; h += 0.5) add(pattern.drums, base + h, 0.08, { midi: 42 });
                     });
                 } else if (style === 'bossa') {
-                    repeat(4, function (base) {
+                    var bossaScale = Number(cev.beats) === 2 && Number(cev.beatType) === 4 ? 0.5 : 1;
+                    function addBossa(list, base, offset, dur, extra) {
+                        add(list, base + offset * bossaScale, dur * bossaScale, extra);
+                    }
+                    repeat(4 * bossaScale, function (base) {
                         var secondVariation = ((cev.playMeasureOrdinal || cev.measureIdx || 0) % 2) === 1;
                         if (secondVariation) {
-                            add(pattern.bass, base, 0.75, { pitch: 'bass', gain: 0.92 });
-                            add(pattern.bass, base + 1.5, 0.45, { pitch: 'fifth', gain: 0.76 });
-                            add(pattern.bass, base + 2, 1.45, { pitch: 'bass', gain: 1.06 });
+                            addBossa(pattern.bass, base, 0, 0.75, { pitch: 'bass', gain: 0.92 });
+                            addBossa(pattern.bass, base, 1.5, 0.45, { pitch: 'fifth', gain: 0.76 });
+                            addBossa(pattern.bass, base, 2, 1.45, { pitch: 'bass', gain: 1.06 });
                         } else {
-                            add(pattern.bass, base, 1.45, { pitch: 'bass', gain: 1.06 });
-                            add(pattern.bass, base + 2, 1.35, { pitch: 'fifth', gain: 0.9 });
+                            addBossa(pattern.bass, base, 0, 1.45, { pitch: 'bass', gain: 1.06 });
+                            addBossa(pattern.bass, base, 2, 1.35, { pitch: 'fifth', gain: 0.9 });
                         }
-                        add(pattern.bass, base + 3.5, 0.45, { pitch: 'next', gain: 0.7 });
+                        addBossa(pattern.bass, base, 3.5, 0.45, { pitch: 'next', gain: 0.7 });
                         var chordOffsets = secondVariation ? [0.5, 1.5, 2.5, 3.5] : [0, 1, 2.5, 3.5];
                         chordOffsets.forEach(function (offset, idx) {
-                            add(pattern.chords, base + offset, idx === chordOffsets.length - 1 ? 0.45 : (idx === 0 ? 1.15 : 0.85), {
+                            addBossa(pattern.chords, base, offset, idx === chordOffsets.length - 1 ? 0.45 : (idx === 0 ? 1.15 : 0.85), {
                                 type: 'block', gain: idx === 0 ? 0.96 : (idx === chordOffsets.length - 1 ? 0.68 : 0.82)
                             });
                         });
-                        add(pattern.drums, base, 0.2, { midi: 36 });
-                        add(pattern.drums, base + 2, 0.2, { midi: 36 });
-                        add(pattern.drums, base + 1, 0.12, { midi: 37 });
-                        add(pattern.drums, base + 3, 0.12, { midi: 37 });
-                        for (var h = 0; h < 4; h += 0.5) add(pattern.drums, base + h, 0.08, { midi: 42 });
+                        addBossa(pattern.drums, base, 0, 0.2, { midi: 36 });
+                        addBossa(pattern.drums, base, 2, 0.2, { midi: 36 });
+                        addBossa(pattern.drums, base, 1, 0.12, { midi: 37 });
+                        addBossa(pattern.drums, base, 3, 0.12, { midi: 37 });
+                        for (var h = 0; h < 4; h += 0.5) addBossa(pattern.drums, base, h, 0.08, { midi: 42 });
                     });
                 } else if (style === 'arpejo') {
                     repeat(4, function (base) {
@@ -4407,6 +4447,72 @@
                 return { xml: converted ? new XMLSerializer().serializeToString(doc) : xml, converted: converted };
             }
 
+            function resetSongSpecificState() {
+                if (run || paused) stopPlayback(true);
+                else { stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); }
+                soundLoadGeneration++;
+                partSoundLoadGenerations = [];
+                chordSoundLoadGeneration++;
+                pianoChordSoundLoadGeneration++;
+                partConfigs = [];
+                partInsts = [];
+                partGains = [];
+                chordConfig = defaultChordConfig();
+                pianoChordConfig = defaultPianoChordConfig();
+                chordStyleConfig = defaultChordStyleConfig();
+                chordInst = null; pianoChordInst = null; chordGain = null; pianoChordGain = null; styleDrumGain = null;
+                chordEvents = []; playbackChordEvents = []; evs = []; sc = []; retiredSc = [];
+                eventsCache = { bpm: null, xml: null, partConfigs: '', evs: [], pieceEnd: 0 };
+                chordsCache = { xml: null, bpm: null, chords: [] };
+                percInfo = null; transposeInstrumentsGlobally = false;
+                rangeFrom = 1; rangeTo = 1; totalMeasures = 0; minMeasureNumber = 1; maxMeasureNumber = 1;
+                sat = 0; pat = 0; run = false; paused = false; pieceEnd = 0;
+                annotations = []; resetAnnotationHistory(); annotationLayoutLock = null;
+                setEmbeddedHtml('', '');
+                if (annotationMode) setAnnotationMode(false);
+                if (typeof editModeActive !== 'undefined' && editModeActive) toggleEditMode();
+                selectedAnnotationId = null; annotationDraft = null; annotationInteraction = null;
+                mixerExpanded = true;
+
+                document.getElementById('bpm').value = 120;
+                document.getElementById('transSel').value = '0';
+                document.getElementById('zoomInp').value = 100;
+                document.getElementById('layoutMode').value = 'auto';
+                document.getElementById('mpsCount').value = 4;
+                document.getElementById('mpsCount').disabled = true;
+                document.getElementById('cursorMode').value = '3';
+                document.getElementById('metCheck').checked = false;
+                document.getElementById('countInSelect').value = '0';
+                document.getElementById('loopCheck').checked = false;
+                document.getElementById('reverbAmt').value = 15;
+                document.getElementById('hideControlsInExport').checked = false;
+                document.getElementById('rangeFrom').value = 1;
+                document.getElementById('rangeTo').value = 1;
+                document.getElementById('metaPanel').classList.remove('visible');
+                document.getElementById('btnToggleMeta').setAttribute('aria-expanded', 'false');
+                document.getElementById('htmlEditorPanel').classList.remove('visible');
+                document.getElementById('btnToggleHtmlEditor').setAttribute('aria-expanded', 'false');
+                if (osmd) osmd.Zoom = 1;
+                applyAnnotationLayoutLock();
+                updatePlayButtonVisual();
+            }
+
+            function applyProjectSongSettings(settings) {
+                settings = settings || {};
+                if (settings.bpm !== undefined) document.getElementById('bpm').value = settings.bpm;
+                if (settings.transposition !== undefined) document.getElementById('transSel').value = String(settings.transposition);
+                if (settings.zoom !== undefined) { document.getElementById('zoomInp').value = settings.zoom; if (osmd) osmd.Zoom = Number(settings.zoom) / 100; }
+                if (settings.layoutMode) document.getElementById('layoutMode').value = settings.layoutMode;
+                if (settings.measuresPerSystem !== undefined) document.getElementById('mpsCount').value = settings.measuresPerSystem;
+                document.getElementById('mpsCount').disabled = document.getElementById('layoutMode').value !== 'fixed';
+                if (settings.cursorMode !== undefined) document.getElementById('cursorMode').value = String(settings.cursorMode);
+                if (settings.metronome !== undefined) document.getElementById('metCheck').checked = !!settings.metronome;
+                if (settings.countIn !== undefined) document.getElementById('countInSelect').value = String(settings.countIn);
+                if (settings.loop !== undefined) document.getElementById('loopCheck').checked = !!settings.loop;
+                if (settings.reverb !== undefined) document.getElementById('reverbAmt').value = settings.reverb;
+                if (settings.hideControlsInExport !== undefined) document.getElementById('hideControlsInExport').checked = !!settings.hideControlsInExport;
+            }
+
             async function afterXmlLoaded() {
                 var finaleChords = normalizeFinaleTextChords(rawXml);
                 rawXml = finaleChords.xml;
@@ -4447,87 +4553,77 @@
 
             document.getElementById('fi').onchange = async function (e) {
                 var f = e.target.files[0]; if (!f) return;
+                currentDemo = 0;
+                updateDemoButton();
                 document.getElementById('fname').textContent = f.name;
                 setStatus('Carregando partitura...', 'info');
                 try {
+                    resetSongSpecificState();
                     isLoadingProject = false;
-                    annotations = [];
-                    setEmbeddedHtml('', '');
-                    resetAnnotationHistory();
-                    annotationLayoutLock = null;
-                    applyAnnotationLayoutLock();
                     rawXml = f.name.toLowerCase().endsWith('.mxl') ? await getXmlFromMxl(f) : await f.text();
                     await afterXmlLoaded();
                 } catch (err) { setStatus('Erro: ' + err.message, 'err'); }
             };
 
             /* ── Carregar Projeto (.vtp) ── */
-            document.getElementById('btnLoadProject').onchange = function (e) {
+            async function loadProjectData(project, fileName) {
+                if (!project.rawXml) throw new Error('Arquivo de projeto inválido (campo rawXml ausente)');
+                resetSongSpecificState();
+                isLoadingProject = true;
+                rawXml = project.rawXml;
+                if (project.chordEvents) chordEvents = project.chordEvents;
+                if (project.partConfigs) partConfigs = project.partConfigs;
+                if (project.chordConfig) chordConfig = project.chordConfig;
+                if (project.pianoChordConfig) pianoChordConfig = project.pianoChordConfig;
+                if (project.chordStyleConfig) chordStyleConfig = project.chordStyleConfig;
+                var legacyQuality = project.soundQuality === 'hq' ? 'medium' : 'standard';
+                partConfigs.forEach(function (cfg) { cfg.soundQuality = normalizeSoundQuality(cfg.soundQuality || legacyQuality); });
+                chordConfig.soundQuality = normalizeSoundQuality(chordConfig.soundQuality || legacyQuality);
+                pianoChordConfig.soundQuality = normalizeSoundQuality(pianoChordConfig.soundQuality || legacyQuality);
+                annotations = Array.isArray(project.annotations) ? project.annotations : [];
+                setEmbeddedHtml(project.embeddedHtmlBefore || '', project.embeddedHtmlAfter || '');
+                resetAnnotationHistory();
+                annotationLayoutLock = project.annotationLayoutLock || null;
+                applyProjectSongSettings(project.songSettings || { bpm: project.bpm, countIn: project.countInVal, loop: project.loopCheck });
+                if (annotationLayoutLock && annotations.length) {
+                    document.getElementById('zoomInp').value = annotationLayoutLock.zoom || 100;
+                    document.getElementById('layoutMode').value = annotationLayoutLock.layoutMode || 'auto';
+                    document.getElementById('mpsCount').value = annotationLayoutLock.measuresPerSystem || 4;
+                }
+                if (project.bpm) document.getElementById('bpm').value = project.bpm;
+                if (project.btDelayMs !== undefined) {
+                    btDelayMs = project.btDelayMs;
+                    var slider = document.getElementById('btSlider');
+                    var display = document.getElementById('btValDisplay');
+                    if (slider) { slider.value = btDelayMs; slider.style.setProperty('--pct', btDelayMs / 12); }
+                    if (display) display.textContent = btDelayMs + ' ms';
+                    localStorage.setItem('btDelayMs', btDelayMs);
+                }
+                if (project.countInVal !== undefined) document.getElementById('countInSelect').value = project.countInVal;
+                if (project.loopCheck !== undefined) document.getElementById('loopCheck').checked = project.loopCheck;
+                document.getElementById('fname').textContent = fileName;
+                await afterXmlLoaded();
+                if (project.songSettings) {
+                    if (project.songSettings.rangeFrom !== undefined) rangeFrom = Math.max(minMeasureNumber, Math.min(Number(project.songSettings.rangeFrom), maxMeasureNumber));
+                    if (project.songSettings.rangeTo !== undefined) rangeTo = Math.max(rangeFrom, Math.min(Number(project.songSettings.rangeTo), maxMeasureNumber));
+                    document.getElementById('rangeFrom').value = rangeFrom;
+                    document.getElementById('rangeTo').value = rangeTo;
+                    resetCursorToStart();
+                }
+            }
+
+            document.getElementById('btnLoadProject').onchange = async function (e) {
                 var f = e.target.files[0];
                 if (!f) return;
+                currentDemo = 0;
+                updateDemoButton();
                 setStatus('Carregando projeto...', 'info');
-                var reader = new FileReader();
-                reader.onload = async function (evt) {
-                    try {
-                        var project = JSON.parse(evt.target.result);
-                        if (!project.rawXml) {
-                            throw new Error('Arquivo de projeto inválido (campo rawXml ausente)');
-                        }
-                        isLoadingProject = true;
-                        rawXml = project.rawXml;
-                        if (project.chordEvents) chordEvents = project.chordEvents;
-                        if (project.partConfigs) partConfigs = project.partConfigs;
-                        if (project.chordConfig) chordConfig = project.chordConfig;
-                        if (project.pianoChordConfig) pianoChordConfig = project.pianoChordConfig;
-                        if (project.chordStyleConfig) chordStyleConfig = project.chordStyleConfig;
-                        var legacyQuality = project.soundQuality === 'hq' ? 'medium' : 'standard';
-                        partConfigs.forEach(function (cfg) { cfg.soundQuality = normalizeSoundQuality(cfg.soundQuality || legacyQuality); });
-                        chordConfig.soundQuality = normalizeSoundQuality(chordConfig.soundQuality || legacyQuality);
-                        pianoChordConfig.soundQuality = normalizeSoundQuality(pianoChordConfig.soundQuality || legacyQuality);
-                        annotations = Array.isArray(project.annotations) ? project.annotations : [];
-                        setEmbeddedHtml(project.embeddedHtmlBefore || '', project.embeddedHtmlAfter || '');
-                        resetAnnotationHistory();
-                        annotationLayoutLock = project.annotationLayoutLock || null;
-                        if (annotationLayoutLock && annotations.length) {
-                            document.getElementById('zoomInp').value = annotationLayoutLock.zoom || 100;
-                            document.getElementById('layoutMode').value = annotationLayoutLock.layoutMode || 'auto';
-                            document.getElementById('mpsCount').value = annotationLayoutLock.measuresPerSystem || 4;
-                        }
-                        
-                        if (project.bpm) {
-                            document.getElementById('bpm').value = project.bpm;
-                        }
-                        
-                        if (project.btDelayMs !== undefined) {
-                            btDelayMs = project.btDelayMs;
-                            var slider = document.getElementById('btSlider');
-                            var display = document.getElementById('btValDisplay');
-                            if (slider) {
-                                slider.value = btDelayMs;
-                                slider.style.setProperty('--pct', btDelayMs / 12);
-                            }
-                            if (display) {
-                                display.textContent = btDelayMs + ' ms';
-                            }
-                            localStorage.setItem('btDelayMs', btDelayMs);
-                        }
-
-                        if (project.countInVal !== undefined) {
-                            document.getElementById('countInSelect').value = project.countInVal;
-                        }
-                        if (project.loopCheck !== undefined) {
-                            document.getElementById('loopCheck').checked = project.loopCheck;
-                        }
-
-                        document.getElementById('fname').textContent = f.name;
-                        await afterXmlLoaded();
-                        
-                    } catch (err) {
-                        setStatus('Erro ao carregar projeto: ' + err.message, 'err');
-                        console.error(err);
-                    }
-                };
-                reader.readAsText(f);
+                try {
+                    await loadProjectData(JSON.parse(await f.text()), f.name);
+                } catch (err) {
+                    setStatus('Erro ao carregar projeto: ' + err.message, 'err');
+                    console.error(err);
+                }
             };
 
             /* ── Salvar Projeto (.vtp) ── */
@@ -4541,6 +4637,21 @@
                     chordConfig: chordConfig || null,
                     pianoChordConfig: pianoChordConfig || null,
                     chordStyleConfig: chordStyleConfig || null,
+                    songSettings: {
+                        bpm: parseInt(document.getElementById('bpm').value, 10) || 100,
+                        transposition: parseInt(document.getElementById('transSel').value, 10) || 0,
+                        zoom: parseInt(document.getElementById('zoomInp').value, 10) || 100,
+                        layoutMode: document.getElementById('layoutMode').value || 'auto',
+                        measuresPerSystem: parseInt(document.getElementById('mpsCount').value, 10) || 4,
+                        cursorMode: parseInt(document.getElementById('cursorMode').value, 10),
+                        metronome: document.getElementById('metCheck').checked,
+                        countIn: parseInt(document.getElementById('countInSelect').value, 10) || 0,
+                        loop: document.getElementById('loopCheck').checked,
+                        reverb: parseInt(document.getElementById('reverbAmt').value, 10) || 0,
+                        hideControlsInExport: document.getElementById('hideControlsInExport').checked,
+                        rangeFrom: rangeFrom,
+                        rangeTo: rangeTo
+                    },
                     annotations: annotations || [],
                     embeddedHtmlBefore: embeddedHtmlBefore || '',
                     embeddedHtmlAfter: embeddedHtmlAfter || '',
@@ -4561,23 +4672,75 @@
                 URL.revokeObjectURL(url);
             };
 
-            async function loadFromUrl(url) {
+            async function loadFromUrl(url, fileName) {
                 setStatus('Carregando partitura de exemplo...', 'info');
                 try {
-                    annotations = [];
-                    setEmbeddedHtml('', '');
-                    resetAnnotationHistory();
-                    annotationLayoutLock = null;
-                    applyAnnotationLayoutLock();
+                    resetSongSpecificState();
                     var resp = await fetch(url); if (!resp.ok) throw new Error('HTTP ' + resp.status);
                     rawXml = await resp.text();
                     var meta = extractMetaFromXml(rawXml);
-                    document.getElementById('fname').textContent = meta.title || 'Vitopamos.musicxml';
+                    document.getElementById('fname').textContent = fileName || meta.title || 'Vitopamos.musicxml';
                     await afterXmlLoaded();
-                } catch (err) { setStatus('Não foi possível carregar a partitura de exemplo.', 'err'); }
+                } catch (err) {
+                    setStatus('Não foi possível carregar a partitura de exemplo.', 'err');
+                    throw err;
+                }
             }
 
-            loadFromUrl('https://raw.githubusercontent.com/GlauberLASantiago/vitopamos/main/Vitopamos.musicxml');
+            function updateDemoButton() {
+                var btn = document.getElementById('btnToggleDemo');
+                if (!btn) return;
+                var target = currentDemo === 1 ? 2 : 1;
+                btn.textContent = 'Demo ' + target;
+                btn.title = target === 1 ? 'Voltar à demonstração inicial' : 'Abrir a outra demonstração';
+                btn.setAttribute('aria-label', btn.title);
+            }
+
+            function getEmbeddedDemo2Project() {
+                var bytes = Uint8Array.from(atob(EMBEDDED_DEMO_2_BASE64), function (char) { return char.charCodeAt(0); });
+                return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+            }
+
+            async function loadDemo(demoNumber) {
+                var btn = document.getElementById('btnToggleDemo');
+                btn.disabled = true;
+                try {
+                    if (demoNumber === 2) {
+                        setStatus('Carregando a outra demonstração...', 'info');
+                        var project;
+                        if (location.protocol === 'file:') {
+                            project = getEmbeddedDemo2Project();
+                        } else {
+                            try {
+                                var resp = await fetch('outra_demonstra__o_para_o_vitopamos.vtp', { cache: 'no-store' });
+                                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                                project = await resp.json();
+                            } catch (_) {
+                                project = getEmbeddedDemo2Project();
+                            }
+                        }
+                        await loadProjectData(project, 'Outra demonstração para o ViToPaMoS');
+                    } else {
+                        var initialDemoUrl = location.protocol === 'file:'
+                            ? 'https://raw.githubusercontent.com/GlauberLASantiago/vitopamos/main/Vitopamos.musicxml'
+                            : 'Vitopamos.musicxml';
+                        await loadFromUrl(initialDemoUrl, 'Vitopamos.musicxml');
+                    }
+                    currentDemo = demoNumber;
+                    updateDemoButton();
+                } catch (err) {
+                    setStatus('Não foi possível carregar a demonstração.', 'err');
+                    console.error(err);
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+
+            document.getElementById('btnToggleDemo').onclick = function () {
+                loadDemo(currentDemo === 1 ? 2 : 1);
+            };
+
+            loadDemo(1);
 
             document.getElementById('bp').onclick = async function () {
                 if (!partInsts.length || !ac) return;
@@ -6078,7 +6241,7 @@
             document.getElementById('bx').onclick = async function () {
                 try {
                     if (!rawXml) return;
-                    var html = buildExportHtml();
+                    var html = buildExportHtml(true);
                     html = "<!-- INÍCIO DO CÓDIGO DA PARTITURA -->\n" + html + "\n<!-- FIM DO CÓDIGO DA PARTITURA -->";
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         await navigator.clipboard.writeText(html);
@@ -6099,7 +6262,7 @@
             document.getElementById('bdl').onclick = async function () {
                 try {
                     if (!rawXml) return;
-                    var html = buildExportHtml();
+                    var html = buildExportHtml(false);
                     var rawTitle = (document.getElementById('metaTitle').value || extractTitleFromXml(rawXml) || 'partitura').trim();
                     var fileName = rawTitle.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9 _\-]/g, '').trim().replace(/\s+/g, '_') || 'partitura';
                     fileName += '.html';
@@ -6115,7 +6278,7 @@
             /* ═══════════════════════════════════════════════════════════════════
                BUILD EXPORT HTML
                ═══════════════════════════════════════════════════════════════════ */
-            function buildExportHtml() {
+            function buildExportHtml(moodleMode) {
                 syncAnnotationLayoutLock();
                 var xml = rawXml;
                 var bpm = document.getElementById('bpm').value || 100;
@@ -6136,6 +6299,7 @@
                 var safeAnnotations = JSON.stringify(annotations || []);
                 var exportAnnotationLayoutLock = annotations.length ? annotationLayoutLock : null;
                 var safeAnnotationLayoutLock = JSON.stringify(exportAnnotationLayoutLock);
+                var moodleMaskOffset = moodleMode ? 0.006 : 0;
                 var exportLayoutLocked = !!exportAnnotationLayoutLock;
                 var exportScoreWidth = exportLayoutLocked ? Math.max(320, Number(exportAnnotationLayoutLock.contentWidth) || 1000) : 0;
                 var safePercInfo = JSON.stringify(percInfo || { drumFlags: {}, noteMap: {} });
@@ -6257,6 +6421,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   var chordStyleConfig = ${safeChordStyleConfig};
   var annotations = ${safeAnnotations};
   var annotationLayoutLock = ${safeAnnotationLayoutLock};
+  var annotationMaskOffsetX = ${moodleMaskOffset};
   var transposeInstrumentsGlobally = false;
   var percInfo    = ${safePercInfo};
   var binString = atob("${xmlB64}");
@@ -6646,7 +6811,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       if(item.type==='pen'&&item.points&&item.points.length>1)g.appendChild(annSvg('polyline',Object.assign({points:item.points.map(function(p){return(p.x*w)+','+(p.y*h);}).join(' ')},common)));
       else if(item.type==='ellipse'){var x1=item.x1*w,y1=item.y1*h,x2=item.x2*w,y2=item.y2*h;g.appendChild(annSvg('ellipse',Object.assign({cx:(x1+x2)/2,cy:(y1+y2)/2,rx:Math.abs(x2-x1)/2,ry:Math.abs(y2-y1)/2},common)));}
       else if(item.type==='rectangle'){var rx1=item.x1*w,ry1=item.y1*h,rx2=item.x2*w,ry2=item.y2*h;g.appendChild(annSvg('rect',Object.assign({x:Math.min(rx1,rx2),y:Math.min(ry1,ry2),width:Math.abs(rx2-rx1),height:Math.abs(ry2-ry1),rx:3},common)));}
-      else if(item.type==='mask'){var mx1=item.x1*w,my1=item.y1*h,mx2=item.x2*w,my2=item.y2*h;g.appendChild(annSvg('rect',{x:Math.min(mx1,mx2),y:Math.min(my1,my2),width:Math.abs(mx2-mx1),height:Math.abs(my2-my1),rx:2,fill:'#ffffff',stroke:'#ffffff','stroke-width':2,'vector-effect':'non-scaling-stroke'}));}
+      else if(item.type==='mask'){var mx1=(item.x1+annotationMaskOffsetX)*w,my1=item.y1*h,mx2=(item.x2+annotationMaskOffsetX)*w,my2=item.y2*h;g.appendChild(annSvg('rect',{x:Math.min(mx1,mx2),y:Math.min(my1,my2),width:Math.abs(mx2-mx1),height:Math.abs(my2-my1),rx:2,fill:'#ffffff',stroke:'#ffffff','stroke-width':2,'vector-effect':'non-scaling-stroke'}));}
       else if(item.type==='arrow')g.appendChild(annSvg('line',Object.assign({x1:item.x1*w,y1:item.y1*h,x2:item.x2*w,y2:item.y2*h,'marker-end':'url(#annArrowHead)'},common)));
       else if(item.type==='callout'){
         var scale=Math.max(.55,Math.min(3,Number(item.scale)||1)),lines=wrapExAnnotationText(item.text,30);
@@ -7199,7 +7364,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var pattern={bass:[],chords:[],drums:[]};
     function add(list,offset,dur,extra){
       if(offset<-.0001||offset>=maxBeats-.0001)return;
-      var event={offset:offset,dur:Math.max(.05,Math.min(dur,maxBeats-offset))};
+      var event={offset:offset,dur:Math.max(.02,Math.min(dur,maxBeats-offset))};
       if(extra)Object.keys(extra).forEach(function(key){event[key]=extra[key];});
       list.push(event);
     }
@@ -7209,7 +7374,9 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     }else if(style==='cancao'){
       repeat(2,function(base){var secondHalf=Math.floor(base/2)%2===1;add(pattern.bass,base,1.35,{pitch:secondHalf?'fifth':'bass',gain:secondHalf?.88:1.02});add(pattern.chords,base+.5,.95,{type:'block',gain:.88});add(pattern.chords,base+1.5,.45,{type:'block',gain:.72});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+1,.15,{midi:37});for(var h=0;h<2;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
     }else if(style==='bossa'){
-      repeat(4,function(base){var second=((cev.playMeasureOrdinal||cev.measureIdx||0)%2)===1;if(second){add(pattern.bass,base,.75,{pitch:'bass',gain:.92});add(pattern.bass,base+1.5,.45,{pitch:'fifth',gain:.76});add(pattern.bass,base+2,1.45,{pitch:'bass',gain:1.06});}else{add(pattern.bass,base,1.45,{pitch:'bass',gain:1.06});add(pattern.bass,base+2,1.35,{pitch:'fifth',gain:.9});}add(pattern.bass,base+3.5,.45,{pitch:'next',gain:.7});var offsets=second?[.5,1.5,2.5,3.5]:[0,1,2.5,3.5];offsets.forEach(function(offset,idx){add(pattern.chords,base+offset,idx===offsets.length-1?.45:(idx===0?1.15:.85),{type:'block',gain:idx===0?.96:(idx===offsets.length-1?.68:.82)});});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+2,.2,{midi:36});add(pattern.drums,base+1,.12,{midi:37});add(pattern.drums,base+3,.12,{midi:37});for(var h=0;h<4;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
+      var bossaScale=Number(cev.beats)===2&&Number(cev.beatType)===4?.5:1;
+      function addBossa(list,base,offset,dur,extra){add(list,base+offset*bossaScale,dur*bossaScale,extra);}
+      repeat(4*bossaScale,function(base){var second=((cev.playMeasureOrdinal||cev.measureIdx||0)%2)===1;if(second){addBossa(pattern.bass,base,0,.75,{pitch:'bass',gain:.92});addBossa(pattern.bass,base,1.5,.45,{pitch:'fifth',gain:.76});addBossa(pattern.bass,base,2,1.45,{pitch:'bass',gain:1.06});}else{addBossa(pattern.bass,base,0,1.45,{pitch:'bass',gain:1.06});addBossa(pattern.bass,base,2,1.35,{pitch:'fifth',gain:.9});}addBossa(pattern.bass,base,3.5,.45,{pitch:'next',gain:.7});var offsets=second?[.5,1.5,2.5,3.5]:[0,1,2.5,3.5];offsets.forEach(function(offset,idx){addBossa(pattern.chords,base,offset,idx===offsets.length-1?.45:(idx===0?1.15:.85),{type:'block',gain:idx===0?.96:(idx===offsets.length-1?.68:.82)});});addBossa(pattern.drums,base,0,.2,{midi:36});addBossa(pattern.drums,base,2,.2,{midi:36});addBossa(pattern.drums,base,1,.12,{midi:37});addBossa(pattern.drums,base,3,.12,{midi:37});for(var h=0;h<4;h+=.5)addBossa(pattern.drums,base,h,.08,{midi:42});});
     }else if(style==='arpejo'){
       repeat(4,function(base){add(pattern.bass,base,1.55,{pitch:'bass',gain:1});add(pattern.bass,base+2,1.35,{pitch:'fifth',gain:.86});for(var a=0;a<4;a+=.5)add(pattern.chords,base+a,.48,{type:'arp',noteIndex:Math.round(a*2),gain:a%2===0?.86:.7});add(pattern.drums,base,.2,{midi:36});add(pattern.drums,base+2,.15,{midi:37});for(var h=0;h<4;h+=.5)add(pattern.drums,base+h,.08,{midi:42});});
     }else if(style==='colcheias'){

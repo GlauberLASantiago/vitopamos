@@ -1,3 +1,5 @@
 .vercel
 .firebase
 .env*
+.mscbackup/
+*.mscz

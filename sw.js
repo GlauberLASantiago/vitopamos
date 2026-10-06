@@ -1,11 +1,13 @@
-const CACHE_NAME = 'vitopamos-v1';
+const CACHE_NAME = 'vitopamos-v2';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './Vitopamos.musicxml'
+  './Vitopamos.musicxml',
+  './Outra-demo-para-ViToPaMoS.mxl',
+  './outra_demonstra__o_para_o_vitopamos.vtp'
 ];
 
 self.addEventListener('install', function (event) {

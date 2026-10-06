@@ -9,6 +9,8 @@
       ".git/**",
       ".vercel/**",
       ".env*",
+      ".mscbackup/**",
+      "**/*.mscz",
       "**/node_modules/**"
     ],
     "headers": [
