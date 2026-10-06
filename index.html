@@ -6197,10 +6197,10 @@ ${exportLayoutLocked ? '#score svg:not(#annotationLayer){width:auto!important;he
 #htmlBeforeContent{border:1px solid #e5e7eb;border-bottom:0;border-radius:8px 8px 0 0;}
 #htmlBeforeContent:not(:empty)+#score{border-radius:0;}
 #htmlAfterContent{border:1px solid #e5e7eb;border-top:0;border-radius:0 0 8px 8px;}
-.mix-toggle{display:inline-flex;align-items:center;gap:6px;background:#eee;border:1px solid #d1d5db;border-radius:5px;padding:3px 10px;white-space:nowrap;font-size:12px;font-weight:600;color:#111827;cursor:pointer;font-family:var(--font-body);user-select:none;transition:all 0.2s;margin-left:auto;}
-.mix-toggle:hover{background:#e5e7eb;}
+.mix-toggle{display:inline-flex;align-items:center;gap:6px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:7px;padding:6px 10px;min-height:32px;box-sizing:border-box;white-space:nowrap;font-size:11px;font-weight:700;color:#334155;cursor:pointer;font-family:var(--font-body);user-select:none;transition:all 0.2s;margin-left:auto;box-shadow:0 1px 2px rgba(15,23,42,.05);}
+.mix-toggle:hover{background:#f1f5f9;}
 .mix-toggle svg{transition:transform 0.2s;color:#6b7280;}
-.mix-toggle.active{background:#e2e8f0;}
+.mix-toggle.active{background:#eef2f7;border-color:#94a3b8;}
 .mix-toggle.active svg{transform:rotate(90deg);color:#111827;}
 .quality-level-btn{min-width:82px;display:inline-flex;align-items:center;justify-content:flex-start;gap:4px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;background:#f8fafc;color:#475569;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;}
 .quality-level-btn.quality-medium{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;}.quality-level-btn.quality-superior{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9;}
@@ -6242,7 +6242,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
   ${exportLayoutLocked ? '<span title="A diagramação foi congelada para preservar as anotações">🔒 Layout das anotações protegido</span><span>&bull;</span>' : ''}
   <span><b>1-5</b>&nbsp;solo</span>
   <span>&bull;</span>
-  <a href="https://glauberlasantiago.github.io/vitopamos/" target="_blank" style="text-decoration:none;color:#94a3b8;font-size:10px;">Powered by ViToPaMos</a>
+  <a href="https://vitopamos.web.app" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#94a3b8;font-size:10px;">Powered by ViToPaMoS</a>
   <span>&bull;</span>
   <a href="https://github.com/gleitz/midi-js-soundfonts" target="_blank" rel="noopener noreferrer" title="FluidR3_GM: CC BY 3.0; FatBoy e MusyngKite: CC BY-SA 3.0" style="text-decoration:none;color:#94a3b8;font-size:10px;">Timbres MIDI.js Soundfonts</a>
 </div>
@@ -7697,7 +7697,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     var ctrls=document.getElementById('ctrlsEx');
     var btnMix=document.createElement('button');
     btnMix.className='mix-toggle';
-    btnMix.style.cssText='display:inline-flex;align-items:center;gap:7px;margin-left:auto;height:32px;padding:0 12px;background:#334155;color:#fff;border:1px solid #1e293b;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;box-shadow:0 2px 5px rgba(15,23,42,.16);';
+    btnMix.style.cssText='display:inline-flex;align-items:center;gap:7px;margin-left:auto;height:32px;padding:0 12px;background:#f8fafc;color:#334155;border:1px solid #cbd5e1;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.05);';
     btnMix.setAttribute('aria-expanded','false');
     btnMix.innerHTML='<span style="${L}">Abrir mixer</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
     ctrls.appendChild(btnMix);
@@ -7709,6 +7709,8 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       var isCol=(pPanel.style.display==='none');
       pPanel.style.display=isCol?'flex':'none';
       btnMix.classList.toggle('active', isCol);
+      btnMix.style.background=isCol?'#eef2f7':'#f8fafc';
+      btnMix.style.borderColor=isCol?'#94a3b8':'#cbd5e1';
       btnMix.setAttribute('aria-expanded',isCol?'true':'false');
       btnMix.querySelector('span').textContent=isCol?'Recolher mixer':'Abrir mixer';
     };
