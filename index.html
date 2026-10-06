@@ -698,6 +698,7 @@
         .embedded-html-content h2, .embedded-html-content h3 { margin: 5px 0 8px; }
         .embedded-html-content ul, .embedded-html-content ol { margin: 6px 0 10px; padding-left: 30px; list-style-position: outside; }
         .embedded-html-content li { padding-left: 3px; margin: 3px 0; }
+        .embedded-html-content a { color: #2563eb; text-decoration: underline; cursor: pointer; pointer-events: auto; }
         #htmlBeforeContent { margin-top: 15px; border: 1px solid #e5e7eb; border-bottom: 0; border-radius: 8px 8px 0 0; }
         #htmlBeforeContent:not(:empty) + #score { margin-top: 0; border-radius: 0; }
         #htmlAfterContent { border: 1px solid #e5e7eb; border-top: 0; border-radius: 0 0 8px 8px; }
@@ -4776,19 +4777,47 @@
             document.getElementById('htmlBeforeInput').addEventListener('input', renderEmbeddedHtml);
             document.getElementById('htmlAfterInput').addEventListener('input', renderEmbeddedHtml);
             document.querySelectorAll('.rich-text-toolbar button').forEach(function (button) {
-                button.addEventListener('mousedown', function (event) { event.preventDefault(); });
+                button.addEventListener('mousedown', function (event) {
+                    var toolbar = this.closest('.rich-text-toolbar');
+                    var editor = document.getElementById(toolbar.dataset.editor);
+                    var selection = window.getSelection();
+                    if (selection.rangeCount) {
+                        var range = selection.getRangeAt(0);
+                        if (editor.contains(range.commonAncestorContainer)) toolbar._savedEditorRange = range.cloneRange();
+                    }
+                    event.preventDefault();
+                });
             });
             document.querySelectorAll('.rich-text-toolbar [data-command]').forEach(function (control) {
                 var eventName = control.tagName === 'SELECT' ? 'change' : 'click';
                 control.addEventListener(eventName, function () {
-                    var editor = document.getElementById(this.closest('.rich-text-toolbar').dataset.editor);
+                    var toolbar = this.closest('.rich-text-toolbar');
+                    var editor = document.getElementById(toolbar.dataset.editor);
                     var command = this.dataset.command, value = this.value || null;
                     if (command === 'createLink') {
                         value = prompt('Endereço do link (https://...)', 'https://');
                         if (!value) return;
+                        value = value.trim();
+                        if (!/^(https?:|mailto:|tel:|#|\/)/i.test(value)) value = 'https://' + value;
                     }
-                    document.execCommand(command, false, value);
                     editor.focus();
+                    var selection = window.getSelection();
+                    if (toolbar._savedEditorRange) {
+                        selection.removeAllRanges();
+                        selection.addRange(toolbar._savedEditorRange);
+                    }
+                    if (command === 'createLink' && (!selection.rangeCount || selection.getRangeAt(0).collapsed)) {
+                        var link = document.createElement('a');
+                        link.href = value; link.textContent = value; link.target = '_blank'; link.rel = 'noopener noreferrer';
+                        var activeRange = selection.rangeCount ? selection.getRangeAt(0) : document.createRange();
+                        if (!selection.rangeCount) { activeRange.selectNodeContents(editor); activeRange.collapse(false); }
+                        activeRange.insertNode(link); activeRange.setStartAfter(link); activeRange.collapse(true);
+                        selection.removeAllRanges(); selection.addRange(activeRange);
+                    } else {
+                        document.execCommand(command, false, value);
+                    }
+                    editor.querySelectorAll('a[href]').forEach(function (link) { link.target = '_blank'; link.rel = 'noopener noreferrer'; });
+                    toolbar._savedEditorRange = null;
                     renderEmbeddedHtml();
                 });
             });
@@ -6358,6 +6387,7 @@ ${exportLayoutLocked ? '#score svg:not(#annotationLayer){width:auto!important;he
 .embedded-html-content h2,.embedded-html-content h3{margin:5px 0 8px;}
 .embedded-html-content ul,.embedded-html-content ol{margin:6px 0 10px;padding-left:30px;list-style-position:outside;}
 .embedded-html-content li{padding-left:3px;margin:3px 0;}
+.embedded-html-content a{color:#2563eb;text-decoration:underline;cursor:pointer;pointer-events:auto;}
 #htmlBeforeContent{border:1px solid #e5e7eb;border-bottom:0;border-radius:8px 8px 0 0;}
 #htmlBeforeContent:not(:empty)+#score{border-radius:0;}
 #htmlAfterContent{border:1px solid #e5e7eb;border-top:0;border-radius:0 0 8px 8px;}
