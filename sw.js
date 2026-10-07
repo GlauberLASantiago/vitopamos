@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vitopamos-v2';
+const CACHE_NAME = 'vitopamos-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -33,6 +33,28 @@ self.addEventListener('activate', function (event) {
 
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
+
+  // O documento principal precisa ser network-first. Caso contrário, uma
+  // versão antiga do index.html pode permanecer ativa mesmo após novo deploy.
+  if (event.request.mode === 'navigate' || new URL(event.request.url).pathname.endsWith('/index.html')) {
+    event.respondWith(
+      fetch(event.request).then(function (response) {
+        if (response && response.status === 200) {
+          const toCache = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) {
+            cache.put(event.request, toCache).catch(function () {});
+          });
+        }
+        return response;
+      }).catch(function () {
+        return caches.match(event.request).then(function (cached) {
+          return cached || caches.match('./index.html');
+        });
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       if (cached) return cached;
