@@ -1250,7 +1250,7 @@
                 style="display:none; flex-direction:column; gap:10px; margin-top:15px; border-top: 1px solid var(--border); padding-top: 15px;">
                 <div style="font-size:13px; font-weight:700; color:var(--text-main); display:flex; align-items:center; justify-content:space-between; width:100%;">
                     <span>Gerenciador de Cifras (Timeline)</span>
-                    <span style="font-size:11px; font-weight:normal; color:var(--text-muted);">Clique na cifra e depois no novo ponto • duplo clique edita • Del exclui</span>
+                    <span style="font-size:11px; font-weight:normal; color:var(--text-muted);">Clique: tempo/subdivisão • duplo clique: nome • Del: excluir</span>
                 </div>
                 <div id="chordTimelineList" style="display:flex; flex-wrap:wrap; gap:8px; width:100%; max-height: 250px; overflow-y: auto; padding: 5px 0;"></div>
             </div>
@@ -1403,7 +1403,7 @@
             <div class="step"><span class="step-num">3</span><b>Configurar a execução</b>Use Tocar/Pausar para iniciar, interromper momentaneamente e continuar do mesmo ponto; Reiniciar volta ao início do trecho. No mixer, o botão de cada pista alterna entre Banco 1 (FluidR3_GM), Banco 2 (FatBoy) e Banco 3 (MusyngKite). Na bateria, apenas bumbo e caixa mudam de banco, mantendo o carregamento leve.</div>
             <div class="step"><span class="step-num">4</span><b>Estudar trechos e repetições</b>Defina os compassos inicial e final e ative Loop para repetir uma passagem sem pausa perceptível. Para iniciar rapidamente de outro ponto, segure Ctrl e clique no compasso desejado. Sinais e casas de repetição do MusicXML são considerados na reprodução.</div>
             <div class="step"><span class="step-num">5</span><b>Organizar o acompanhamento</b>No mixer, ajuste volume, Mute, Solo, oitavas e timbres. Em “Levada das cifras”, escolha Manual, Automático, Ataque, Canção, Bossa, Arpejo, Colcheias ou Valsa, com baixo e bateria gerados pelo navegador.</div>
-            <div class="step"><span class="step-num">6</span><b>Editar cifras</b>Ative “Editar Cifras”. Clique numa cifra e depois no novo ponto da pauta para movê-la; use duplo clique para alterar seu texto. A cifragem brasileira é reconhecida: A7M, por exemplo, equivale a Amaj7.</div>
+            <div class="step"><span class="step-num">6</span><b>Editar cifras</b>Ative “Editar Cifras”. Na Timeline, clique numa cifra para indicar exatamente o tempo e a subdivisão; use duplo clique para alterar seu texto. Também é possível selecionar uma cifra e reposicioná-la pela pauta. A cifragem brasileira é reconhecida: A7M, por exemplo, equivale a Amaj7.</div>
             <div class="step"><span class="step-num">7</span><b>Fazer intervenções visuais</b>Em “Anotar”, use lápis, círculo, retângulo, seta, balão ou texto livre. A ferramenta “Máscara” cria um retângulo branco para ocultar trechos da partitura. Dê duplo clique para selecionar ou editar; arraste para mover e use as alças azuis para redimensionar. As cores rápidas e o seletor “Outra” facilitam a organização visual.</div>
             <div class="step"><span class="step-num">8</span><b>Preservar o trabalho</b>Salve um projeto .vtp para continuar editando. Quando houver anotações, zoom e diagramação ficam protegidos para manter a correspondência entre marcas e partitura.</div>
             <div class="step"><span class="step-num">9</span><b>Exportar e conferir</b>Use “Copiar HTML” para o Moodle, “Baixar HTML” para o player autônomo, ou salve PDF e PNG com a diagramação, o zoom e as anotações visíveis. “MP3” grava em tempo real o trecho, andamento, timbres, mixer e levada atuais. Antes de publicar, confira o resultado.</div>
@@ -1695,6 +1695,7 @@
             var oldOsmdRender = osmd.render;
             osmd.render = function () {
                 oldOsmdRender.apply(osmd, arguments);
+                if (typeof applyChordVisualAnchors === 'function') applyChordVisualAnchors();
                 if (typeof bindSvgChordClicks === 'function') bindSvgChordClicks();
                 if (typeof renderAnnotations === 'function') renderAnnotations();
             };
@@ -4560,6 +4561,68 @@
                 return { xml: converted ? new XMLSerializer().serializeToString(doc) : xml, converted: converted };
             }
 
+            // Alguns editores gravam a segunda cifra de um compasso com nota inteira
+            // depois da nota e usam um offset negativo (por exemplo: posição 32 - 16).
+            // Musicalmente é válido, mas o OSMD pode ancorar a cifra no compasso anterior.
+            // Em compassos esparsos, convertemos as cifras para offsets absolutos a partir
+            // do início do compasso e as colocamos antes do conteúdo temporal.
+            function normalizeSparseMeasureChords(xml) {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(xml, 'text/xml');
+                if (doc.querySelector('parsererror')) return { xml: xml, converted: 0 };
+                var converted = 0;
+
+                Array.from(doc.querySelectorAll('part > measure')).forEach(function (measure) {
+                    var harmonies = Array.from(measure.children).filter(function (el) { return el.tagName === 'harmony'; });
+                    var rhythmicNotes = Array.from(measure.children).filter(function (el) {
+                        return el.tagName === 'note' && !el.querySelector('grace') && !el.querySelector('chord');
+                    });
+                    if (harmonies.length < 2 || rhythmicNotes.length > 1) return;
+
+                    var position = 0;
+                    var absolutePositions = new Map();
+                    Array.from(measure.children).forEach(function (el) {
+                        if (el.tagName === 'harmony') {
+                            var offsetEl = Array.from(el.children).find(function (child) { return child.tagName === 'offset'; });
+                            var offset = offsetEl ? (parseFloat(offsetEl.textContent) || 0) : 0;
+                            absolutePositions.set(el, Math.max(0, position + offset));
+                        } else if (el.tagName === 'note') {
+                            if (!el.querySelector('grace') && !el.querySelector('chord')) {
+                                var durationEl = Array.from(el.children).find(function (child) { return child.tagName === 'duration'; });
+                                position += durationEl ? (parseFloat(durationEl.textContent) || 0) : 0;
+                            }
+                        } else if (el.tagName === 'backup' || el.tagName === 'forward') {
+                            var moveDuration = el.querySelector('duration');
+                            var amount = moveDuration ? (parseFloat(moveDuration.textContent) || 0) : 0;
+                            position += el.tagName === 'backup' ? -amount : amount;
+                        }
+                    });
+
+                    var firstTemporal = Array.from(measure.children).find(function (el) {
+                        return el.tagName === 'note' || el.tagName === 'backup' || el.tagName === 'forward';
+                    });
+                    if (!firstTemporal) return;
+
+                    harmonies.forEach(function (harmony) {
+                        var absolute = absolutePositions.get(harmony) || 0;
+                        var offsetEl = Array.from(harmony.children).find(function (child) { return child.tagName === 'offset'; });
+                        if (absolute > 0) {
+                            if (!offsetEl) {
+                                offsetEl = doc.createElement('offset');
+                                harmony.appendChild(offsetEl);
+                            }
+                            offsetEl.textContent = String(absolute);
+                        } else if (offsetEl) {
+                            harmony.removeChild(offsetEl);
+                        }
+                        measure.insertBefore(harmony, firstTemporal);
+                        converted++;
+                    });
+                });
+
+                return { xml: converted ? new XMLSerializer().serializeToString(doc) : xml, converted: converted };
+            }
+
             function resetSongSpecificState() {
                 if (run || paused) stopPlayback(true);
                 else { stopScheduled(); clearCursorTimer(); clearPlaybackEndTimer(); }
@@ -4631,6 +4694,8 @@
             async function afterXmlLoaded() {
                 var finaleChords = normalizeFinaleTextChords(rawXml);
                 rawXml = finaleChords.xml;
+                var sparseChords = normalizeSparseMeasureChords(rawXml);
+                rawXml = sparseChords.xml;
                 xmlDoc = new DOMParser().parseFromString(rawXml, 'text/xml');
                 var detectedBpm = extractTempoFromXml(rawXml);
                 if (detectedBpm && !isLoadingProject) document.getElementById('bpm').value = detectedBpm;
@@ -5108,6 +5173,7 @@
 
             /* ─── Gerenciamento de Cifras ─────────────────────────────────────── */
             var selectedChordEvt = null;
+            var chordTimelineClickTimer = null;
             var editModeActive = false;
             var movingChordEvt = null;
             var inlineInput = null;
@@ -5342,6 +5408,7 @@
                     clearPlaybackEndTimer();
 
                     renderChordManager();
+                    applyChordVisualAnchors();
                     bindSvgChordClicks();
                 } catch (err) {
                     console.error("Erro ao recarregar partitura:", err);
@@ -5398,7 +5465,7 @@
                             badge.style.cssText = 'border:1px solid #c7d2fe; background:#e0e7ff; color:#3730a3; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px; cursor:pointer; transition:all 0.15s;';
                         }
                         badge.textContent = name;
-                        badge.title = 'Clique para selecionar; depois clique no novo ponto da pauta. Duplo clique para editar.';
+                        badge.title = 'Clique para definir tempo e subdivisão. Duplo clique para editar o nome.';
 
                         badge.onmouseover = function () {
                             badge.style.background = isSel ? '#ef4444' : '#4f46e5';
@@ -5413,14 +5480,19 @@
 
                         badge.onclick = function (e) {
                             e.stopPropagation();
-                            selectedChordEvt = evt;
-                            highlightSelectedChord();
-                            renderChordManager();
-                            setStatus(name + ' selecionado. Clique na pauta onde deseja posicioná-lo.', 'info');
+                            if (chordTimelineClickTimer) clearTimeout(chordTimelineClickTimer);
+                            chordTimelineClickTimer = setTimeout(function () {
+                                chordTimelineClickTimer = null;
+                                selectedChordEvt = evt;
+                                highlightSelectedChord();
+                                renderChordManager();
+                                showChordPositionDialog(evt);
+                            }, 220);
                         };
 
                         badge.ondblclick = function (e) {
                             e.stopPropagation();
+                            if (chordTimelineClickTimer) { clearTimeout(chordTimelineClickTimer); chordTimelineClickTimer = null; }
                             selectedChordEvt = evt;
                             highlightSelectedChord();
                             var rect = badge.getBoundingClientRect();
@@ -5473,6 +5545,55 @@
                             nextChordIdx++;
                         }
                     }
+                }
+            }
+
+            /* O OSMD pode concentrar todas as cifras na única figura de um compasso.
+               Nesses casos, reposicionamos somente o glifo SVG conforme o beatOffset;
+               o MusicXML e a linha do tempo sonora permanecem inalterados. */
+            function applyChordVisualAnchors() {
+                if (!chordEvents || !chordEvents.length || !xmlDoc) return;
+                var chordPartEl = getChordPart(xmlDoc);
+                if (!chordPartEl) return;
+                var measures = chordPartEl.querySelectorAll('measure');
+                var chordCounts = {}, sparseMeasures = {};
+                chordEvents.forEach(function (evt) { chordCounts[evt.measureIdx] = (chordCounts[evt.measureIdx] || 0) + 1; });
+                Object.keys(chordCounts).forEach(function (key) {
+                    var idx = Number(key), measure = measures[idx];
+                    if (!measure || chordCounts[key] < 2) return;
+                    var rhythmicEntries = Array.from(measure.children).filter(function (node) {
+                        return node.tagName === 'note' && !node.querySelector('chord') && !node.querySelector('grace');
+                    });
+                    if (rhythmicEntries.length <= 1) sparseMeasures[idx] = true;
+                });
+                if (!Object.keys(sparseMeasures).length) return;
+
+                var svgTexts = Array.from(document.querySelectorAll('#score svg text'));
+                var chordNames = chordEvents.map(getChordDisplayName), nextChordIdx = 0;
+                for (var i = 0; i < svgTexts.length && nextChordIdx < chordEvents.length; i++) {
+                    var text = svgTexts[i], content = (text.textContent || '').trim();
+                    if (!content) continue;
+                    var evt = chordEvents[nextChordIdx], expected = chordNames[nextChordIdx];
+                    var normContent = content.replace(/[\u266d\u266f]/g, function (mark) { return mark === '\u266d' ? 'b' : '#'; }).trim();
+                    var normExpected = expected.replace(/[\u266d\u266f]/g, function (mark) { return mark === '\u266d' ? 'b' : '#'; }).trim();
+                    var matches = normContent === normExpected || (!evt.fromFinaleText && normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10);
+                    if (!matches) continue;
+                    if (sparseMeasures[evt.measureIdx]) {
+                        var renderedMeasures = Array.from(document.querySelectorAll('#score svg g.vf-measure')).filter(function (group) { return Number(group.id) === evt.measureIdx; });
+                        var renderedMeasure = renderedMeasures[0];
+                        if (renderedMeasure && typeof renderedMeasure.getBBox === 'function') {
+                            try {
+                                var box = renderedMeasure.getBBox();
+                                var padding = Math.min(16, box.width * 0.08);
+                                var totalBeats = Math.max(0.0001, Number(evt.measureQuarterBeats) || 4);
+                                var ratio = Math.max(0, Math.min(0.96, (Number(evt.beatOffset) || 0) / totalBeats));
+                                var targetX = box.x + padding + Math.max(0, box.width - padding * 2) * ratio;
+                                text.setAttribute('x', String(targetX));
+                                text.setAttribute('data-vitopamos-chord-anchor', 'true');
+                            } catch (_) { }
+                        }
+                    }
+                    nextChordIdx++;
                 }
             }
 
@@ -5544,6 +5665,141 @@
                 }
 
                 highlightSelectedChord();
+            }
+
+            function showChordPositionDialog(evt) {
+                var existing = document.getElementById('chordPositionOverlay');
+                if (existing) existing.remove();
+                var beats = Math.max(1, Number(evt.beats) || 4);
+                var beatType = Math.max(1, Number(evt.beatType) || 4);
+                var beatUnitQuarter = 4 / beatType;
+                var displayMeasureNumber = getChordMeasureDisplayNumber(evt);
+                var rawBeatPosition = Math.max(0, Number(evt.beatOffset) || 0) / beatUnitQuarter;
+                var currentBeat = Math.min(beats, Math.floor(rawBeatPosition + 0.0001) + 1);
+                var currentSubdivision = rawBeatPosition - Math.floor(rawBeatPosition + 0.0001);
+                if (currentSubdivision < 0.0001) currentSubdivision = 0;
+
+                var overlay = document.createElement('div');
+                overlay.id = 'chordPositionOverlay';
+                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.48);backdrop-filter:blur(3px);z-index:20000;display:flex;align-items:center;justify-content:center;padding:18px;';
+                var box = document.createElement('div');
+                box.style.cssText = 'width:min(390px,calc(100vw - 36px));background:var(--card-bg);color:var(--text-main);border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 45px rgba(15,23,42,.3);padding:20px;';
+                var title = document.createElement('h3');
+                title.style.cssText = 'font-size:17px;margin:0 0 5px;';
+                title.textContent = 'Posição de ' + getChordDisplayName(evt);
+                var description = document.createElement('p');
+                description.style.cssText = 'font-size:12px;color:var(--text-muted);margin:0 0 16px;line-height:1.45;';
+                description.textContent = 'Escolha o tempo e a subdivisão dentro do compasso ' + displayMeasureNumber + ' (' + beats + '/' + beatType + ').';
+                var fields = document.createElement('div');
+                fields.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;';
+
+                function makeFieldLabel(text) {
+                    var label = document.createElement('label');
+                    label.style.cssText = 'display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.4px;';
+                    label.appendChild(document.createTextNode(text));
+                    return label;
+                }
+                var beatLabel = makeFieldLabel('Tempo');
+                var beatInput = document.createElement('input');
+                beatInput.type = 'number'; beatInput.min = '1'; beatInput.max = String(beats); beatInput.step = '1'; beatInput.value = String(currentBeat);
+                beatInput.style.cssText = 'height:38px;border:1px solid var(--border);border-radius:7px;background:var(--bg-main);color:var(--text-main);padding:0 10px;font:600 14px var(--font-body);';
+                beatLabel.appendChild(beatInput);
+
+                var subdivisionLabel = makeFieldLabel('Subdivisão');
+                var subdivisionSelect = document.createElement('select');
+                subdivisionSelect.style.cssText = 'height:38px;border:1px solid var(--border);border-radius:7px;background:var(--bg-main);color:var(--text-main);padding:0 8px;font:600 13px var(--font-body);';
+                var subdivisionOptions = [[0, 'Início do tempo'], [0.25, '1/4'], [1 / 3, '1/3 (tercina)'], [0.5, '1/2'], [2 / 3, '2/3 (tercina)'], [0.75, '3/4']];
+                var matchedSubdivision = false;
+                subdivisionOptions.forEach(function (option) {
+                    var el = document.createElement('option'); el.value = String(option[0]); el.textContent = option[1];
+                    if (Math.abs(currentSubdivision - option[0]) < 0.015) { el.selected = true; matchedSubdivision = true; }
+                    subdivisionSelect.appendChild(el);
+                });
+                if (!matchedSubdivision) {
+                    var custom = document.createElement('option'); custom.value = String(currentSubdivision); custom.textContent = 'Atual (' + currentSubdivision.toFixed(3) + ')'; custom.selected = true;
+                    subdivisionSelect.appendChild(custom);
+                }
+                subdivisionLabel.appendChild(subdivisionSelect);
+                fields.appendChild(beatLabel); fields.appendChild(subdivisionLabel);
+
+                var hint = document.createElement('div');
+                hint.style.cssText = 'font-size:11px;color:var(--text-muted);margin:0 0 16px;';
+                hint.textContent = 'Exemplo: tempo 2 + 1/2 posiciona a cifra na segunda metade do tempo 2.';
+                var buttons = document.createElement('div');
+                buttons.style.cssText = 'display:flex;justify-content:flex-end;gap:9px;';
+                var cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Cancelar';
+                cancel.style.cssText = 'border:1px solid var(--border);background:var(--bg-main);color:var(--text-main);border-radius:7px;padding:8px 14px;font-weight:600;cursor:pointer;';
+                var apply = document.createElement('button'); apply.type = 'button'; apply.textContent = 'Aplicar posição';
+                apply.style.cssText = 'border:1px solid #4f46e5;background:#4f46e5;color:#fff;border-radius:7px;padding:8px 14px;font-weight:700;cursor:pointer;';
+                cancel.onclick = function () { overlay.remove(); };
+                apply.onclick = function () {
+                    var beat = Math.max(1, Math.min(beats, parseInt(beatInput.value, 10) || 1));
+                    var subdivision = Math.max(0, Math.min(0.999999, Number(subdivisionSelect.value) || 0));
+                    overlay.remove();
+                    setChordBeatPosition(evt, beat, subdivision);
+                };
+                buttons.appendChild(cancel); buttons.appendChild(apply);
+                box.appendChild(title); box.appendChild(description); box.appendChild(fields); box.appendChild(hint); box.appendChild(buttons); overlay.appendChild(box); document.body.appendChild(overlay);
+                overlay.onclick = function (event) { if (event.target === overlay) overlay.remove(); };
+                overlay.onkeydown = function (event) { if (event.key === 'Escape') overlay.remove(); else if (event.key === 'Enter') apply.click(); };
+                beatInput.focus(); beatInput.select();
+            }
+
+            function getChordMeasureDisplayNumber(evt) {
+                var docXml = getXmlDoc(), chordPartEl = getChordPart(docXml);
+                var measures = chordPartEl ? chordPartEl.querySelectorAll('measure') : [];
+                var measure = measures[evt.measureIdx];
+                return measure ? (measure.getAttribute('number') || (evt.measureIdx + 1)) : (evt.measureIdx + 1);
+            }
+
+            function setChordBeatPosition(evt, beatNumber, subdivision) {
+                var docXml = getXmlDoc(), chordPartEl = getChordPart(docXml);
+                if (!chordPartEl) return;
+                var measures = chordPartEl.querySelectorAll('measure'), measure = measures[evt.measureIdx];
+                if (!measure) return;
+                var harmonyNode = measure.querySelectorAll('harmony')[evt.harmonyIdx];
+                if (!harmonyNode) return;
+                var linkedDirection = getLinkedFinaleChordDirection(harmonyNode);
+                var divisions = 1;
+                for (var i = 0; i <= evt.measureIdx; i++) {
+                    var divisionsEl = measures[i].querySelector('attributes > divisions');
+                    if (divisionsEl) divisions = parseFloat(divisionsEl.textContent) || divisions;
+                }
+                var beatUnitQuarter = 4 / (Number(evt.beatType) || 4);
+                var desiredQuarterOffset = ((beatNumber - 1) + subdivision) * beatUnitQuarter;
+                var desiredDivisions = desiredQuarterOffset * divisions;
+                function setOffset(node, value) {
+                    var offset = node.querySelector(':scope > offset');
+                    if (Math.abs(value) < 0.000001) { if (offset) offset.remove(); return; }
+                    if (!offset) { offset = docXml.createElement('offset'); node.appendChild(offset); }
+                    offset.textContent = String(Math.round(value * 1000000) / 1000000);
+                }
+                harmonyNode.remove();
+                if (linkedDirection) linkedDirection.remove();
+                var firstTemporalNode = null;
+                for (var n = 0; n < measure.childNodes.length; n++) {
+                    var child = measure.childNodes[n];
+                    if (child.nodeType === 1 && (child.tagName === 'note' || child.tagName === 'forward' || child.tagName === 'backup')) { firstTemporalNode = child; break; }
+                }
+                setOffset(harmonyNode, desiredDivisions);
+                measure.insertBefore(harmonyNode, firstTemporalNode);
+                if (linkedDirection) {
+                    setOffset(linkedDirection, desiredDivisions);
+                    measure.insertBefore(linkedDirection, firstTemporalNode);
+                }
+                selectedChordEvt = null;
+                reloadScoreFromXml();
+                var subdivisionText = subdivision ? ' + ' + subdivisionSelectLabel(subdivision) : '';
+                setStatus('Cifra posicionada no tempo ' + beatNumber + subdivisionText + ' do compasso ' + getChordMeasureDisplayNumber(evt) + '.', 'ok');
+            }
+
+            function subdivisionSelectLabel(value) {
+                if (Math.abs(value - 1 / 3) < 0.015) return '1/3';
+                if (Math.abs(value - 2 / 3) < 0.015) return '2/3';
+                if (Math.abs(value - 0.25) < 0.015) return '1/4';
+                if (Math.abs(value - 0.5) < 0.015) return '1/2';
+                if (Math.abs(value - 0.75) < 0.015) return '3/4';
+                return String(Math.round(value * 1000) / 1000);
             }
 
             function showInlineInput(x, y, initialValue, onSave) {
@@ -6847,7 +7103,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
                 }
             }
             var intervals = getChordIntervals(kindStr);
-            chords.push({t:tSec,midi:bassMidi,rootMidi:rootMidi,intervals:intervals,measureIdx:mi,beatOffset:harmDiv/divisions,beats:currentBeats,beatType:currentBeatType,measureQuarterBeats:currentBeats*4/currentBeatType});
+            chords.push({t:tSec,midi:bassMidi,rootMidi:rootMidi,intervals:intervals,measureIdx:mi,beatOffset:harmDiv/divisions,beats:currentBeats,beatType:currentBeatType,measureQuarterBeats:currentBeats*4/currentBeatType,rootStep:rootStep?rootStep.textContent.trim():'',rootAlter:rootAlter?parseFloat(rootAlter.textContent):0,kindText:kindTextAttr||'',kindVal:kindEl?kindEl.textContent.trim():'major',bassStep:bassStep?bassStep.textContent.trim():'',bassAlter:bassAlter?parseFloat(bassAlter.textContent):0});
           }else if(tag==='note'){
             var isChordNote=!!node.querySelector('chord');
             if(!isChordNote){var durEl=node.querySelector('duration');var dur=durEl?(parseFloat(durEl.textContent)||0):0;pos+=dur;if(pos>maxPos)maxPos=pos;}
@@ -6861,6 +7117,28 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       }
     }catch(e){console.warn('parseChordEvents',e);}
     return chords;
+  }
+
+  function chordDisplayNameEx(evt){
+    if(!evt||!evt.rootStep)return'';var root=evt.rootStep;if(evt.rootAlter===1)root+='#';else if(evt.rootAlter===-1)root+='b';
+    var text=String(evt.kindText||'').trim(),kind=evt.kindVal||'major';
+    if(text&&text.toUpperCase().indexOf(evt.rootStep.toUpperCase())===0)text=text.slice(evt.rootStep.length).replace(/^[#b♯♭]/,'').trim();
+    if(!text){if(kind==='minor')text='m';else if(kind==='dominant')text='7';else if(kind==='major-seventh')text='maj7';else if(kind==='minor-seventh')text='m7';else if(kind==='diminished')text='dim';else if(kind==='diminished-seventh')text='dim7';else if(kind==='half-diminished')text='m7b5';else if(kind==='major-minor')text='m(maj7)';}
+    var name=root+text;if(evt.bassStep){var bass=evt.bassStep;if(evt.bassAlter===1)bass+='#';else if(evt.bassAlter===-1)bass+='b';name+='/'+bass;}return name;
+  }
+
+  function applyChordVisualAnchorsEx(){
+    var bpm=+document.getElementById('bpm').value||100,events=parseChordEvents(raw,bpm);if(!events.length)return;
+    var doc=new DOMParser().parseFromString(raw,'text/xml'),parts=doc.querySelectorAll('part'),targetPart=null;
+    for(var p=0;p<parts.length;p++)if(parts[p].querySelector('harmony')){targetPart=parts[p];break;}if(!targetPart)return;
+    var measures=targetPart.querySelectorAll('measure'),counts={},sparse={};events.forEach(function(evt){counts[evt.measureIdx]=(counts[evt.measureIdx]||0)+1;});
+    Object.keys(counts).forEach(function(key){var idx=Number(key),measure=measures[idx];if(!measure||counts[key]<2)return;var entries=Array.from(measure.children).filter(function(node){return node.tagName==='note'&&!node.querySelector('chord')&&!node.querySelector('grace');});if(entries.length<=1)sparse[idx]=true;});
+    if(!Object.keys(sparse).length)return;
+    var texts=Array.from(document.querySelectorAll('#score svg text')),names=events.map(chordDisplayNameEx),next=0;
+    for(var i=0;i<texts.length&&next<events.length;i++){var el=texts[i],content=(el.textContent||'').trim();if(!content)continue;var evt=events[next],expected=names[next];var normContent=content.replace(/[\u266d\u266f]/g,function(mark){return mark==='\u266d'?'b':'#';}).trim();var normExpected=expected.replace(/[\u266d\u266f]/g,function(mark){return mark==='\u266d'?'b':'#';}).trim();if(normContent!==normExpected)continue;
+      if(sparse[evt.measureIdx]){var groups=Array.from(document.querySelectorAll('#score svg g.vf-measure')).filter(function(group){return Number(group.id)===evt.measureIdx;});var group=groups[0];if(group&&typeof group.getBBox==='function')try{var box=group.getBBox(),padding=Math.min(16,box.width*.08),total=Math.max(.0001,Number(evt.measureQuarterBeats)||4),ratio=Math.max(0,Math.min(.96,(Number(evt.beatOffset)||0)/total)),targetX=box.x+padding+Math.max(0,box.width-padding*2)*ratio;el.setAttribute('x',String(targetX));el.setAttribute('data-vitopamos-chord-anchor','true');}catch(_){}
+      }next++;
+    }
   }
 
   function buildMeasureTimeMap(){
@@ -7915,9 +8193,9 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     if(run&&ac){var off=getPlaybackPosition(ac.currentTime,0);stopAll();clearCursorTimer();clearPlaybackEndTimer();play(off,0.02).then(function(){startCursorFollow(off);});}
     else moveCursorToTime(pat||0);
   });
-  document.getElementById('layoutEx').addEventListener('change',function(){applyLayout();osmd.render();});
-  document.getElementById('zoomEx').addEventListener('change',function(){var z=+this.value||100;osmd.Zoom=z/100;osmd.render();});
-  document.getElementById('mpsCountEx').addEventListener('change',function(){if(document.getElementById('layoutEx').value==='fixed'){applyLayout();osmd.render();}});
+  document.getElementById('layoutEx').addEventListener('change',function(){applyLayout();osmd.render();applyChordVisualAnchorsEx();});
+  document.getElementById('zoomEx').addEventListener('change',function(){var z=+this.value||100;osmd.Zoom=z/100;osmd.render();applyChordVisualAnchorsEx();});
+  document.getElementById('mpsCountEx').addEventListener('change',function(){if(document.getElementById('layoutEx').value==='fixed'){applyLayout();osmd.render();applyChordVisualAnchorsEx();}});
   document.getElementById('curEx').addEventListener('change',function(){
     var mode=+this.value;
     cursorStepsCache.mode=null;
@@ -8159,6 +8437,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
       }
     });
     osmd.render();
+    applyChordVisualAnchorsEx();
     buildMeasureTimeMap();
     updateRangeInputs();
     resetCursorToStart();
