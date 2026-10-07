@@ -805,6 +805,28 @@
             min-width: 140px;
         }
 
+        .part-name.editable {
+            cursor: text;
+            border-bottom: 1px dashed transparent;
+        }
+
+        .part-name.editable:hover {
+            border-bottom-color: currentColor;
+        }
+
+        .part-name-input {
+            width: 140px;
+            min-width: 140px;
+            height: 28px;
+            padding: 3px 7px;
+            border: 1px solid #6366f1;
+            border-radius: 5px;
+            background: var(--bg-main);
+            color: var(--text-main);
+            font: 600 13px var(--font-body);
+            outline: none;
+        }
+
         .part-ctrls {
             display: flex;
             gap: 6px;
@@ -3195,8 +3217,9 @@
                     var isDrum = !!percInfo.drumFlags[idx] || !!xmlDefault.isDrum;
                     var defProg = isDrum ? '_drum_kit_gm' : (xmlDefault.program || guessProgramFromInstrumentText(name) || 'acoustic_grand_piano');
                     var existing = (isLoadingProject || prevConfigs.length > 0) && prevConfigs[idx];
-                    if (existing && existing.name === name) {
+                    if (existing && (existing.customName || isLoadingProject || existing.name === name)) {
                         existing.soundQuality = normalizeSoundQuality(existing.soundQuality);
+                        if (!existing.name) existing.name = name;
                         partConfigs.push(existing);
                     } else {
                         partConfigs.push({ name: name, program: defProg, mute: false, solo: false, vol: 100, oct: 0, isDrum: isDrum, soundQuality: 'standard' });
@@ -3397,6 +3420,45 @@
 
             var mixerExpanded = true;
 
+            function makeTrackNameEditable(nameEl, config) {
+                if (!nameEl || !config) return;
+                nameEl.classList.add('editable');
+                nameEl.title = 'Duplo clique para editar o nome da pista';
+                nameEl.ondblclick = function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (nameEl.style.display === 'none') return;
+
+                    var original = config.name || nameEl.textContent || 'Pista';
+                    var input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'part-name-input';
+                    input.value = original;
+                    input.maxLength = 80;
+                    input.setAttribute('aria-label', 'Nome da pista');
+                    var cancelled = false;
+
+                    function finish() {
+                        var value = cancelled ? original : input.value.trim();
+                        config.name = value || original;
+                        if (!cancelled && value) config.customName = true;
+                        nameEl.textContent = config.name;
+                        nameEl.style.display = '';
+                        if (input.parentNode) input.parentNode.removeChild(input);
+                    }
+
+                    input.onkeydown = function (keyEvent) {
+                        if (keyEvent.key === 'Enter') { keyEvent.preventDefault(); input.blur(); }
+                        else if (keyEvent.key === 'Escape') { keyEvent.preventDefault(); cancelled = true; input.blur(); }
+                    };
+                    input.onblur = finish;
+                    nameEl.style.display = 'none';
+                    nameEl.parentNode.insertBefore(input, nameEl);
+                    input.focus();
+                    input.select();
+                };
+            }
+
             function renderPartsPanel() {
                 var p = document.getElementById('partsPanel');
                 p.style.display = 'flex'; p.innerHTML = '';
@@ -3420,6 +3482,7 @@
                 partConfigs.forEach(function (cfg, idx) {
                     var row = document.createElement('div'); row.className = 'part-row';
                     var nameSp = document.createElement('span'); nameSp.className = 'part-name'; nameSp.textContent = cfg.name;
+                    makeTrackNameEditable(nameSp, cfg);
                     var ctrls = document.createElement('div'); ctrls.className = 'part-ctrls';
                     var bMute = document.createElement('button');
                     bMute.className = 'btn-mute' + (cfg.mute ? ' active' : '');
@@ -3511,7 +3574,8 @@
                 var pChRow = document.createElement('div'); pChRow.className = 'part-row';
                 var pChName = document.createElement('span'); pChName.className = 'part-name';
                 pChName.style.fontStyle = 'italic';
-                pChName.textContent = 'Cifra: acordes';
+                pChName.textContent = pianoChordConfig.name || 'Cifra: acordes';
+                makeTrackNameEditable(pChName, pianoChordConfig);
                 var pChCtrls = document.createElement('div'); pChCtrls.className = 'part-ctrls';
                 var bPMuteC = document.createElement('button');
                 bPMuteC.className = 'btn-mute' + (pianoChordConfig.mute ? ' active' : '');
@@ -3538,7 +3602,8 @@
                 var chRow = document.createElement('div'); chRow.className = 'part-row';
                 var chName = document.createElement('span'); chName.className = 'part-name';
                 chName.style.fontStyle = 'italic';
-                chName.textContent = 'Cifra: baixo';
+                chName.textContent = chordConfig.name || 'Cifra: baixo';
+                makeTrackNameEditable(chName, chordConfig);
                 var chCtrls = document.createElement('div'); chCtrls.className = 'part-ctrls';
                 var bMuteC = document.createElement('button');
                 bMuteC.className = 'btn-mute' + (chordConfig.mute ? ' active' : '');
@@ -5579,7 +5644,10 @@
                     var matches = normContent === normExpected || (!evt.fromFinaleText && normContent.indexOf(normExpected.substring(0, 1)) === 0 && normContent.length <= 10);
                     if (!matches) continue;
                     if (sparseMeasures[evt.measureIdx]) {
-                        var renderedMeasures = Array.from(document.querySelectorAll('#score svg g.vf-measure')).filter(function (group) { return Number(group.id) === evt.measureIdx; });
+                        var renderedMeasureNumber = getMeasureNumberAtIndex(evt.measureIdx);
+                        var renderedMeasures = Array.from(document.querySelectorAll('#score svg g.vf-measure')).filter(function (group) {
+                            return Number(group.id) === renderedMeasureNumber;
+                        });
                         var renderedMeasure = renderedMeasures[0];
                         if (renderedMeasure && typeof renderedMeasure.getBBox === 'function') {
                             try {
@@ -5588,6 +5656,14 @@
                                 var totalBeats = Math.max(0.0001, Number(evt.measureQuarterBeats) || 4);
                                 var ratio = Math.max(0, Math.min(0.96, (Number(evt.beatOffset) || 0) / totalBeats));
                                 var targetX = box.x + padding + Math.max(0, box.width - padding * 2) * ratio;
+                                var measureChordEvents = chordEvents.filter(function (item) { return item.measureIdx === evt.measureIdx; });
+                                if (measureChordEvents.length > 1) {
+                                    text.style.fontSize = '85%';
+                                    var ordinal = measureChordEvents.indexOf(evt);
+                                    var textWidth = text.getBBox().width;
+                                    if (ordinal === 0) targetX = box.x + 2;
+                                    else if (ordinal === measureChordEvents.length - 1) targetX = box.x + box.width - textWidth - 2;
+                                }
                                 text.setAttribute('x', String(targetX));
                                 text.setAttribute('data-vitopamos-chord-anchor', 'true');
                             } catch (_) { }
@@ -7136,7 +7212,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     if(!Object.keys(sparse).length)return;
     var texts=Array.from(document.querySelectorAll('#score svg text')),names=events.map(chordDisplayNameEx),next=0;
     for(var i=0;i<texts.length&&next<events.length;i++){var el=texts[i],content=(el.textContent||'').trim();if(!content)continue;var evt=events[next],expected=names[next];var normContent=content.replace(/[\u266d\u266f]/g,function(mark){return mark==='\u266d'?'b':'#';}).trim();var normExpected=expected.replace(/[\u266d\u266f]/g,function(mark){return mark==='\u266d'?'b':'#';}).trim();if(normContent!==normExpected)continue;
-      if(sparse[evt.measureIdx]){var groups=Array.from(document.querySelectorAll('#score svg g.vf-measure')).filter(function(group){return Number(group.id)===evt.measureIdx;});var group=groups[0];if(group&&typeof group.getBBox==='function')try{var box=group.getBBox(),padding=Math.min(16,box.width*.08),total=Math.max(.0001,Number(evt.measureQuarterBeats)||4),ratio=Math.max(0,Math.min(.96,(Number(evt.beatOffset)||0)/total)),targetX=box.x+padding+Math.max(0,box.width-padding*2)*ratio;el.setAttribute('x',String(targetX));el.setAttribute('data-vitopamos-chord-anchor','true');}catch(_){}
+      if(sparse[evt.measureIdx]){var sourceMeasure=measures[evt.measureIdx],renderedNumber=sourceMeasure?Number(sourceMeasure.getAttribute('number')):evt.measureIdx+1;if(!isFinite(renderedNumber))renderedNumber=evt.measureIdx+1;var groups=Array.from(document.querySelectorAll('#score svg g.vf-measure')).filter(function(group){return Number(group.id)===renderedNumber;});var group=groups[0];if(group&&typeof group.getBBox==='function')try{var box=group.getBBox(),padding=Math.min(16,box.width*.08),total=Math.max(.0001,Number(evt.measureQuarterBeats)||4),ratio=Math.max(0,Math.min(.96,(Number(evt.beatOffset)||0)/total)),targetX=box.x+padding+Math.max(0,box.width-padding*2)*ratio,measureEvents=events.filter(function(item){return item.measureIdx===evt.measureIdx;});if(measureEvents.length>1){el.style.fontSize='85%';var ordinal=measureEvents.indexOf(evt),textWidth=el.getBBox().width;if(ordinal===0)targetX=box.x+2;else if(ordinal===measureEvents.length-1)targetX=box.x+box.width-textWidth-2;}el.setAttribute('x',String(targetX));el.setAttribute('data-vitopamos-chord-anchor','true');}catch(_){}
       }next++;
     }
   }
@@ -8380,7 +8456,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
 
     pianoChordConfig.enabled=true;
     var pchRow=document.createElement('div');pchRow.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:36px;padding:4px 6px;border-bottom:1px solid #f1f5f9;';
-    var pchName=document.createElement('span');pchName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;font-style:italic;';pchName.textContent='Cifra: acordes';
+    var pchName=document.createElement('span');pchName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;font-style:italic;';pchName.textContent=pianoChordConfig.name||'Cifra: acordes';
     var bPMuteC=document.createElement('button');bPMuteC.innerHTML=ICONS.mute+' Mute';bPMuteC.style.cssText=S_BTN+(pianoChordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
     bPMuteC.onclick=function(){pianoChordConfig.mute=!pianoChordConfig.mute;bPMuteC.style.cssText=S_BTN+(pianoChordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
     var bPSoloC=document.createElement('button');bPSoloC.innerHTML=ICONS.solo+' Solo';bPSoloC.style.cssText=S_BTN+(pianoChordConfig.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');
@@ -8400,7 +8476,7 @@ ${hideCtrls ? '#ctrlsEx { display: none !important; } #score { border-top: none;
     pPanel.appendChild(pchRow);
 
     var chRow=document.createElement('div');chRow.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:36px;padding:4px 6px;border-bottom:1px solid #f1f5f9;';
-    var chName=document.createElement('span');chName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;font-style:italic;';chName.textContent='Cifra: baixo';
+    var chName=document.createElement('span');chName.style.cssText='font-size:12px;font-weight:600;min-width:120px;color:#111827;font-style:italic;';chName.textContent=chordConfig.name||'Cifra: baixo';
     var bMuteC=document.createElement('button');bMuteC.innerHTML=ICONS.mute+' Mute';bMuteC.style.cssText=S_BTN+(chordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');
     bMuteC.onclick=function(){chordConfig.mute=!chordConfig.mute;bMuteC.style.cssText=S_BTN+(chordConfig.mute?'background:#ef4444;color:#fff;border-color:#ef4444;':'');updateFullMix();};
     var bSoloC=document.createElement('button');bSoloC.innerHTML=ICONS.solo+' Solo';bSoloC.style.cssText=S_BTN+(chordConfig.solo?'background:#eab308;color:#fff;border-color:#eab308;':'');
